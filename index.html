@@ -241,6 +241,7 @@ a{color:var(--brand-ink)}
 .contcard .cc-k{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-ink);font-weight:700}
 .contcard .cc-t{font-weight:900}
 .contcard .cc-l{color:var(--ink-2);font-size:.92rem}
+.setnote{font-size:.85rem;color:var(--ink-2);line-height:1.5;margin:0 0 10px}
 .discbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;cursor:grab}
 .discbar::-webkit-scrollbar{height:6px}.discbar::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px}
 .discbar.wrap{flex-wrap:wrap;overflow-x:visible}
@@ -893,6 +894,15 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
       <div class="setrow"><span>Último backup: <b id="bkLast">nunca</b></span>
         <div style="display:flex;gap:8px"><button type="button" class="ghost" id="bkExp">Exportar</button><button type="button" class="ghost" id="bkImp">Importar</button></div></div>
       <input type="file" id="bkFile" accept="application/json,.json" hidden>
+      <h4>Sincronizar entre aparelhos</h4>
+      <div id="syncOff">
+        <p class="setnote">Use o mesmo progresso no celular, tablet e computador. Os dados ficam num arquivo privado (Gist secreto) na sua própria conta do GitHub.<br>1) <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Meus%20Estudos" target="_blank" rel="noopener">Crie um token</a> só com a permissão <b>gist</b> (Generate token).<br>2) Cole abaixo, neste e nos outros aparelhos.</p>
+        <div class="setrow"><input type="password" id="syncToken" placeholder="ghp_..." autocomplete="off" style="flex:1;min-width:0;padding:9px 10px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit"><button type="button" class="ghost" id="syncGo">Ativar</button></div>
+      </div>
+      <div id="syncOn" hidden>
+        <div class="setrow"><span id="syncStatus">Ativada.</span>
+          <div style="display:flex;gap:8px"><button type="button" class="ghost" id="syncNow">Sincronizar agora</button><button type="button" class="ghost" id="syncStop">Desativar</button></div></div>
+      </div>
       <h4>Aparência</h4>
       <div class="setrow"><span>Tema</span><div class="seg" id="themeSeg"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Claro</button><button type="button" data-t="dark">Escuro</button></div></div>
       <h4>Meta diária de XP</h4>

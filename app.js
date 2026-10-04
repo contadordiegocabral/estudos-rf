@@ -327,7 +327,9 @@ function loadLocal(){
 }
 function saveLocal(){try{localStorage.setItem("afo01_trail",JSON.stringify(S));}catch(e){}}
 function persist(){
+  S.at=Date.now();
   saveLocal();
+  if(window.pvSyncSoon) pvSyncSoon();
   if(saveTimer)clearTimeout(saveTimer);
   saveTimer=setTimeout(function(){
     if(!dbRef)return;
@@ -2248,6 +2250,7 @@ document.getElementById("resetAll").onclick=function(){
   var g=S.goal,so=S.sound,vi=S.vibe,cur=S.cur,dn=dailyTarget(),dsc=S.disc;
   S={xp:0,streak:0,bestStreak:0,lastDay:null,hist:{},goal:g,sound:so,vibe:vi,cur:cur,disc:dsc,mods:{},
      srs:{},dailyN:dn,daily:{d:null,n:0},tempo:{},dstat:{},theme:S.theme,plano:S.plano,vid:S.vid};
+  if(window.pvSyncForce) pvSyncForce();
   persist();drawer.classList.remove("on");renderTrail();buildPanel();
   window.scrollTo({top:0,behavior:"smooth"});
 };
@@ -3308,6 +3311,142 @@ function runVideo(l){
 
 /* ---------- boot ---------- */
 pvInjetaVideo();
+
+/* =====================================================================
+   SINCRONIZAÇÃO ENTRE APARELHOS (Gist secreto do GitHub do próprio usuário)
+   ===================================================================== */
+var SYNC={cfg:null,busy:false,timer:null,force:false,dirty:false};
+var SYNC_FILE="meus-estudos.json", SYNC_DESC="Meus Estudos - sincronizacao";
+function syncCfg(){ try{ return JSON.parse(localStorage.getItem("me_sync")||"null"); }catch(e){ return null; } }
+function syncSaveCfg(c){ try{ if(c) localStorage.setItem("me_sync",JSON.stringify(c)); else localStorage.removeItem("me_sync"); }catch(e){} SYNC.cfg=c; }
+function syncStatus(t){ var e=document.getElementById("syncStatus"); if(e) e.textContent=t; }
+function ghApi(path,opt){
+  opt=opt||{}; var c=SYNC.cfg;
+  opt.headers=Object.assign({"Authorization":"Bearer "+c.token,"Accept":"application/vnd.github+json"},opt.headers||{});
+  return fetch("https://api.github.com"+path,opt).then(function(r){
+    if(!r.ok){ var er=new Error("http "+r.status); er.status=r.status; throw er; }
+    return r.json();
+  });
+}
+function syncPayload(){ return JSON.stringify({app:"meus-estudos",v:1,at:S.at||Date.now(),state:S}); }
+function syncFind(){
+  return ghApi("/gists?per_page=100").then(function(l){
+    for(var i=0;i<l.length;i++) if(l[i].description===SYNC_DESC&&l[i].files&&l[i].files[SYNC_FILE]) return l[i].id;
+    return null;
+  });
+}
+function syncCreate(){
+  var f={}; f[SYNC_FILE]={content:syncPayload()};
+  return ghApi("/gists",{method:"POST",body:JSON.stringify({description:SYNC_DESC,"public":false,files:f})}).then(function(g){ return g.id; });
+}
+function syncRead(id){
+  return ghApi("/gists/"+id).then(function(g){
+    var f=g.files&&g.files[SYNC_FILE]; if(!f) return null;
+    if(f.truncated&&f.raw_url) return fetch(f.raw_url).then(function(r){return r.text();}).then(function(t){ return JSON.parse(t); });
+    return JSON.parse(f.content);
+  });
+}
+var SYNC_MAXK={xp:1,bestStreak:1};
+var SYNC_DEEP={mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
+function syncDeep(a,b){
+  if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
+  if(a&&b&&typeof a==="object"&&typeof b==="object"&&!Array.isArray(a)&&!Array.isArray(b)){
+    var o={}; Object.keys(b).concat(Object.keys(a)).forEach(function(k){
+      if(k in o) return;
+      o[k]=((k in a)&&(k in b))?syncDeep(a[k],b[k]):((k in a)?a[k]:b[k]);
+    }); return o;
+  }
+  return a;
+}
+function syncMerge(loc,rem){
+  var newer=((rem.at||0)>(loc.at||0))?rem:loc, older=(newer===rem)?loc:rem, o={};
+  Object.keys(older).concat(Object.keys(newer)).forEach(function(k){
+    if(k in o) return;
+    var a=newer[k], b=older[k];
+    if(SYNC_DEEP[k]&&a!=null&&b!=null) o[k]=syncDeep(a,b);
+    else if(SYNC_MAXK[k]) o[k]=Math.max(a||0,b||0);
+    else o[k]=(k in newer)?a:b;
+  });
+  Object.keys(SYNC_LOCAL).forEach(function(k){ if(k in loc) o[k]=loc[k]; });
+  o.at=Math.max(loc.at||0,rem.at||0);
+  return o;
+}
+function syncStrip(s){ var c=Object.assign({},s); delete c.at; return JSON.stringify(c); }
+function syncOverlayOn(){ var o=document.getElementById("ov"); return !!(o&&o.classList.contains("on")); }
+function pvSyncSoon(){
+  if(!SYNC.cfg) SYNC.cfg=syncCfg();
+  if(!SYNC.cfg||!SYNC.cfg.token) return;
+  SYNC.dirty=true;
+  if(SYNC.timer) clearTimeout(SYNC.timer);
+  SYNC.timer=setTimeout(function(){ SYNC.timer=null; syncNow(); },4000);
+}
+function pvSyncForce(){ if(syncCfg()) SYNC.force=true; }
+function syncNow(manual){
+  var c=SYNC.cfg=syncCfg();
+  if(!c||!c.token) return Promise.resolve();
+  if(SYNC.busy) return Promise.resolve();
+  if(syncOverlayOn()){ if(SYNC.timer) clearTimeout(SYNC.timer); SYNC.timer=setTimeout(function(){ SYNC.timer=null; syncNow(); },20000); return Promise.resolve(); }
+  if(navigator.onLine===false){ syncStatus("Sem internet — sincroniza quando voltar."); return Promise.resolve(); }
+  SYNC.busy=true; syncStatus("Sincronizando…");
+  var idP=c.gist?Promise.resolve(c.gist):syncFind().then(function(id){ return id||null; });
+  return idP.then(function(id){
+    if(!id){
+      return syncCreate().then(function(nid){ c.gist=nid; syncSaveCfg(c); SYNC.dirty=false; return "created"; });
+    }
+    if(c.gist!==id){ c.gist=id; syncSaveCfg(c); }
+    var rp=SYNC.force?Promise.resolve(null):syncRead(id);
+    return rp.then(function(rem){
+      var changed=false;
+      if(rem&&rem.state&&rem.state.mods){
+        saveLocal();
+        var m=syncMerge(S,rem.state);
+        if(syncStrip(m)!==syncStrip(S)){
+          S=Object.assign({},m); changed=true; saveLocal();
+        }else{ S.at=m.at; }
+        var same=syncStrip(S)===syncStrip(rem.state);
+        if(same&&!SYNC.dirty&&!SYNC.force) return {changed:changed,pushed:false};
+      }
+      var f={}; f[SYNC_FILE]={content:syncPayload()};
+      return ghApi("/gists/"+id,{method:"PATCH",body:JSON.stringify({files:f})}).then(function(){
+        SYNC.force=false; SYNC.dirty=false; return {changed:changed,pushed:true};
+      });
+    });
+  }).then(function(r){
+    if(r&&r.changed){
+      loadDisc(S.disc); if(!S.cur||!REG[S.cur]||ORDER.indexOf(S.cur)<0) S.cur=ORDER[0]||"m01"; loadModule(S.cur);
+      pvApplyTheme(); paintSettings(); renderTrail(); buildPanel();
+    }
+    var d=new Date(); syncStatus("Sincronizado às "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+".");
+    try{ localStorage.setItem("me_sync_at",String(Date.now())); }catch(e){}
+  })["catch"](function(e){
+    if(e&&e.status===401) syncStatus("Token inválido ou expirado. Desative e ative de novo.");
+    else if(e&&e.status===404&&c.gist){ c.gist=null; syncSaveCfg(c); syncStatus("Arquivo de sincronização não encontrado; tentando recriar…"); setTimeout(syncNow,1500); }
+    else syncStatus("Não consegui sincronizar agora ("+(e&&e.message||"erro")+"). Tento de novo depois.");
+  }).then(function(){ SYNC.busy=false; });
+}
+function pvSyncPaint(){
+  var on=!!syncCfg(), a=document.getElementById("syncOff"), b=document.getElementById("syncOn");
+  if(a) a.hidden=on; if(b) b.hidden=!on;
+}
+(function(){
+  var go=document.getElementById("syncGo"), tk=document.getElementById("syncToken");
+  if(!go||!tk) return;
+  go.onclick=function(){
+    var t=(tk.value||"").trim(); if(!t){ syncStatus("Cole o token primeiro."); return; }
+    syncSaveCfg({token:t,gist:null}); tk.value=""; pvSyncPaint(); syncStatus("Conectando…");
+    SYNC.dirty=true; syncNow(true);
+  };
+  document.getElementById("syncNow").onclick=function(){ SYNC.dirty=true; syncNow(true); };
+  document.getElementById("syncStop").onclick=function(){
+    if(!confirm("Desativar a sincronização neste aparelho? Seu progresso local continua aqui.")) return;
+    syncSaveCfg(null); pvSyncPaint(); syncStatus("");
+  };
+  pvSyncPaint();
+  document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible"&&syncCfg()) syncNow(); });
+  window.addEventListener("online",function(){ if(syncCfg()) syncNow(); });
+})();
+
 var _novo = !localStorage.getItem("afo01_trail");
 loadLocal();
 if(S.lastDay){var dd=daysBetween(S.lastDay,today());if(dd>1)S.streak=0;}
@@ -3328,6 +3467,7 @@ pvApplyTheme();
 paintSettings();
 renderTrail();
 buildPanel();
+if(syncCfg()) setTimeout(function(){ syncNow(); },600);
 
 if(window.claude&&typeof window.claude.use==="function"){
   window.claude.use("db").then(function(db){
