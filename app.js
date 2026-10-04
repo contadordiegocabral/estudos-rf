@@ -3129,12 +3129,12 @@ function prepCard(){
 
 /* ---------------- tema escuro ---------------- */
 function pvApplyTheme(){
-  var t=S.theme||"auto", dark=t==="dark"||(t==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
+  var t=S.theme||"light", dark=t==="dark"||(t==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.setAttribute("data-theme",dark?"dark":"light");
 }
 function pvPaintTheme(){
   [].slice.call(document.querySelectorAll("#themeSeg button")).forEach(function(b){
-    b.setAttribute("aria-pressed",String((S.theme||"auto")===b.dataset.t));
+    b.setAttribute("aria-pressed",String((S.theme||"light")===b.dataset.t));
     b.onclick=function(){ S.theme=b.dataset.t; pvApplyTheme(); pvPaintTheme(); persist(); };
   });
 }

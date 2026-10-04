@@ -2,7 +2,7 @@
    Estratégia: cache-first para os arquivos do app (eles só mudam quando eu
    republico, e aí o CACHE muda de nome e tudo é rebaixado de uma vez).      */
 
-var CACHE = "estudo-fiscal-v73";
+var CACHE = "estudo-fiscal-v74";
 
 var ARQUIVOS = [
   "./",
