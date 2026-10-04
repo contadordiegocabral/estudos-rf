@@ -241,6 +241,21 @@ a{color:var(--brand-ink)}
 .contcard .cc-k{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-ink);font-weight:700}
 .contcard .cc-t{font-weight:900}
 .contcard .cc-l{color:var(--ink-2);font-size:.92rem}
+.focobtn{display:flex;align-items:center;gap:8px;width:calc(100% - 24px);margin:6px 12px 2px;padding:8px 12px;border:2px solid var(--line-strong);border-bottom-width:3px;border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-weight:800;cursor:pointer;text-align:left}
+.focobtn.on{border-color:var(--brand);color:var(--brand-ink)}
+.focobtn .fkk{font-family:"IBM Plex Mono",monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);font-weight:600}
+.focobtn .fnn{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.focosheet{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.fs-bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+.fs-box{position:relative;width:100%;max-width:34rem;max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
+.fs-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.fs-tools{display:flex;gap:8px;margin-bottom:8px}
+.fs-tools input{flex:1;min-width:0;padding:8px 10px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+.fs-list{overflow-y:auto;flex:1;display:grid;gap:4px;padding:2px 0 8px}
+.fs-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:2px solid var(--line);border-radius:10px;cursor:pointer}
+.fs-row input{width:20px;height:20px;accent-color:var(--brand)}
+.fs-n{flex:1;font-weight:800}.fs-p{font-family:"IBM Plex Mono",monospace;font-size:.75rem;color:var(--ink-3)}
+.fs-f{padding-top:8px}
 .setnote{font-size:.85rem;color:var(--ink-2);line-height:1.5;margin:0 0 10px}
 .discbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;cursor:grab}
 .discbar::-webkit-scrollbar{height:6px}.discbar::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px}
@@ -819,6 +834,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
     <button class="hud-btn" id="hSuper" title="Super revisão — todas as matérias" aria-label="Super revisão"><svg><use href="#i-repeat"/></svg></button>
     <button class="hud-btn" id="openDrawer" title="Desempenho e consulta" aria-label="Desempenho e consulta"><svg><use href="#i-list"/></svg></button>
   </div>
+  <button type="button" class="focobtn" id="focoBtn" aria-haspopup="dialog"><span class="fkk">Estudando</span><span class="fnn">Todas as matérias</span><span class="fcc">▾</span></button>
   <div class="rank">
     <div class="rank-top"><span class="rank-name" id="hRank">Estagiário</span><span class="rank-next" id="hNext"></span></div>
     <div class="rank-bar"><div class="rank-fill" id="hFill"></div></div>

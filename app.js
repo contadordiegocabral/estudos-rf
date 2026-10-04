@@ -14,6 +14,9 @@ var M=null, CARDS,QS,FEY,TEORIA,EX,KIT,UNITS,ALL,EXUNIT;
 var COMX={};   /* comentários longos do módulo corrente, por índice de QS */
 
 /* todos os módulos registrados, de todas as matérias */
+function focoAtivo(){ return S.foco&&S.foco.length?S.foco:null; }
+function focoOk(d){ var f=focoAtivo(); return !f||f.indexOf(d)>=0; }
+function allModsFoco(){ return allMods().filter(function(k){ return focoOk(discOf(k)); }); }
 function allMods(){
   var out=[];
   DISC_ORDER.forEach(function(d){
@@ -102,6 +105,7 @@ function cursoOrdem(){
   if(_curso) return _curso;
   var itens=[];
   DISC_ORDER.forEach(function(d){
+    if(!focoOk(d)) return;
     var prontos=DISC[d].mods.filter(function(k){return REG[k];});
     if(!prontos.length) return;
     var w=Math.max(1,prioridadeDe(DISC[d].mat));
@@ -336,7 +340,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -615,7 +619,7 @@ function renderTrail(){
   if(DISC_ORDER.length>1){
     var db=el("div","discbar");
     /* sem direcionamento por prova: as matérias aparecem na ordem do curso */
-    var ordD=DISC_ORDER.slice();
+    var ordD=DISC_ORDER.filter(focoOk);
     ordD.forEach(function(d){
       var dd=DISC[d];
       var prontos=dd.mods.filter(function(k){return REG[k];});
@@ -1163,7 +1167,7 @@ function srsValid(fid){
 function srsAll(){ return Object.keys(srs()).filter(srsValid); }
 function srsDue(){
   var t=today();
-  return srsAll().filter(function(k){ return daysBetween(srs()[k].due,t)>=0; });
+  return srsAll().filter(function(k){ return daysBetween(srs()[k].due,t)>=0 && focoOk(discOf(qsplit(k).m)); });
 }
 function srsOverdue(fid){ return Math.max(0,daysBetween(srs()[fid].due,today())); }
 function dailyTarget(){ return S.dailyN||20; }
@@ -1178,7 +1182,7 @@ function dailyBump(n){
 /* candidatos novos: exercícios de lições de prática já concluídas, ainda sem histórico */
 function srsFresh(){
   var out=[];
-  allMods().forEach(function(k){
+  allModsFoco().forEach(function(k){
     var mod=REG[k]; if(!mod) return;
     var pm=S.mods&&S.mods[k]; if(!pm||!pm.done) return;
     mod.UNITS.forEach(function(u){ u.lessons.forEach(function(l){
@@ -1302,7 +1306,7 @@ function startTeimosos(){
    sempre pesado pela prioridade da prova e intercalado entre matérias.      */
 function sprintPool(){
   var out=[];
-  allMods().forEach(function(k){
+  allModsFoco().forEach(function(k){
     var mod=REG[k]; if(!mod) return;
     if(mod.CARDS) for(var i=0;i<mod.CARDS.length;i++) out.push(qjoin(k,"c"+i));
     for(var e in mod.EX){ if(mod.EX[e] && mod.EX[e].t!=="match") out.push(qjoin(k,e)); }
@@ -3163,6 +3167,63 @@ function pvBarScroll(b){
   window.addEventListener("mouseup",function(){ down=false; });
   b.addEventListener("click",function(e){ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } },true);
 }
+
+/* ---- FOCO: filtro no topo para escolher as matérias que quero estudar ---- */
+function focoNome(){
+  var f=focoAtivo(); if(!f) return "Todas as matérias";
+  var ns=f.filter(function(d){return DISC[d];}).map(function(d){return DISC[d].curto||DISC[d].nome;});
+  if(ns.length<=2) return ns.join(" + ");
+  return ns.slice(0,2).join(" + ")+" +"+(ns.length-2);
+}
+function focoPaint(){
+  var b=document.getElementById("focoBtn"); if(!b) return;
+  b.innerHTML='<span class="fkk">Estudando</span><span class="fnn">'+focoNome()+'</span><span class="fcc">▾</span>';
+  b.classList.toggle("on",!!focoAtivo());
+}
+function focoAplicar(sel){
+  var todas=DISC_ORDER.filter(function(d){return DISC[d].mods.some(function(m){return REG[m];});});
+  var ok=todas.filter(function(d){return sel[d];});
+  S.foco=(ok.length===0||ok.length===todas.length)?[]:ok;
+  _curso=null;
+  if(focoAtivo()&&!focoOk(S.disc)){ loadDisc(S.foco[0]); var p=cursoProxima(); loadModule((p&&p.disc===S.disc)?p.mod:ORDER[0]); }
+  else if(focoAtivo()){ var pp=cursoProxima(); if(pp&&pp.disc!==S.disc&&focoOk(pp.disc)){ loadDisc(pp.disc); loadModule(pp.mod); } }
+  persist(); focoPaint(); renderTrail(); buildPanel();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function focoAbrir(){
+  var old=document.getElementById("focoSheet"); if(old) old.remove();
+  var todas=DISC_ORDER.filter(function(d){return DISC[d].mods.some(function(m){return REG[m];});});
+  var sel={}; var f=focoAtivo(); todas.forEach(function(d){ sel[d]=!f||f.indexOf(d)>=0; });
+  var w=document.createElement("div"); w.id="focoSheet"; w.className="focosheet";
+  w.innerHTML='<div class="fs-bg"></div><div class="fs-box" role="dialog" aria-label="Escolher matérias">'+
+    '<div class="fs-h"><b>O que você quer estudar?</b><button type="button" class="ix" id="fsX" aria-label="Fechar">✕</button></div>'+
+    '<div class="fs-tools"><button type="button" class="ghost" id="fsAll">Todas</button><button type="button" class="ghost" id="fsNone">Limpar</button><input type="search" id="fsQ" placeholder="Buscar matéria…"></div>'+
+    '<div class="fs-list" id="fsList"></div>'+
+    '<div class="fs-f"><button type="button" class="big" id="fsOk">Aplicar</button></div></div>';
+  document.body.appendChild(w);
+  var list=w.querySelector("#fsList");
+  function pinta(){
+    var q=(w.querySelector("#fsQ").value||"").toLowerCase();
+    list.innerHTML="";
+    todas.forEach(function(d){
+      var dd=DISC[d]; if(q&&(dd.nome+" "+(dd.curto||"")).toLowerCase().indexOf(q)<0) return;
+      var prontos=dd.mods.filter(function(k){return REG[k];}), feitas=0,total=0;
+      prontos.forEach(function(k){ total+=REG[k].UNITS.reduce(function(a,u){return a+u.lessons.length;},0); if(S.mods&&S.mods[k]) feitas+=Object.keys(S.mods[k].done||{}).length; });
+      var r=document.createElement("label"); r.className="fs-row";
+      r.innerHTML='<input type="checkbox"'+(sel[d]?" checked":"")+'><span class="fs-n">'+dd.nome+'</span><span class="fs-p">'+feitas+'/'+total+'</span>';
+      r.querySelector("input").onchange=function(e){ sel[d]=e.target.checked; };
+      list.appendChild(r);
+    });
+  }
+  pinta();
+  function fecha(){ w.remove(); }
+  w.querySelector("#fsQ").oninput=pinta;
+  w.querySelector("#fsAll").onclick=function(){ todas.forEach(function(d){sel[d]=true;}); pinta(); };
+  w.querySelector("#fsNone").onclick=function(){ todas.forEach(function(d){sel[d]=false;}); pinta(); };
+  w.querySelector("#fsX").onclick=fecha; w.querySelector(".fs-bg").onclick=fecha;
+  w.querySelector("#fsOk").onclick=function(){ fecha(); focoAplicar(sel); };
+}
+(function(){ var b=document.getElementById("focoBtn"); if(b) b.onclick=focoAbrir; })();
 function pvApplyTheme(){
   var t=S.theme||"light", dark=t==="dark"||(t==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.setAttribute("data-theme",dark?"dark":"light");
@@ -3464,6 +3525,7 @@ if(modFeito(S.cur)){
   if(_pb && _pb.mod!==S.cur){ loadModule(_pb.mod); saveLocal(); }
 }
 pvApplyTheme();
+focoPaint();
 paintSettings();
 renderTrail();
 buildPanel();
@@ -3490,7 +3552,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
