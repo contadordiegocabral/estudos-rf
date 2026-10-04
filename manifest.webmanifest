@@ -1,0 +1,20 @@
+{
+  "name": "Estudo Fiscal — Contab. Pública, AFO e LRF",
+  "short_name": "Estudo Fiscal",
+  "description": "Trilha de estudo para os concursos de Contador do TJ-PR e da Prefeitura de Curitiba.",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#FFFFFF",
+  "theme_color": "#2D8A4E",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
