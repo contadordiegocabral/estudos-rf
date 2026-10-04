@@ -237,8 +237,10 @@ a{color:var(--brand-ink)}
   border-radius:99px;padding:0 6px;font-weight:600;vertical-align:2px}
 .discchip.foco{border-color:var(--gold)}
 .ai-foco{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line-strong);color:var(--gold-d)}
-.discbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:10px;scrollbar-width:none}
-.discbar::-webkit-scrollbar{display:none}
+.discbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;cursor:grab}
+.discbar::-webkit-scrollbar{height:6px}.discbar::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px}
+.discbar.wrap{flex-wrap:wrap;overflow-x:visible}
+.discmore{display:block;margin:0 0 10px auto;border:0;background:none;color:var(--brand-ink);font:inherit;font-weight:900;font-size:.85rem;cursor:pointer;padding:2px 4px}
 .discchip{flex:none;border:2px solid var(--line-strong);border-bottom-width:4px;border-radius:12px;padding:9px 16px;
   background:var(--surface);cursor:pointer;font-family:inherit;font-weight:900;color:var(--ink-2);
   display:grid;gap:2px;text-align:left;transition:border-color .15s,color .15s}
@@ -248,7 +250,8 @@ a{color:var(--brand-ink)}
 .discchip[aria-current="true"]{border-color:var(--dc);color:var(--dc);background:var(--surface)}
 .discchip:disabled{opacity:.5;cursor:not-allowed}
 
-.modbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:16px;scrollbar-width:none}
+.modbar{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;scrollbar-width:thin;cursor:grab}
+.modbar::-webkit-scrollbar{height:6px}.modbar::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:6px}
 .modbar::-webkit-scrollbar{display:none}
 .modchip{flex:none;border:2px solid var(--line-strong);border-bottom-width:4px;border-radius:12px;padding:8px 14px;align-content:start;
   background:var(--surface);cursor:pointer;font-family:inherit;font-weight:800;font-size:.82rem;color:var(--ink-2);display:grid;gap:1px;text-align:left}

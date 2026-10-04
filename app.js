@@ -635,10 +635,15 @@ function renderTrail(){
       db.appendChild(b);
     });
     root.appendChild(db);
+    pvBarScroll(db);
+    var mo=el("button","discmore","Ver todas as matérias ▾"); mo.type="button";
+    mo.onclick=function(){ var w=db.classList.toggle("wrap"); mo.textContent=w?"Recolher ▴":"Ver todas as matérias ▾"; };
+    root.appendChild(mo);
+    var ac=db.querySelector('[aria-current="true"]'); if(ac){ setTimeout(function(){ db.scrollLeft=Math.max(0,ac.offsetLeft-12); },0); }
   }
 
   /* ---- barra de módulos da matéria corrente ---- */
-  var mb=el("div","modbar");
+  var mb=el("div","modbar"); pvBarScroll(mb);
   (DC?DC.pesos:PESOS).forEach(function(p){
     var key=(DC&&DC.id!=="afo"?DC.id:"m")+p.mod, mod=REG[key];
     var nome=mod?mod.nome:p.tema;
@@ -3128,6 +3133,14 @@ function prepCard(){
 }
 
 /* ---------------- tema escuro ---------------- */
+function pvBarScroll(b){
+  b.addEventListener("wheel",function(e){ if(Math.abs(e.deltaY)>Math.abs(e.deltaX)&&b.scrollWidth>b.clientWidth){ b.scrollLeft+=e.deltaY; e.preventDefault(); } },{passive:false});
+  var down=false,x0=0,s0=0,moved=false;
+  b.addEventListener("mousedown",function(e){ down=true; moved=false; x0=e.clientX; s0=b.scrollLeft; });
+  window.addEventListener("mousemove",function(e){ if(!down)return; var dx=e.clientX-x0; if(Math.abs(dx)>4)moved=true; b.scrollLeft=s0-dx; });
+  window.addEventListener("mouseup",function(){ down=false; });
+  b.addEventListener("click",function(e){ if(moved){ e.stopPropagation(); e.preventDefault(); moved=false; } },true);
+}
 function pvApplyTheme(){
   var t=S.theme||"light", dark=t==="dark"||(t==="auto"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);
   document.documentElement.setAttribute("data-theme",dark?"dark":"light");
