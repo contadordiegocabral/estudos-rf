@@ -1,4 +1,4 @@
-/* AFO em Voz Alta — trilha, motor de exercícios, gamificação e painel */
+/* Meus Estudos — trilha, motor de exercícios, gamificação e painel */
 (function(){
 "use strict";
 var D=window.DATA;
@@ -2769,7 +2769,7 @@ function pvIcs(conc){
   var dias=pvDias(conc), n=(dias==null||dias<0)?30:Math.min(90,dias+1); if(n<1) n=1;
   var ag=pvAgenda(conc,n), ini=S.plano.ini||19;
   var stamp=new Date().toISOString().replace(/[-:]/g,"").slice(0,15)+"Z";
-  var out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//App de Estudos//PT","CALSCALE:GREGORIAN"];
+  var out=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Meus Estudos//PT","CALSCALE:GREGORIAN"];
   function p2(x){ return (x<10?"0":"")+x; }
   function esc(t){ return String(t).replace(/([,;\\])/g,"\\$1").replace(/\n/g,"\\n"); }
   var uid=0;
