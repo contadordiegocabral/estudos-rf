@@ -420,7 +420,7 @@ window.DISC.simples = {
 window.DISC.consult = {
   id:"consult", nome:"Consultoria", cor:"u4", mat:"consult",
   nomeLongo:"Consultoria Tributária (Reforma Tributária, Simples e Perguntão PJ)",
-  mods:["cons01","cons02","cons03","cons04","cons05","cons06","cons07","cons08","cons09","cons10","cons11","cons12","cons13","cons14","cons15","cons16","cons17","cons18","cons19","cons20","cons21","cons22","cons23","cons24","cons25","cons26","cons27","cons28","cons29","cons30","cons31","cons32","cons33","cons34","cons35","cons36","cons37","cons38","cons39","cons40","cons41","cons42","cons43","cons44","cons45","cons46","cons47","cons48","cons49","cons50"],
+  mods:["cons01","cons02","cons03","cons04","cons05","cons06","cons07","cons08","cons09","cons10","cons11","cons12","cons13","cons14","cons15","cons16","cons17","cons18","cons19","cons20","cons21","cons22","cons23","cons24","cons25","cons26","cons27","cons28","cons29","cons30","cons31","cons32","cons33","cons34","cons35","cons36","cons37","cons38","cons39","cons40","cons41","cons42","cons43","cons44","cons45","cons46","cons47","cons48","cons49","cons50","cons51","cons52","cons53","cons54","cons55","cons56","cons57","cons58","cons59","cons60","cons61","cons62"],
   pesos:[
     {mod:"01", tema:"Opção pelo regime regular de IBS e CBS no Simples Nacional (regime híbrido)", q:null},
     {mod:"02", tema:"Opção pelo Simples Nacional para 2027: prazos, indeferimento e regime regular", q:null},
@@ -471,7 +471,19 @@ window.DISC.consult = {
     {mod:"47", tema:"PIS/Cofins-Importação, PIS sobre a folha de salários e sobre receitas governamentais", q:null},
     {mod:"48", tema:"PJ 2026: Cide-Combustíveis e EFD-Contribuições (obrigação, prazo, retificação, multa)", q:null},
     {mod:"49", tema:"PJ 2026: novos métodos contábeis, adoção inicial (FCONT, subcontas), ágio e arrendamento", q:null},
-    {mod:"50", tema:"PJ 2026: valor justo, concessões, depreciação, moeda funcional, hedge e pagamento em ações", q:null}
+    {mod:"50", tema:"PJ 2026: valor justo, concessões, depreciação, moeda funcional, hedge e pagamento em ações", q:null},
+    {mod:"51", tema:"Casos práticos 1: como calcular IBS e CBS (base, alíquota, débito x crédito, transição)", q:null},
+    {mod:"52", tema:"Casos práticos 2: notas fiscais de entrada e saída (compra, venda, devolução, remessas, transferência)", q:null},
+    {mod:"53", tema:"Casos práticos 3: nota de débito, nota de crédito, notas complementares e adiantamentos", q:null},
+    {mod:"54", tema:"Casos práticos 4: split payment (pagamento, retenção, crédito e conciliação)", q:null},
+    {mod:"55", tema:"Casos práticos 5: créditos de IBS e CBS (o que gera, o que não gera e estorno)", q:null},
+    {mod:"56", tema:"Casos práticos 6: estoque, perdas, roubo, furto, sinistro e doações", q:null},
+    {mod:"57", tema:"Casos práticos 7: agronegócio (produtor rural, cooperativa, agroindústria, insumos, exportação)", q:null},
+    {mod:"58", tema:"Casos práticos 8: indústria, comércio, importação e exportação", q:null},
+    {mod:"59", tema:"Casos práticos 9: serviços (profissionais, saúde, educação, construção, imóveis, transporte, plataformas)", q:null},
+    {mod:"60", tema:"Casos práticos 10: lucro real, presumido, Simples Nacional e MEI diante da reforma", q:null},
+    {mod:"61", tema:"Casos práticos 11: casos integrados e FAQ do consultor (para treinar e gravar vídeo)", q:null},
+    {mod:"62", tema:"Classificação tributária (CST e cClassTrib), documentos fiscais eletrônicos e CGIBS", q:null}
   ],
   pesoNota:"Material oficial: EC 132, LC 214, 224 e 227, manuais e roteiro do Simples Nacional e Perguntas e Respostas da Pessoa Jurídica 2026 (Receita Federal). Confira sempre a legislação e os manuais vigentes antes da prova."
 };
