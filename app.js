@@ -184,7 +184,7 @@ function loadModule(id){
   if(!REG[id]) id=ORDER[0];
   var d=discOf(id);
   if(d!==S.disc) loadDisc(d);
-  S.cur=id; M=REG[id];
+  S.cur=id; M=REG[id]; if(!S.lastMod)S.lastMod={}; S.lastMod[S.disc]=id;
   CARDS=M.CARDS; QS=M.QS; FEY=M.FEY; TEORIA=M.TEORIA; EX=M.EX; KIT=M.KIT; UNITS=M.UNITS;
   COMX=M.COM||{};
   ALL=[];
@@ -334,7 +334,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -508,6 +508,7 @@ function renderTrail(){
     root.appendChild(det);
   })();
 
+  root.appendChild(contCard());
   root.appendChild(ytCard());
   root.appendChild(metasCard());
   root.appendChild(superCard());
@@ -630,7 +631,7 @@ function renderTrail(){
       b.style.setProperty("--dc","var(--"+(dd.cor||"u1")+")");
       if(prontos.length){
         b.setAttribute("aria-current", d===S.disc?"true":"false");
-        b.onclick=function(){ if(d===S.disc)return; loadDisc(d); loadModule(ORDER[0]); persist(); renderTrail(); buildPanel(); window.scrollTo({top:0,behavior:"smooth"}); };
+        b.onclick=function(){ if(d===S.disc)return; loadDisc(d); loadModule((S.lastMod&&S.lastMod[d]&&REG[S.lastMod[d]]&&ORDER.indexOf(S.lastMod[d])>=0)?S.lastMod[d]:ORDER[0]); persist(); renderTrail(); buildPanel(); window.scrollTo({top:0,behavior:"smooth"}); };
       }else{ b.disabled=true; b.title="Em construção"; }
       db.appendChild(b);
     });
@@ -1260,6 +1261,7 @@ function modsNaMistura(ids){
    LIÇÕES
    ======================================================= */
 function startLesson(l){
+  try{ S.last={disc:S.disc,mod:S.cur,id:l.id,title:l.title||l.id,at:Date.now()}; persist(); }catch(e){}
   L={lesson:l,finished:false,correct:0,total:0};
   openOv();setHearts(null);setProg(0);stopTimer();
   if(l.type==="teoria")runTeoria(l);
@@ -3086,6 +3088,23 @@ function pvYtPendentes(){
   });
   return out;
 }
+function contCard(){
+  var c=S.last; if(!c||!REG[c.mod]||!DISC[c.disc]) return document.createElement("span");
+  var ls=licoesDoMod(c.mod), it=null;
+  ls.forEach(function(x){ if(x.l.id===c.id) it=x; });
+  if(!it) return document.createElement("span");
+  var feita=!!(S.mods[c.mod]&&S.mods[c.mod].done&&S.mods[c.mod].done[c.id]);
+  var b=el("button","contcard",
+    '<span class="cc-k">Continuar de onde parei</span>'+
+    '<span class="cc-t">'+DISC[c.disc].nome+' · Módulo '+REG[c.mod].n+'</span>'+
+    '<span class="cc-l">'+(feita?"Última lição: ":"Lição em andamento: ")+it.l.title+'</span>');
+  b.type="button";
+  b.onclick=function(){
+    loadDisc(c.disc); loadModule(c.mod); persist(); renderTrail(); buildPanel();
+    startLesson(it.l);
+  };
+  return b;
+}
 function ytCard(){
   var p=pvYtPendentes(); if(!p.length) return document.createElement("div");
   var x=p[0], d=DISC[discOf(x.mod)];
@@ -3331,7 +3350,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
