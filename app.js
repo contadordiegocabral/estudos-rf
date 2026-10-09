@@ -123,19 +123,24 @@ function licoesDoMod(mod){
   m.UNITS.forEach(function(u){ (u.lessons||[]).forEach(function(l){ out.push({l:l,u:u}); }); });
   return out;
 }
+var RITMO_PULA={completo:[],rapido:["flash","missao","video","leitura","feynman"],turbo:["flash","missao","video","leitura","feynman","teoria","review"]};
+function ritmo(){ return RITMO_PULA[S.ritmo]?S.ritmo:"rapido"; }
+function licaoPula(l){ return RITMO_PULA[ritmo()].indexOf(l.type)>=0; }
+function lDone(mod,l){ var pm=S.mods&&S.mods[mod]; return !!(pm&&pm.done&&pm.done[l.id]); }
+function licoesAtivas(mod){ return licoesDoMod(mod).filter(function(x){ return !licaoPula(x.l)||lDone(mod,x.l); }); }
 function feitasNoMod(mod){
   var pm=S.mods&&S.mods[mod]; if(!pm||!pm.done) return 0;
   var n=0; licoesDoMod(mod).forEach(function(x){ if(pm.done[x.l.id]) n++; });
   return n;
 }
 function modFeito(mod){
-  var ls=licoesDoMod(mod);
-  return ls.length>0 && feitasNoMod(mod)===ls.length;
+  var ls=licoesAtivas(mod);
+  return ls.length>0 && ls.every(function(x){ return lDone(mod,x.l); });
 }
 function cursoTotais(){
   var feitas=0, total=0, modsFeitos=0;
   cursoOrdem().forEach(function(k){
-    var n=licoesDoMod(k).length;
+    var n=licoesAtivas(k).length;
     total+=n; feitas+=feitasNoMod(k);
     if(modFeito(k)) modsFeitos++;
   });
@@ -146,11 +151,11 @@ function cursoTotais(){
 function cursoProxima(){
   var ord=cursoOrdem();
   for(var i=0;i<ord.length;i++){
-    var k=ord[i], pm=S.mods&&S.mods[k], ls=licoesDoMod(k);
+    var k=ord[i], pm=S.mods&&S.mods[k], ls=licoesAtivas(k);
     for(var j=0;j<ls.length;j++){
       if(!pm || !pm.done || !pm.done[ls[j].l.id]){
         return {mod:k, disc:discOf(k), idx:i, li:j, lesson:ls[j].l, unit:ls[j].u,
-                feitasMod:j, totalMod:ls.length};
+                feitasMod:feitasNoMod(k), totalMod:ls.length};
       }
     }
   }
@@ -340,7 +345,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -365,7 +370,7 @@ function rankOf(xp){
   for(var i=0;i<RANKS.length;i++){if(xp>=RANKS[i][0])r=RANKS[i];else{nx=RANKS[i];break;}}
   return {name:r[1],floor:r[0],next:nx};
 }
-function unlockedIndex(){for(var i=0;i<ALL.length;i++){if(!P().done[ALL[i].id])return i;}return ALL.length;}
+function unlockedIndex(){for(var i=0;i<ALL.length;i++){if(!P().done[ALL[i].id]&&!licaoPula(ALL[i]))return i;}return ALL.length;}
 function missIds(){return Object.keys(P().misses).filter(function(k){
   return P().misses[k]>0 && (EX[k] || (isCardE(k) && CARDS && CARDS[parseInt(k.slice(1),10)]));});}
 
@@ -484,7 +489,7 @@ function renderTrail(){
       '<div class="cu-bar"><div class="cu-bf" style="width:'+Math.max(1.5,t.pct)+'%"></div></div>'+
       corpo+
       '<div class="cu-meta">'+t.modsFeitos+' de '+t.mods+' módulos concluídos · '+
-        'as oito matérias se intercalam para nenhuma ficar parada</div>');
+        'as matérias se intercalam para nenhuma ficar parada</div>');
     root.appendChild(card);
     var go=document.getElementById("cuGo");
     if(go) go.onclick=function(){ irParaCurso(); };
@@ -514,44 +519,7 @@ function renderTrail(){
     root.appendChild(det);
   })();
 
-  root.appendChild(contCard());
-  root.appendChild(ytCard());
-  root.appendChild(metasCard());
-  root.appendChild(superCard());
-  root.appendChild(prepCard());
-
-  /* ---- SPRINT: o caminho mais curto até a memorização ---- */
-  (function(){
-    var tot=sprintPool().length; if(!tot) return;
-    var st=srsStats();
-    var n=sprintN();
-    var sc=el("div","sprintcard",
-      '<div class="sp-h"><span class="sp-ic">'+svg("i-dumbbell")+'</span>'+
-        '<div><div class="sp-t">Sprint de memorização</div>'+
-        '<div class="sp-s">Recall direto do banco inteiro — <b>'+tot.toLocaleString("pt-BR")+'</b> itens, '+
-        '<b>sem teoria e sem trilha</b>. Vem primeiro o que você erra sempre, depois o que está vencido, '+
-        'depois o inédito.</div></div></div>'+
-      '<div class="setrow"><span>Itens por rodada</span>'+
-        '<div class="seg" id="spSeg">'+
-          [20,30,50,100].map(function(v){
-            return '<button type="button" data-n="'+v+'" aria-pressed="'+(n===v)+'">'+v+'</button>';
-          }).join("")+
-        '</div></div>'+
-      '<button class="big" id="spGo">Começar agora · ~'+Math.max(1,Math.round(n*0.75))+' min</button>'+
-      '<div class="sp-meta">'+
-        (st.teimosos?'<b class="leech">'+st.teimosos+' teimoso'+(st.teimosos===1?'':'s')+'</b> entram primeiro · ':'')+
-        (st.due?st.due+' vencido'+(st.due===1?'':'s')+' · ':'')+
-        (st.total?st.total+' no ciclo':'ciclo ainda vazio — o sprint começa a preenchê-lo')+
-        (st.ret!=null?' · retenção '+st.ret+'%':'')+'</div>');
-    root.appendChild(sc);
-    document.getElementById("spGo").onclick=function(){ startSprint(sprintN()); };
-    var seg=document.getElementById("spSeg");
-    seg.querySelectorAll("button").forEach(function(b){
-      b.onclick=function(){
-        S.sprintN=parseInt(b.dataset.n,10); persist(); renderTrail();
-      };
-    });
-  })();
+  root.appendChild(hojeCard());
 
   /* ---- as provas, em ordem de prioridade ---- */
   if(CONC_ORDER.length){
@@ -568,50 +536,6 @@ function renderTrail(){
       pb.appendChild(w);
     });
     root.appendChild(pb);
-  }
-
-  /* ---- revisão diária entre módulos ---- */
-  var sst=srsStats();
-  if(sst.total || srsFresh().length){
-    var metaDia=dailyTarget(), feitasHoje=dailyDoneToday();
-    var novosN=srsFresh().length;
-    var pend=Math.min(metaDia,Math.max(0,sst.due+novosN));
-    var pct=Math.min(100,Math.round(feitasHoje/metaDia*100));
-    var emDia=sst.due===0 && novosN===0;
-    var dc=el("div","dailycard"+(emDia?" ok":""),
-      '<div class="ri">'+svg(emDia?"i-check":"i-repeat")+'</div>'+
-      '<div class="rl">'+
-        '<div class="rt">Revisão diária'+(emDia?' · em dia':'')+'</div>'+
-        '<div class="rs">'+
-          (emDia
-            ? (sst.total+' carta'+(sst.total===1?"":"s")+' no ciclo · nada vencido hoje')
-            : (sst.due===0
-              ? ('<b>'+Math.min(metaDia,novosN)+'</b> '+(novosN===1?'item novo':'itens novos')+
-                 ' '+(novosN===1?'pronto':'prontos')+' para entrar no ciclo · ~'+Math.max(1,Math.round(pend*0.75))+' min')
-              : (function(){
-                var mm=modsNaMistura(srsDue());
-                var dd=[]; mm.forEach(function(m){var d=discOf(m); if(dd.indexOf(d)<0)dd.push(d);});
-                return '<b>'+sst.due+'</b> vencida'+(sst.due===1?"":"s")+' em '+mm.length+' módulo'+(mm.length===1?"":"s")+
-                       (dd.length>1?' de '+dd.length+' matérias':'')+' · ~'+Math.max(1,Math.round(pend*0.75))+' min';
-              })()))+
-        '</div>'+
-        '<div class="dbar"><div class="dbf" style="width:'+pct+'%"></div></div>'+
-        '<div class="dmeta"><span>'+feitasHoje+'/'+metaDia+' hoje</span>'+
-          (sst.ret!=null?'<span>retenção '+sst.ret+'%</span>':'')+
-          (sst.cards?'<span>'+sst.cards+' flashcards</span>':'')+
-          (sst.maduras?'<span>'+sst.maduras+' maduras</span>':'')+'</div>'+
-      '</div>'+
-      '<button class="ghost" id="doDaily">'+(emDia?"Ver":"Revisar")+'</button>');
-    root.appendChild(dc);
-    document.getElementById("doDaily").onclick=function(){ openDaily(); };
-    if(sst.teimosos){
-      var tr=el("div","teimrow",
-        svg("i-x")+'<span style="flex:1">'+sst.teimosos+' item'+(sst.teimosos===1?"":"s")+
-        ' que você erra sempre</span>'+
-        '<button class="ghost" id="doTeim" style="padding:7px 12px;font-size:.76rem">Atacar</button>');
-      root.appendChild(tr);
-      document.getElementById("doTeim").onclick=function(){ startTeimosos(); };
-    }
   }
 
   /* ---- barra de matérias ---- */
@@ -670,32 +594,8 @@ function renderTrail(){
   var act=mb.querySelector('[aria-current="true"]');
   if(act) mb.scrollLeft=Math.max(0, act.offsetLeft-mb.clientWidth/2+act.offsetWidth/2);
 
-  var pool=reviewPool();
-  if(pool.length>=4){
-    var rc=el("div","revcard",
-      '<div class="ri">'+svg("i-repeat")+'</div>'+
-      '<div class="rl"><div class="rt">Revisão geral</div>'+
-      '<div class="rs">'+studiedUnits().length+' unidade'+(studiedUnits().length===1?"":"s")+' no sorteio · '+pool.length+' exercícios disponíveis</div></div>'+
-      '<button class="ghost" id="doReview">Revisar</button>');
-    root.appendChild(rc);
-    document.getElementById("doReview").onclick=function(){
-      var l={id:"revquick",type:"review",title:"Revisão geral",xp:30,unit:UNITS[0],reforco:true};
-      L={lesson:l,finished:false,correct:0,total:0};
-      openOv();startReviewDrill(l,shuffle(pool).slice(0,Math.min(15,pool.length)));
-    };
-  }
-
-  var miss=missIds();
-  if(miss.length){
-    var card=el("div","reforco",
-      '<div class="ri">'+svg("i-dumbbell")+'</div>'+
-      '<div class="rl"><div class="rt">'+miss.length+(miss.length===1?" exercício a reforçar":" exercícios a reforçar")+'</div>'+
-      '<div class="rs">Só o que você errou. Acertou, sai da lista.</div></div>'+
-      '<button class="ghost" id="doReforco">Praticar</button>');
-    root.appendChild(card);
-    document.getElementById("doReforco").onclick=function(){startReforco();};
-  }
   var cur=unlockedIndex(), gi=0;
+  var pulaN=ALL.filter(function(x){return licaoPula(x)&&!P().done[x.id];}).length;
   UNITS.forEach(function(u){
     var doneCount=u.lessons.filter(function(l){return !!P().done[l.id];}).length;
     var firstIdx=ALL.indexOf(u.lessons[0]);
@@ -707,8 +607,8 @@ function renderTrail(){
       '<div class="uh-c">'+doneCount+'/'+u.lessons.length+'</div>'));
     var nodes=el("div","nodes");
     u.lessons.forEach(function(l){
-      var idx=gi++, done=!!P().done[l.id], locked=idx>cur, isCur=idx===cur;
-      var w=el("div","nodewrap"+(isCur?" current":""));
+      var idx=gi++, done=!!P().done[l.id], locked=idx>cur&&!licaoPula(l), isCur=idx===cur;
+      var w=el("div","nodewrap"+(isCur?" current":"")+((licaoPula(l)&&!done)?" opc":""));
       w.style.setProperty("--dx",DX[idx%DX.length]);
       if(isCur) w.appendChild(el("div","startbub",done?"REVISAR":"COMEÇAR"));
       var b=el("button","node"+(done?" done":""));
@@ -1893,7 +1793,7 @@ function finish(l,stats){
   var hitGoal=!goalBefore&&goalNow;
 
   var unit=l.unit;
-  var unitDone=!l.reforco&&unit.lessons.every(function(x){return !!P().done[x.id];});
+  var unitDone=!l.reforco&&unit.lessons.every(function(x){return !!P().done[x.id]||licaoPula(x);});
   var nextIdx=ALL.indexOf(l)+1, hasNext=!l.reforco&&nextIdx>0&&nextIdx<ALL.length;
   /* a trilha é uma só: o "continuar" atravessa o fim do módulo sozinho */
   var modAcabou=!l.reforco&&!l.daily&&modFeito(S.cur);
@@ -3095,6 +2995,93 @@ function pvYtPendentes(){
   });
   return out;
 }
+
+/* ---- PLANO DE HOJE: tudo dentro da trilha, numa fila só ---- */
+function reforcarTotal(){
+  var n=0;
+  allModsFoco().forEach(function(k){ var pm=S.mods&&S.mods[k]; if(!pm||!pm.misses) return;
+    for(var e in pm.misses){ if(pm.misses[e]>0) n++; } });
+  return n;
+}
+function hojeRow(ic,t,s,btn,fn,cls){
+  var r=el("div","hrow"+(cls?" "+cls:""),
+    '<span class="hr-i">'+svg(ic)+'</span><span class="hr-t"><b>'+t+'</b><small>'+s+'</small></span>'+
+    '<button type="button" class="ghost hr-b">'+btn+'</button>');
+  r.querySelector(".hr-b").onclick=fn;
+  return r;
+}
+function hojeCard(){
+  var c=el("div","hojecard");
+  var hoje=today(), tmin=Math.round(((S.tempo&&S.tempo[hoje])||0)/60), ds=(S.dstat&&S.dstat[hoje])||{ok:0,err:0};
+  var mm=S.metaMin||120, mq=S.metaQ||40, qh=(ds.ok||0)+(ds.err||0), xh=todayXp(), gx=S.goal||50;
+  var bateu=(tmin>=mm?1:0)+(qh>=mq?1:0)+(xh>=gx?1:0);
+  c.appendChild(el("div","hj-h",
+    '<div class="hj-t">Plano de hoje</div><div class="hj-m">'+bateu+' de 3 metas</div>'));
+  c.appendChild(el("div","hj-metas",
+    '<span><b>'+tmin+'</b>/'+mm+' min</span><span><b>'+qh+'</b>/'+mq+' questões</span><span><b>'+xh+'</b>/'+gx+' XP</span>'));
+  /* ritmo */
+  var rt=ritmo();
+  var seg=el("div","hj-ritmo",
+    '<span class="hj-rl">Ritmo da trilha</span><div class="seg" id="rtSeg">'+
+    [["completo","Completo"],["rapido","Rápido"],["turbo","Turbo"]].map(function(x){
+      return '<button type="button" data-r="'+x[0]+'" aria-pressed="'+(rt===x[0])+'">'+x[1]+'</button>'; }).join("")+'</div>');
+  c.appendChild(seg);
+  c.appendChild(el("div","hj-rn",
+    rt==="completo"?"Todas as lições, na ordem."
+    :rt==="rapido"?"Pula flashcards, missões, leitura, Feynman e vídeo na trilha. Flashcards e erros vão para a revisão e a Super revisão."
+    :"Só exercícios e provas na trilha. A teoria continua à mão pelo botão “?” e o resto entra na revisão."));
+  seg.querySelectorAll("button").forEach(function(b){
+    b.onclick=function(){ S.ritmo=b.dataset.r; _curso=null; persist(); renderTrail(); };
+  });
+
+  /* vídeo: o aviso de domínio entra aqui, na fila */
+  var yt=ytCard(); if(yt.className) c.appendChild(yt);
+
+  /* retomar lição */
+  var cl=S.last; 
+  if(cl&&REG[cl.mod]&&DISC[cl.disc]){
+    var it=null; licoesDoMod(cl.mod).forEach(function(x){ if(x.l.id===cl.id) it=x; });
+    if(it&&!lDone(cl.mod,it.l)){
+      c.appendChild(hojeRow("i-target","Retomar de onde parei",DISC[cl.disc].nome+" · módulo "+REG[cl.mod].n+" · "+it.l.title,"Retomar",function(){
+        loadDisc(cl.disc); loadModule(cl.mod); persist(); renderTrail(); buildPanel(); startLesson(it.l);
+      }));
+    }
+  }
+
+  /* revisão diária (inclui o que preciso reforçar) */
+  var sst=srsStats(), novos=srsFresh().length, refT=reforcarTotal();
+  var metaD=dailyTarget(), feitasD=dailyDoneToday();
+  if(sst.total||novos){
+    var pend=sst.due+novos;
+    c.appendChild(hojeRow("i-repeat","Revisão do dia",
+      (pend?('<b>'+sst.due+'</b> vencid'+(sst.due===1?'a':'as')+(novos?' · '+Math.min(novos,metaD)+' novos':'')):'em dia')+
+      (refT?' · <b>'+refT+'</b> a reforçar entram aqui':'')+(sst.teimosos?' · '+sst.teimosos+' teimoso'+(sst.teimosos===1?'':'s'):'')+
+      ' · '+feitasD+'/'+metaD+' hoje',
+      pend?"Revisar":"Ver",function(){ openDaily(); },pend?"":"ok"));
+  }
+  /* sprint */
+  var tot=sprintPool().length;
+  if(tot){
+    var n=sprintN();
+    c.appendChild(hojeRow("i-dumbbell","Sprint de memorização",
+      tot.toLocaleString("pt-BR")+' itens do banco · '+n+' por rodada · ~'+Math.max(1,Math.round(n*0.75))+' min · sem teoria',
+      "Começar",function(){ startSprint(sprintN()); }));
+  }
+  /* super revisão */
+  c.appendChild(hojeRow("i-repeat","Super revisão","Todas as matérias (ou as que você marcar) num bloco só — erros e vencidos primeiro","Abrir",function(){ runSuperRevisao(); }));
+
+  /* preparação para a prova + metas + opções do sprint, recolhidos */
+  var d1=el("details","hj-det",'<summary>Preparação para a prova</summary>'); d1.appendChild(prepCard()); c.appendChild(d1);
+  var d2=el("details","hj-det",'<summary>Metas de hoje (detalhes)</summary>'); d2.appendChild(metasCard()); c.appendChild(d2);
+  if(tot){
+    var d3=el("details","hj-det",'<summary>Opções do sprint</summary>');
+    var sg=el("div","setrow",'<span>Itens por rodada</span><div class="seg" id="spSeg">'+
+      [20,30,50,100].map(function(v){ return '<button type="button" data-n="'+v+'" aria-pressed="'+(sprintN()===v)+'">'+v+'</button>'; }).join("")+'</div>');
+    d3.appendChild(sg); c.appendChild(d3);
+    sg.querySelectorAll("button").forEach(function(b){ b.onclick=function(){ S.sprintN=parseInt(b.dataset.n,10); persist(); renderTrail(); }; });
+  }
+  return c;
+}
 function contCard(){
   var c=S.last; if(!c||!REG[c.mod]||!DISC[c.disc]) return document.createElement("span");
   var ls=licoesDoMod(c.mod), it=null;
@@ -3552,7 +3539,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
