@@ -3003,6 +3003,15 @@ function reforcarTotal(){
     for(var e in pm.misses){ if(pm.misses[e]>0) n++; } });
   return n;
 }
+
+function pontosFracos(){
+  var arr=[];
+  allModsFoco().forEach(function(k){ var pm=S.mods&&S.mods[k]; if(!pm||!pm.misses) return;
+    var n=0; for(var e in pm.misses){ if(pm.misses[e]>0) n++; }
+    if(n&&REG[k]) arr.push({k:k,n:n}); });
+  arr.sort(function(x,y){ return y.n-x.n; });
+  return arr.slice(0,5);
+}
 function hojeRow(ic,t,s,btn,fn,cls){
   var r=el("div","hrow"+(cls?" "+cls:""),
     '<span class="hr-i">'+svg(ic)+'</span><span class="hr-t"><b>'+t+'</b><small>'+s+'</small></span>'+
@@ -3069,6 +3078,18 @@ function hojeCard(){
   }
   /* super revisão */
   c.appendChild(hojeRow("i-repeat","Super revisão","Todas as matérias (ou as que você marcar) num bloco só — erros e vencidos primeiro","Abrir",function(){ runSuperRevisao(); }));
+
+  /* pontos fracos: jogar na revisão */
+  var pf=pontosFracos();
+  if(pf.length){
+    var dw=el("details","hj-det",'<summary>Pontos fracos ('+reforcarTotal()+' itens)</summary>');
+    pf.forEach(function(x){
+      var di=discOf(x.k);
+      dw.appendChild(hojeRow("i-target",REG[x.k].n+" · "+REG[x.k].nome,(DISC[di]?DISC[di].nome+" · ":"")+x.n+" a reforçar","Treinar",function(){ loadDisc(di); loadModule(x.k); persist(); startReforco(); }));
+    });
+    dw.appendChild(hojeRow("i-repeat","Jogar tudo na Super revisão","Os erros vêm primeiro","Abrir",function(){ runSuperRevisao(); }));
+    c.appendChild(dw);
+  }
 
   /* preparação para a prova + metas + opções do sprint, recolhidos */
   var d1=el("details","hj-det",'<summary>Preparação para a prova</summary>'); d1.appendChild(prepCard()); c.appendChild(d1);
@@ -3493,6 +3514,49 @@ function pvSyncPaint(){
   pvSyncPaint();
   document.addEventListener("visibilitychange",function(){ if(document.visibilityState==="visible"&&syncCfg()) syncNow(); });
   window.addEventListener("online",function(){ if(syncCfg()) syncNow(); });
+})();
+
+
+/* ---- código de transferência (sem token): gera e cola, mesclando ---- */
+function b64enc(u8){ var s=""; for(var i=0;i<u8.length;i+=8192) s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return btoa(s); }
+function b64dec(t){ var s=atob(t), u=new Uint8Array(s.length); for(var i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; }
+function streamBytes(u8,Cls,mode){
+  var st=new Blob([u8]).stream().pipeThrough(new Cls(mode));
+  return new Response(st).arrayBuffer().then(function(b){ return new Uint8Array(b); });
+}
+function codGerar(){
+  saveLocal();
+  var raw=new TextEncoder().encode(JSON.stringify({app:"meus-estudos",v:1,state:S}));
+  if(window.CompressionStream) return streamBytes(raw,CompressionStream,"gzip").then(function(z){ return "ME1."+b64enc(z); });
+  return Promise.resolve("ME0."+b64enc(raw));
+}
+function codLer(t){
+  t=(t||"").replace(/\s+/g,"");
+  var z=t.indexOf("ME1.")===0, p=z||t.indexOf("ME0.")===0;
+  if(!p) return Promise.reject(new Error("formato"));
+  var u=b64dec(t.slice(4));
+  var pr=z?streamBytes(u,DecompressionStream,"gzip"):Promise.resolve(u);
+  return pr.then(function(b){ var o=JSON.parse(new TextDecoder().decode(b)); if(!o||!o.state||!o.state.mods) throw new Error("estado"); return o.state; });
+}
+(function(){
+  var g=document.getElementById("codGen"), a=document.getElementById("codApply"), box=document.getElementById("codBox"), st=document.getElementById("codStatus");
+  if(!g||!a||!box) return;
+  function msg(t){ st.textContent=t; }
+  g.onclick=function(){
+    codGerar().then(function(c){
+      box.value=c; box.select();
+      var ok=false; try{ ok=document.execCommand("copy"); }catch(e){}
+      if(!ok&&navigator.clipboard) navigator.clipboard.writeText(c)["catch"](function(){});
+      msg("Código gerado e copiado ("+Math.round(c.length/1024)+" KB). Mande para você mesmo (WhatsApp, e-mail) e cole no outro aparelho.");
+    })["catch"](function(){ msg("Não consegui gerar o código."); });
+  };
+  a.onclick=function(){
+    codLer(box.value).then(function(rem){
+      saveLocal();
+      var m=syncMerge(S,rem); S=Object.assign({},m); S.at=Date.now(); saveLocal();
+      msg("Pronto: progresso mesclado com o código. Recarregando…"); setTimeout(function(){ location.reload(); },700);
+    })["catch"](function(){ msg("Código inválido. Cole o texto inteiro, começando por ME1."); });
+  };
 })();
 
 var _novo = !localStorage.getItem("afo01_trail");

@@ -928,7 +928,11 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
       <div class="setrow"><span>Último backup: <b id="bkLast">nunca</b></span>
         <div style="display:flex;gap:8px"><button type="button" class="ghost" id="bkExp">Exportar</button><button type="button" class="ghost" id="bkImp">Importar</button></div></div>
       <input type="file" id="bkFile" accept="application/json,.json" hidden>
-      <h4>Sincronizar entre aparelhos</h4>
+      <h4>Transferir por código (sem conta)</h4>
+      <p class="setnote">No aparelho que tem o progresso: <b>Gerar código</b> e envie o texto para você (WhatsApp, e-mail). No outro aparelho: cole aqui e toque em <b>Aplicar</b>. Os dois progressos são somados, nada se perde.</p>
+      <textarea id="codBox" rows="3" placeholder="ME1...." style="width:100%;box-sizing:border-box;padding:9px 10px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:.78rem"></textarea>
+      <div class="setrow"><span id="codStatus" class="setnote"></span><div style="display:flex;gap:8px"><button type="button" class="ghost" id="codGen">Gerar código</button><button type="button" class="ghost" id="codApply">Aplicar</button></div></div>
+      <h4>Sincronizar entre aparelhos (automático, avançado)</h4>
       <div id="syncOff">
         <p class="setnote">Use o mesmo progresso no celular, tablet e computador. Os dados ficam num arquivo privado (Gist secreto) na sua própria conta do GitHub.<br>1) <a href="https://github.com/settings/tokens/new?scopes=gist&amp;description=Meus%20Estudos" target="_blank" rel="noopener">Crie um token</a> só com a permissão <b>gist</b> (Generate token).<br>2) Cole abaixo, neste e nos outros aparelhos.</p>
         <div class="setrow"><input type="password" id="syncToken" placeholder="ghp_..." autocomplete="off" style="flex:1;min-width:0;padding:9px 10px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit"><button type="button" class="ghost" id="syncGo">Ativar</button></div>
