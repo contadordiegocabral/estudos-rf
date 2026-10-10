@@ -392,7 +392,7 @@ window.DISC.rlm = {
 window.DISC.ti = {
   id:"ti", nome:"TI", cor:"u1", mat:"info",
   nomeLongo:"Tecnologia da Informação",
-  mods:["ti11","ti01","ti02","ti03","ti04","ti05","ti06","ti07","ti08","ti09","ti10","ti12","ti13","ti14","ti15","ti16"],
+  mods:["ti11","ti01","ti02","ti03","ti04","ti05","ti06","ti07","ti08","ti09","ti10","ti12","ti13","ti14","ti15","ti16","ti17"],
   pesos:[
     {mod:"11", tema:"Fundamentos de banco de dados: tipos de dados, dados abertos, qualidade (DAMA) e níveis de modelagem", q:null},
     {mod:"01", tema:"Modelagem de banco de dados: níveis, modelo entidade-relacionamento, atributos, chaves e cardinalidade", q:null},
@@ -409,7 +409,8 @@ window.DISC.ti = {
     {mod:"13", tema:"BPM e BPMN: gerenciamento de processos de negócio, BPM CBOK, ciclo BPM e notação BPMN 2.0", q:null},
     {mod:"14", tema:"Governança e qualidade: ITIL, COBIT, CMMI e MPS-BR", q:null},
     {mod:"15", tema:"Engenharia de software: processos, ciclo de vida, requisitos, UML, testes e métricas", q:null},
-    {mod:"16", tema:"Programação: lógica, paradigmas, orientação a objetos, estruturas de dados e linguagens", q:null}
+    {mod:"16", tema:"Programação: lógica, paradigmas, orientação a objetos, estruturas de dados e linguagens", q:null},
+    {mod:"17", tema:"TI aplicada à fiscalização: documentos fiscais eletrônicos, SPED, certificação digital, sigilo e governo digital", q:null}
   ],
   pesoNota:"Resumos do Radegondes (módulos 01 a 11: bancos de dados, SQL, BI, big data e segurança) e mapas mentais de revisão (módulos 12 a 16: PMBOK, BPM/BPMN, ITIL/COBIT/CMMI/MPS-BR, engenharia de software e programação). Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
@@ -417,7 +418,7 @@ window.DISC.ti = {
 window.DISC.infob = {
   id:"infob", nome:"Informática", cor:"u1", mat:"infob",
   nomeLongo:"Noções de Informática (Windows, Linux, Word, Excel, redes, segurança e hardware)",
-  mods:["infob01","infob02","infob03","infob04","infob05","infob06","infob07"],
+  mods:["infob01","infob02","infob03","infob04","infob05","infob06","infob07","infob08"],
   pesos:[
     {mod:"01", tema:"Redes e Internet: classificações, topologias, arquiteturas, protocolos e serviços", q:null},
     {mod:"02", tema:"Computação em nuvem, e-mail, listas, transferência, acesso remoto, redes sociais e formatos", q:null},
@@ -425,9 +426,10 @@ window.DISC.infob = {
     {mod:"04", tema:"Word e PowerPoint: recursos, atalhos, formatação e apresentações", q:null},
     {mod:"05", tema:"Planilhas eletrônicas Excel: referências, fórmulas, funções, gráficos e formatação condicional", q:null},
     {mod:"06", tema:"Sistemas operacionais Windows e Linux: arquivos, atalhos, comandos, diretórios e permissões", q:null},
-    {mod:"07", tema:"Hardware e software: componentes, memórias, armazenamento, periféricos, tipos de software e licenças", q:null}
+    {mod:"07", tema:"Hardware e software: componentes, memórias, armazenamento, periféricos, tipos de software e licenças", q:null},
+    {mod:"08", tema:"Google Drive, e-mail (Outlook, Gmail, Zimbra), operadores de busca na web e navegadores com atalhos", q:null}
   ],
-  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Versões de Word e Excel mudam: o edital do ISS Curitiba cita Word e Excel 2016, Windows 10 e 11 e Ubuntu. Não cobre ainda o Google Drive em detalhe, Outlook/Zimbra e busca na web."
+  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Versões de Word e Excel mudam: o edital do ISS Curitiba cita Word e Excel 2016, Windows 10 e 11 e Ubuntu. O módulo 08 cobre Google Drive, e-mail (Outlook, Gmail, Zimbra), busca na web e navegadores."
 };
 window.DISC.estat = {
   id:"estat", nome:"Estatística", cor:"u5", mat:"estat",
@@ -471,6 +473,42 @@ window.DISC.econ = {
     {mod:"10", tema:"Setor externo: balanço de pagamentos, câmbio nominal e real, regimes cambiais, PPC e Marshall-Lerner", q:null}
   ],
   pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Cobre microeconomia, contas nacionais, modelos clássico e keynesiano, IS-LM, OA-DA e Phillips. Os módulos 08 a 10 (crescimento e ciclos, inflação e desemprego, setor externo) foram feitos a partir do programa do edital e de conteúdo-padrão, sem mapa mental. Não cobre moeda e sistema financeiro nem economia do setor público."
+};
+
+window.DISC.ingles = {
+  id:"ingles", nome:"Inglês", cor:"u2", mat:"ingles",
+  nomeLongo:"Língua Inglesa (interpretação de texto e gramática, Receita Federal)",
+  mods:["ing01","ing02","ing03","ing04","ing05","ing06","ing07","ing08","ing09","ing10","ing11","ing12","ing13","ing14","ing15","ing16","ing17"],
+  pesos:[
+    {mod:"01", tema:"Técnicas de interpretação de texto em inglês: estratégias, cognatos, vocabulário fiscal e inferência", q:null},
+    {mod:"02", tema:"Formação de frases, substantivos (plural, contáveis, genitivo) e artigos", q:null},
+    {mod:"03", tema:"Pronomes: pessoais, reflexivos, possessivos, demonstrativos, interrogativos, relativos e indefinidos", q:null},
+    {mod:"04", tema:"Preposições de tempo, lugar, movimento e dependentes, e interpretação de texto", q:null},
+    {mod:"05", tema:"Adjetivos: ordem, graus (comparativo e superlativo), -ed/-ing, adjetivos compostos", q:null},
+    {mod:"06", tema:"Advérbios: classes, posição, graus, prefixos e sufixos", q:null},
+    {mod:"07", tema:"Conjunções e verbos frasais (phrasal verbs)", q:null},
+    {mod:"08", tema:"Verbos auxiliares: do, be, have e seus usos (interrogativa, negativa, ênfase, tempos compostos)", q:null},
+    {mod:"09", tema:"Verbos modais: can, could, may, might, must, should, would, ought to, have to e equivalentes", q:null},
+    {mod:"10", tema:"Presente simples e passado simples: formas, auxiliares, there be e verbos irregulares", q:null},
+    {mod:"11", tema:"Futuro (will, going to), quantificadores, determinantes e textos não verbais", q:null},
+    {mod:"12", tema:"Tempos contínuos (presente, passado, futuro) e present perfect", q:null},
+    {mod:"13", tema:"Past perfect, future perfect, perfeitos contínuos e voz ativa e passiva", q:null},
+    {mod:"14", tema:"Imperativo, subjuntivo, condicionais, wishes e would rather", q:null},
+    {mod:"15", tema:"Expressões idiomáticas, discurso direto e indireto e numerais", q:null},
+    {mod:"16", tema:"Marcadores de discurso, question tags, wh-questions, infinitivo e gerúndio e período composto", q:null},
+    {mod:"17", tema:"Vocabulário essencial e glossário de termos da Receita e da tributação em inglês", q:null}
+  ],
+  pesoNota:"Montado a partir de material de revisão de Inglês para a Receita Federal; textos, frases e questões de treino são originais. Onde o material trazia erro, o módulo corrige e avisa. Conteúdo de bancas anteriores pode diferir do estilo da FGV."
+};
+window.DISC.lgpd = {
+  id:"lgpd", nome:"LGPD", cor:"u3", mat:"lgpd",
+  nomeLongo:"Lei Geral de Proteção de Dados Pessoais (Lei 13.709/2018)",
+  mods:["lgpd01","lgpd02"],
+  pesos:[
+    {mod:"01", tema:"LGPD: conceitos, âmbito, fundamentos, princípios, bases legais e direitos do titular", q:null},
+    {mod:"02", tema:"LGPD: Poder Público, compartilhamento e sigilo fiscal, agentes, segurança, ANPD e sanções", q:null}
+  ],
+  pesoNota:"Montado a partir do conteúdo-padrão da Lei 13.709/2018 e do programa do edital, sem o texto da lei em mãos: confira a redação vigente dos artigos citados."
 };
 
 window.DISC.simples = {
@@ -576,11 +614,31 @@ window.DISC.consult = {
 window.DISC.fdados = {
   id:"fdados", nome:"Fluência em Dados", cor:"u2", mat:"dados",
   nomeLongo:"Fluência em Dados",
-  mods:["fdados01"],
+  mods:["fdados01","fdados02","fdados03","fdados04","fdados05","fdados06","fdados07","fdados08","fdados09","fdados10","fdados11","fdados12","fdados13","fdados14","fdados15","fdados16","fdados17","fdados18","fdados19","fdados20","fdados21"],
   pesos:[
-    {mod:"01", tema:"Dados, Big Data, ciência de dados, governança e arquiteturas", q:null}
+    {mod:"01", tema:"Dados, Big Data, ciência de dados, governança e arquiteturas", q:null},
+    {mod:"02", tema:"Dados, informação, conhecimento e inteligência; estruturação; dados abertos; XML, JSON, CSV e SQL", q:null},
+    {mod:"03", tema:"Big Data: conceito, tipos de dados, 5 Vs, analytics (4 tipos) e fluxo de ingestão, processamento e disponibilização", q:null},
+    {mod:"04", tema:"Pipeline de dados: orquestração, integração, batch x streaming, Data Lake x Data Warehouse e ETL x ELT", q:null},
+    {mod:"05", tema:"Bancos NoSQL: modelos, teorema CAP, CP x AP, BASE e aspectos", q:null},
+    {mod:"06", tema:"Ecossistema Apache Hadoop e Spark: componentes e comparação com MapReduce", q:null},
+    {mod:"07", tema:"Arquiteturas de Big Data (Lambda, Kappa, IoT), governança e catálogo de dados", q:null},
+    {mod:"08", tema:"Mineração de dados: conceito, objetivos, KDD, CRISP-DM e pré-processamento", q:null},
+    {mod:"09", tema:"Tarefas de mineração de dados (classificação, regressão, agrupamento, associação, anomalias) e aplicações", q:null},
+    {mod:"10", tema:"Mineração de textos e pareamento de dados (record linkage): determinístico x probabilístico, etapas e aplicações", q:null},
+    {mod:"11", tema:"Aprendizagem de máquina: como funciona, tipos de aprendizagem, viés x variância, overfitting e underfitting", q:null},
+    {mod:"12", tema:"Classificação: algoritmos (árvore, KNN, Naive Bayes, SVM, logística, redes neurais, ensembles) e métricas (matriz de confusão, ROC/AUC)", q:null},
+    {mod:"13", tema:"Regressão e métricas, agrupamento, associação (Apriori), PCA, aprendizagem por reforço e etapas de construção do modelo", q:null},
+    {mod:"14", tema:"PLN: evolução, níveis, abordagens, tarefas, word embeddings e Transformers", q:null},
+    {mod:"15", tema:"Sistemas de recomendação: conteúdo, colaborativa, híbridos, dados e métricas", q:null},
+    {mod:"16", tema:"IA: forte x fraca, simbólica x conexionista, generativa x discriminativa e Transformer", q:null},
+    {mod:"17", tema:"Grandes modelos de linguagem (LLMs): fases, capacidades emergentes, RAG, RAG x fine-tuning e desafios", q:null},
+    {mod:"18", tema:"Engenharia de prompts, técnicas de prompting, agentes de IA, modelos fundacionais e plataformas de IA como serviço", q:null},
+    {mod:"19", tema:"Governança e ética em IA: viés, transparência e XAI, responsabilidade, privacidade, segurança e framework", q:null},
+    {mod:"20", tema:"Ciência de dados na prática: ciclo de vida, papéis, atributos, transformação, análise, indicadores, Python e R", q:null},
+    {mod:"21", tema:"Computação em nuvem e Big Data: NIST, modelos de serviço e implantação, plataformas, elasticidade, serverless e riscos", q:null}
   ],
-  pesoNota:"a ferramenta de quem lê números: dados, Big Data, ciência de dados, governança e arquiteturas. Teoria montada a partir de conteúdo programático e de questões reais com gabarito comentado, por não haver resumo de curso disponível."
+  pesoNota:"Dados, Big Data, ciência de dados, governança e arquiteturas. Os módulos 02 a 19 vêm de material de revisão de Ciência de Dados (estruturação, Big Data, NoSQL, Hadoop, mineração, aprendizado de máquina, PLN, recomendação e IA); os módulos 20 e 21 (ciência de dados na prática, Python e R, nuvem) foram feitos a partir do programa do edital e de conteúdo-padrão. Ferramentas, versões e modelos de IA mudam: confira a versão atual."
 };
 
 window.DISC.cavan = {
@@ -636,7 +694,7 @@ window.DISC.dadm = {
    Nenhuma matéria fica guardada: a trilha intercala todas em partes iguais,
    para que nenhuma passe semanas parada.                                     */
 window.DISC_GUARDADAS = [];
-window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","estat","matfin","econ","ti","infob","simples","consult","fdados"];
+window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ingles","estat","matfin","econ","ti","infob","lgpd","simples","consult","fdados"];
 
 /* ---------- as provas, em ordem de prioridade ----------
    fator  = peso da prova na sua prioridade de estudo
@@ -676,10 +734,10 @@ window.CONCURSOS = {
     etapas:"Objetiva (40 questões, 80 pontos) + títulos (20 pontos)",
     mapa:[
       {it:"1.1", tema:"Língua Portuguesa", discs:["port"], st:"ok", nota:"Interpretação, coesão, ortografia, classes de palavras, concordância, pontuação e semântica estão nos 8 módulos. Literatura brasileira (prosa, poesia, autores e obras) não tem módulo."},
-      {it:"1.2", tema:"Noções de Informática", discs:["infob"], st:"ok", nota:"7 módulos: redes e internet, nuvem e e-mail, segurança, Word e PowerPoint, Excel, Windows e Linux, hardware e software. Falta o que é específico do edital: Google Drive em detalhe, Outlook/Zimbra, busca na web e IA generativa. Word e Excel do edital são 2016; confira os atalhos na sua versão. São 5 questões."},
+      {it:"1.2", tema:"Noções de Informática", discs:["infob"], st:"ok", nota:"8 módulos: redes e internet, nuvem e e-mail, segurança, Word e PowerPoint, Excel, Windows e Linux, hardware e software, e Google Drive, Outlook/Gmail/Zimbra, busca na web e navegadores. Word e Excel do edital são 2016; confira os atalhos na sua versão. São 5 questões."},
       {it:"2.1", tema:"Legislação municipal (Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91)", discs:[], st:"falta", nota:"Sem conteúdo. Preciso dos PDFs dessas três leis."},
       {it:"2.2", tema:"Raciocínio lógico, estatística e matemática financeira", discs:["rlm","estat","matfin"], st:"ok", nota:"Lógica em RLM; estatística descritiva, probabilidade, amostragem, inferência, testes e regressão em Estatística; porcentagem, juros, descontos, VPL/TIR e amortização (SAC, Price, SAM) em Matemática Financeira. Razão, proporção, regra de três e conjuntos nos módulos 09 e 10 de RLM."},
-      {it:"2.3", tema:"TI aplicada à fiscalização, dados e LGPD", discs:["ti","fdados"], st:"parcial", nota:"Cobertos: bancos de dados, SQL, BI, data warehouse, mineração, big data, segurança e governança de dados (NoSQL e Python aparecem em Fluência em Dados). TI também tem projetos (PMBOK), BPM, ITIL, COBIT, engenharia de software e programação. Falta a LGPD (Lei 13.709/2018)."},
+      {it:"2.3", tema:"TI aplicada à fiscalização, dados e LGPD", discs:["ti","fdados","lgpd"], st:"ok", nota:"TI 17 traz documentos fiscais eletrônicos, SPED, certificação digital, sigilo fiscal e governo digital; segurança no TI 10; LGPD em 2 módulos (LGPD 01 e 02); Fluência em Dados tem 21 módulos (Big Data, NoSQL, Hadoop, mineração, aprendizado de máquina, PLN, IA, Python e R, nuvem). A LGPD foi feita sem o texto da lei: confira a redação vigente."},
       {it:"2.4", tema:"Direito Constitucional", discs:["dconst","dtrib"], st:"ok", nota:"O Sistema Tributário Nacional está nos módulos 02 a 04 de Direito Tributário, e o orçamento em AFO e LRF. Não há módulo de ordem econômica e financeira."},
       {it:"2.5", tema:"Direito Administrativo", discs:["dadm","licit"], st:"parcial", nota:"Cobertos: regime jurídico, atos, agentes, poderes, responsabilidade, licitações, improbidade, LAI e controle. Faltam o Decreto 9.830/2019 e as normas municipais (Lei 16.466/2024 e Decreto 435/2026)."},
       {it:"2.6", tema:"Direito Tributário, teoria geral (CTN)", discs:["dtrib"], st:"ok", nota:"Os 14 módulos seguem o CTN. A norma geral antielisiva não aparece com esse nome."},
