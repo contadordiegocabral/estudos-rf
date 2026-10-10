@@ -242,6 +242,16 @@ a{color:var(--brand-ink)}
 .contcard .cc-k{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-ink);font-weight:700}
 .contcard .cc-t{font-weight:900}
 .contcard .cc-l{color:var(--ink-2);font-size:.92rem}
+.hj-provas{margin:0 0 10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.hj-pv{margin:0 0 10px}.hj-pvh{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.hj-pvh b{font-weight:900}.hj-pvh span{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--brand-ink);font-weight:700;text-align:right}
+.hj-pvm{font-size:.8rem;color:var(--ink-2);line-height:1.45;margin-top:3px}.hj-pvm small{display:block;color:var(--ink-3);margin-top:2px}
+.hj-ok{color:var(--certo);font-weight:800}.hj-no{color:var(--erro,#b3261e);font-weight:800}
+.hj-testes{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.76rem;color:var(--ink-2);margin:2px 0 8px}
+.hj-tl{font-weight:800;color:var(--ink-3);text-transform:uppercase;font-size:.62rem;letter-spacing:.1em;align-self:center}
+.hj-pvb{display:flex;gap:6px;flex-wrap:wrap}.hj-pvb .ghost{padding:7px 10px;font-size:.76rem}
+.hj-pvb .ghost[aria-pressed=true]{border-color:var(--brand);color:var(--brand-ink)}
+.updbar{position:fixed;left:12px;right:12px;bottom:12px;z-index:60;display:flex;gap:10px;align-items:center;justify-content:space-between;padding:10px 12px;border:2px solid var(--line-strong);border-radius:12px;background:var(--surface);box-shadow:0 6px 24px rgba(0,0,0,.18);font-weight:700;font-size:.85rem}
 .hojecard{margin:0 0 14px;padding:14px 14px 10px;border:2px solid var(--line-strong);border-bottom-width:4px;border-radius:16px;background:var(--surface)}
 .hj-h{display:flex;justify-content:space-between;align-items:baseline}
 .hj-t{font-weight:900;font-size:1.15rem}.hj-m{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--brand-ink);font-weight:700}
@@ -1008,6 +1018,15 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 
   /* --- service worker --- */
   if("serviceWorker" in navigator){
+    var hadCtl = !!navigator.serviceWorker.controller, avisou = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function(){
+      if(!hadCtl){ hadCtl = true; return; }
+      if(avisou) return; avisou = true;
+      var b = document.createElement("div"); b.className = "updbar"; b.setAttribute("role","status");
+      b.innerHTML = '<span>Nova versão instalada.</span><button type="button" class="ghost" style="padding:7px 12px">Atualizar agora</button>';
+      b.querySelector("button").onclick = function(){ location.reload(); };
+      document.body.appendChild(b);
+    });
     window.addEventListener("load", function(){
       navigator.serviceWorker.register("sw.js", {scope:"./"})
         .then(function(){ marcar(true); })

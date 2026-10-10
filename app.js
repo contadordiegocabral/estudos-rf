@@ -2442,11 +2442,11 @@ function pvEsc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){retu
 function pvStrip(s){return String(s==null?"":s).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();}
 function pvE(){
   if(!S.sim)S.sim=[]; if(!S.yt)S.yt={}; if(!S.duv)S.duv={}; if(!S.nota)S.nota={}; if(!S.dsc)S.dsc=[];
-  if(!S.plano)S.plano={conc:"tjpr",hpd:3,ini:19,datas:{}};
+  if(!S.plano)S.plano={conc:"isscwb",hpd:3,ini:19,datas:{}};
   if(!S.plano.datas)S.plano.datas={};
 }
-var PV_CONC=["tjpr","isscwb","atrfb"].filter(function(k){return CONC[k];});
-var PV_MATMAP={tjpr:{contab:["contab","afo","lrf"]},isscwb:{contab:["contab","cavan","afo","lrf"]},atrfb:{contab:["contab","cavan"]}};
+var PV_CONC=["isscwb","atrfb","tjpr","creapr","crqpr"].filter(function(k){return CONC[k];});
+var PV_MATMAP={tjpr:{contab:["contab","afo","lrf"]},isscwb:{contab:["contab"]},atrfb:{contab:["contab","cavan"]},creapr:{contab:["contab","cavan"]},crqpr:{contab:["contab","cavan"]}};
 var PV_EXTRA={matem:"Matemática",legpr:"Legislação do Paraná",ingles:"Inglês"};
 function pvMatNome(k){ return (window.MAT&&MAT[k])?MAT[k].nome:(PV_EXTRA[k]||k); }
 function pvDiscs(conc,k){
@@ -2475,7 +2475,8 @@ function pvDownload(nome,tipo,conteudo){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
 }
-function pvData(k){ pvE(); return (S.plano.datas&&S.plano.datas[k])||(CONC[k]&&CONC[k].data)||null; }
+function pvData(k){ pvE(); return (S.plano.datas&&S.plano.datas[k])||(CONC[k]&&(CONC[k].data||CONC[k].dataEstimada))||null; }
+function pvDataEst(k){ pvE(); return !(S.plano.datas&&S.plano.datas[k])&&!!CONC[k]&&!CONC[k].data&&!!CONC[k].dataEstimada; }
 function pvDias(k){ var d=pvData(k); return d?daysBetween(today(),d):null; }
 function pvDataBr(iso){ return iso?iso.slice(8,10)+"/"+iso.slice(5,7)+"/"+iso.slice(0,4):""; }
 
@@ -2996,6 +2997,106 @@ function pvYtPendentes(){
   return out;
 }
 
+
+/* ---- contagem regressiva por prova, com a meta de lições por dia ---- */
+var PV_RESERVA=14;            /* dias finais só para revisão e simulados */
+function concDiscs(c){
+  var out=[]; if(!CONC[c]) return out;
+  Object.keys(CONC[c].materias).forEach(function(k){
+    pvDiscs(c,k).forEach(function(d){ if(out.indexOf(d)<0) out.push(d); });
+  });
+  return out;
+}
+function licoesRestantes(c,rt){
+  var old=S.ritmo, n=0; S.ritmo=rt;
+  concDiscs(c).forEach(function(d){ DISC[d].mods.forEach(function(m){
+    if(!REG[m]) return;
+    licoesAtivas(m).forEach(function(x){ if(!lDone(m,x.l)) n++; });
+  }); });
+  S.ritmo=old; return n;
+}
+function minPorLicao(){
+  var seg=0, k; for(k in (S.tempo||{})) seg+=S.tempo[k]||0;
+  var fe=0; allMods().forEach(function(m){ var pm=S.mods&&S.mods[m]; if(pm&&pm.done) fe+=Object.keys(pm.done).length; });
+  return fe>=15&&seg>0 ? Math.min(12,Math.max(1.5,seg/60/fe)) : 4;
+}
+function provaRow(c,main){
+  var cc=CONC[c], dias=pvDias(c), est=pvDataEst(c);
+  var quando=dias==null?cc.dataNota:(dias<0?"prova realizada":(dias===0?"é hoje":(dias===1?"amanhã":dias+" dias")))+" · "+pvDataBr(pvData(c))+(est?" (estimada)":"");
+  if(!main) return '<span class="hj-tp"><b>'+cc.curto+'</b> '+quando+'</span>';
+  var h='<div class="hj-pv"><div class="hj-pvh"><b>'+cc.nome+'</b><span>'+quando+'</span></div>';
+  if(dias!=null&&dias>=0){
+    var util=Math.max(1,dias-PV_RESERVA), mpl=minPorLicao();
+    var base=ritmo(), r3=["completo","rapido","turbo"];
+    var cenas=r3.map(function(r){
+      var n=licoesRestantes(c,r), por=Math.ceil(n/util);
+      return {r:r,n:n,por:por,min:Math.round(por*mpl)};
+    });
+    var at=cenas.filter(function(x){return x.r===base;})[0];
+    h+='<div class="hj-pvm">Para terminar a teoria '+(dias>PV_RESERVA?PV_RESERVA+' dias antes':'a tempo')+' e ficar com o fim só para revisão: '+
+      '<b>'+at.por+' lições/dia</b> (~'+at.min+' min) no ritmo '+({completo:"Completo",rapido:"Rápido",turbo:"Turbo"})[base]+'. '+
+      (function(){
+        var cab=(S.plano&&S.plano.hpd||3)*60, nm={completo:"Completo",rapido:"Rápido",turbo:"Turbo"};
+        if(at.min<=cab) return '<span class="hj-ok">Cabe nas suas '+(cab/60)+' h/dia.</span> ';
+        var fit=cenas.filter(function(x){return x.min<=cab;})[0];
+        return fit?'<span class="hj-no">Não cabe em '+(cab/60)+' h/dia neste ritmo; o mais completo que cabe é o '+nm[fit.r]+'.</span> '
+                  :'<span class="hj-no">Nem o Turbo cabe em '+(cab/60)+' h/dia: foque nas matérias de maior peso (veja o Simulado) ou aumente as horas no Plano.</span> ';
+      })()+
+      '<small>'+cenas.map(function(x){ return ({completo:"Completo",rapido:"Rápido",turbo:"Turbo"})[x.r]+" "+x.por+"/dia"; }).join(" · ")+'</small></div>';
+  }else if(dias==null){
+    h+='<div class="hj-pvm">Sem data definida ainda.</div>';
+  }
+  h+='</div>';
+  return h;
+}
+function focoAlvos(){
+  var u=[]; ["isscwb","atrfb"].forEach(function(c){ concDiscs(c).forEach(function(d){ if(u.indexOf(d)<0) u.push(d); }); });
+  return u;
+}
+function focoEhAlvos(){
+  var f=focoAtivo(), u=focoAlvos(); if(!f) return false;
+  return f.length===u.length && u.every(function(d){return f.indexOf(d)>=0;});
+}
+
+
+/* ---- resumo da semana ---- */
+function resumoSemana(){
+  pvE();
+  var dias=[], i, tmin=0, q=0, ok=0, est=0, ativos=0;
+  for(i=6;i>=0;i--){
+    var k=dayKey(-i), t=Math.round(((S.tempo&&S.tempo[k])||0)/60), ds=(S.dstat&&S.dstat[k])||{ok:0,err:0};
+    dias.push({k:k,t:t,q:(ds.ok||0)+(ds.err||0),ok:ds.ok||0});
+    tmin+=t; q+=(ds.ok||0)+(ds.err||0); ok+=ds.ok||0; if(t>0||(ds.ok||0)+(ds.err||0)>0) ativos++;
+  }
+  var maxT=Math.max.apply(null,dias.map(function(d){return d.t;}).concat([30]));
+  var por=[], parada=[];
+  DISC_ORDER.forEach(function(d){
+    var s=0,r=0,fe=0,tot=0;
+    DISC[d].mods.forEach(function(m){ if(!REG[m]) return; var a=pvAcc(m); s+=a.s; r+=a.r; tot+=licoesDoMod(m).length; fe+=feitasNoMod(m); });
+    if(!tot) return;
+    if(s>=10) por.push({d:d,pc:Math.round(r/s*100),s:s});
+    if(fe===0) parada.push(d);
+  });
+  por.sort(function(a,b){return a.pc-b.pc;});
+  var ds=pvDias("isscwb");
+  var h='<div class="cele"><div class="medal">'+svg("i-clock")+'</div><h2>Resumo da semana</h2>'+
+    '<div class="statgrid"><div class="statbox"><span class="sl">Tempo</span><span class="sv">'+Math.floor(tmin/60)+'h'+("0"+tmin%60).slice(-2)+'</span></div>'+
+    '<div class="statbox"><span class="sl">Dias com estudo</span><span class="sv">'+ativos+'/7</span></div>'+
+    '<div class="statbox"><span class="sl">Questões</span><span class="sv">'+q+'</span></div>'+
+    '<div class="statbox"><span class="sl">Acerto</span><span class="sv">'+(q?Math.round(ok/q*100)+'%':'—')+'</span></div></div>'+
+    '<div class="pvdias">'+dias.map(function(d){
+      var w=Math.round(d.t/maxT*100);
+      return '<div class="pvdia"><b>'+d.k.slice(8,10)+'/'+d.k.slice(5,7)+'</b><div class="pvbl"><span style="display:block;height:10px;border-radius:6px;background:var(--brand);width:'+Math.max(w,d.t?4:0)+'%"></span><small>'+d.t+' min · '+d.q+' questões</small></div></div>';
+    }).join("")+'</div>'+
+    (por.length?'<span class="vlab" style="justify-self:start">Onde você mais erra (mín. 10 respondidas)</span><div class="pvtab">'+por.slice(0,5).map(function(x){
+      return '<div class="pvrow"><span>'+DISC[x.d].nome+'</span><b>'+x.pc+'% de acerto</b></div>';}).join("")+'</div>':'')+
+    (parada.length?'<p class="pvaviso">Ainda sem nenhuma lição: <b>'+parada.slice(0,6).map(function(d){return DISC[d].curto||DISC[d].nome;}).join(", ")+(parada.length>6?" e mais "+(parada.length-6):"")+'</b>.</p>':'')+
+    '<p style="font-size:.88rem"><b>Para a próxima semana:</b> '+
+    (por.length?'reforce <b>'+DISC[por[0].d].nome+'</b> pela Super revisão. ':'resolva mais questões para o app apontar os pontos fracos. ')+
+    (ds!=null&&ds>=0?'Faltam <b>'+ds+' dias</b> para o ISS Curitiba.':'')+'</p></div>';
+  pvTela(h);
+}
+
 /* ---- PLANO DE HOJE: tudo dentro da trilha, numa fila só ---- */
 function reforcarTotal(){
   var n=0;
@@ -3028,6 +3129,22 @@ function hojeCard(){
     '<div class="hj-t">Plano de hoje</div><div class="hj-m">'+bateu+' de 3 metas</div>'));
   c.appendChild(el("div","hj-metas",
     '<span><b>'+tmin+'</b>/'+mm+' min</span><span><b>'+qh+'</b>/'+mq+' questões</span><span><b>'+xh+'</b>/'+gx+' XP</span>'));
+  /* provas: as duas principais com meta diária; as demais são testes */
+  var pvb=el("div","hj-provas");
+  pvb.innerHTML=provaRow("isscwb",true)+provaRow("atrfb",true)+
+    '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
+      .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
+    '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
+    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button></div>';
+  c.appendChild(pvb);
+  pvb.querySelector("#hjAlvo").onclick=function(){
+    if(focoEhAlvos()){ focoAplicar({}); }
+    else{ var sel={}; focoAlvos().forEach(function(d){sel[d]=true;}); focoAplicar(sel); }
+  };
+  pvb.querySelector("#hjSimIss").onclick=function(){ PV_SIM.conc="isscwb"; pvSimScreen(); };
+  pvb.querySelector("#hjPlano").onclick=function(){ pvE(); S.plano.conc="isscwb"; pvPlanScreen(); };
+  pvb.querySelector("#hjSem").onclick=function(){ resumoSemana(); };
+
   /* ritmo */
   var rt=ritmo();
   var seg=el("div","hj-ritmo",

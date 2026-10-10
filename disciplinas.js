@@ -573,7 +573,7 @@ window.CONCURSOS = {
     id:"atrfb", nome:"RFB · Analista", curto:"ATRFB", cor:"u2", prioridade:1, fator:1.00, alvo:true,
     nomeLongo:"Analista-Tributário da Receita Federal do Brasil",
     orgao:"Receita Federal", banca:"FGV (último certame)",
-    data:null, dataNota:"novo edital previsto até jan/2027",
+    data:null, dataEstimada:"2027-03-01", dataNota:"estimada para fev/mar 2027 — edital ainda não saiu",
     vagas:"116 (previsão 2026)", salario:"R$ 16.935,99", total:140,
     confirmado:true, fonte:"Edital FGV 2023, 3ª retificação — quadro de provas oficial",
     etapas:"Objetiva e discursiva + Curso de Formação em São Paulo",
@@ -581,16 +581,16 @@ window.CONCURSOS = {
                dconst:14, dadm:12, dtrib:16, legtrib:14, legadu:14 }
   },
   isscwb: {
-    id:"isscwb", nome:"ISS Curitiba", curto:"ISS CWB", cor:"u4", prioridade:2, fator:0.80, alvo:true,
-    nomeLongo:"Contador da Prefeitura de Curitiba",
+    id:"isscwb", nome:"ISS Curitiba", curto:"ISS CWB", cor:"u4", prioridade:1, fator:0.80, alvo:true,
+    nomeLongo:"Auditor Fiscal de Tributos Municipais — Prefeitura de Curitiba",
     orgao:"Prefeitura de Curitiba", banca:"Fundação FAFIPA",
-    data:"2026-12-06", dataNota:"data provável da prova, Anexo III do edital",
-    vagas:"8 + CR", salario:"R$ 10.839,69 + 30% de gratificação técnica", total:40,
-    confirmado:true,
-    fonte:"Edital Normativo nº 5/2026 — Tabela 10.1.1 e Anexo II, conteúdo programático oficial",
+    data:"2026-12-06", dataNota:"prova objetiva em 06/12/2026 (Anexo III do edital retificado)",
+    vagas:"8 + PcD 1 + PPI 1", salario:"R$ 14.117,18 + 30% de gratificação técnica", total:40,
+    confirmado:true, pesosEstimados:true,
+    fonte:"Edital Normativo nº 5/2026 (retificação nº 1) — Tabela 10.1.1, Anexo II (Auditor Fiscal) e Anexo III",
     etapas:"Objetiva (40 questões, 80 pontos) + títulos (20 pontos)",
-    materias:{ contab:30, port:5, info:5 },
-    nota:"Inscrições de 07/10 a 05/11/2026. Das 30 questões de Conhecimentos Específicos, o programa é quase todo Contabilidade Aplicada ao Setor Público, Receita e Despesa Públicas, DCASP, AFO e LRF — mais a legislação municipal. O mesmo edital abre 8 vagas de Auditor Fiscal, com R$ 14.117,18 + 30%, cujo programa puxa forte para Direito Tributário, ISSQN e Código Tributário de Curitiba."
+    materias:{ port:5, info:5, legtrib:4, legcwb:3, dtrib:5, consult:3, dconst:3, dadm:3, contab:3, dcivpen:2, lrf:1, econ:1, rlm:1, matem:1 },
+    nota:"O edital fixa 5 questões de Português, 5 de Informática e 30 de Conhecimentos Específicos, mas NÃO divulga quantas questões cada matéria tem. Os pesos acima para as matérias específicas são uma estimativa de estudo (ISSQN e legislação de Curitiba no topo, depois Direito Tributário, Reforma Tributária, Constitucional, Administrativo e Contabilidade). Inscrições de 07/10 a 05/11/2026; taxa até 06/11."
   },
   tjpr: {
     id:"tjpr", nome:"TJPR · Contador", curto:"TJPR", cor:"u1", prioridade:1, fator:1.00, alvo:true,
@@ -604,11 +604,35 @@ window.CONCURSOS = {
     materias:{ contab:40, port:10, matem:10, legpr:10 },
     nota:"A prova mais próxima. 40 das 70 questões são Conhecimentos Específicos de Contabilidade, que no programa é Contabilidade Pública, Orçamento Público e Responsabilidade Fiscal. Outras 10 são Legislação, quase toda do Paraná. A discursiva é no mesmo dia: um estudo de caso e uma dissertativa, 50 pontos cada."
   },
+  creapr: {
+    id:"creapr", nome:"CREA-PR · Contador", curto:"CREA-PR", cor:"u1", prioridade:4, fator:0.05,
+    nomeLongo:"Agente Profissional (Contador) — CREA-PR",
+    orgao:"CREA-PR", banca:"Instituto UniFil",
+    data:"2026-11-22", dataNota:"data provável (item 11.1 do edital)",
+    vagas:"ver edital", salario:"R$ 7.234,12", total:60,
+    confirmado:true, pesosEstimados:true, teste:true,
+    fonte:"Edital CREA-PR (03/09/2026), itens 10.12 e 11.1",
+    etapas:"Objetiva (60 questões) e discursiva no mesmo dia; mínimo de 40 pontos",
+    materias:{ port:10, adm:10, contab:10 },
+    nota:"Prova-teste. O programa detalhado e o quadro por matéria estão no Anexo V (SEI), que não veio no PDF — pesos iguais por estimativa."
+  },
+  crqpr: {
+    id:"crqpr", nome:"CRQ-PR · Contador", curto:"CRQ-PR", cor:"u3", prioridade:4, fator:0.05,
+    nomeLongo:"Contador (cód. 406) — CRQ 9ª Região (PR)",
+    orgao:"CRQ-PR", banca:"Instituto Quadrix",
+    data:"2026-11-29", dataNota:"prova objetiva e discursiva à tarde (Anexo I do edital)",
+    vagas:"ver edital", salario:"ver edital", total:120,
+    confirmado:true, pesosEstimados:true, teste:true,
+    fonte:"Edital CRQ-PR 2026 — itens 10.1, 11.1 e 18.2.4.7 (Contador)",
+    etapas:"Objetiva (120 itens Certo/Errado: 40 básicos, 30 complementares, 50 específicos) + discursiva",
+    materias:{ port:10, contab:10, afo:10, lrf:10, audit:10 },
+    nota:"Prova-teste. O edital lista Legislação (CF, Lei 4.320, LRF, 14.133, LC 123), Orçamento e Contabilidade Pública, Contabilidade Geral e Auditoria; os pesos por matéria são uma estimativa."
+  },
   detranpr: {
     id:"detranpr", nome:"DETRAN-PR", curto:"DETRAN", cor:"u3", prioridade:5, fator:0.03,
     nomeLongo:"Contador do DETRAN-PR",
     orgao:"DETRAN-PR", banca:"a definir",
-    data:null, dataNota:"comissão formada em jul/2026",
+    data:null, dataNota:"sem edital; estimativa sua: entre dez/2026 e mar/2027",
     vagas:"a definir", salario:"até R$ 7.616,88", total:null,
     confirmado:false, estimado:true,
     fonte:"Edital de 2013 — só teve Despachante de Trânsito, nível médio",
@@ -624,7 +648,7 @@ window.CONCURSOS = {
    banca. Os quadros dos editais continuam guardados aqui embaixo; para voltar
    a ver as provas no painel, basta pôr os ids nesta lista.                   */
 window.CONC_ORDER = [];
-window.CONC_GUARDADOS = ["tjpr","isscwb","detranpr","atrfb","afrfb"];
+window.CONC_GUARDADOS = ["isscwb","atrfb","tjpr","creapr","crqpr","detranpr","afrfb"];
 window.ALVO_NOTA = "Nove matérias, uma trilha só, sem perseguir edital. A ordem é de aprendizado: Contabilidade Geral primeiro, porque é a gramática de tudo o que vem depois; Contabilidade Avançada em seguida, que é essa mesma gramática dentro dos pronunciamentos do CPC; Contabilidade Pública, que a aplica ao Estado; AFO e LRF, que são o orçamento e a lei que o disciplina; Direito Tributário, de onde sai a receita; Direito Administrativo, que é o regime a que o Estado se submete; Legislação Aduaneira, que é a receita na fronteira; e Fluência em Dados, que é a ferramenta de quem lê números. A trilha intercala as nove, de modo que nenhuma fica semanas parada e o que você viu na semana passada volta antes de sumir da memória.";
 
 window.NUCLEO_NOTA = "";
