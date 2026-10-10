@@ -3059,6 +3059,39 @@ function focoEhAlvos(){
 }
 
 
+
+/* ---- edital × app: o que está coberto, o que falta ---- */
+function abrirDisc(d){
+  closeOv();
+  if(focoAtivo()&&!focoOk(d)){ S.foco=[]; _curso=null; focoPaint(); }
+  loadDisc(d);
+  var f=ORDER.filter(function(m){return REG[m]&&!modFeito(m);})[0]||ORDER[0];
+  loadModule(f); persist(); renderTrail(); buildPanel();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function pvEditalScreen(conc){
+  var cc=CONC[conc]; if(!cc||!cc.mapa) return;
+  var n={ok:0,parcial:0,falta:0}; cc.mapa.forEach(function(x){ n[x.st]++; });
+  var rot={ok:"Coberto",parcial:"Parcial",falta:"Falta"};
+  var h='<div class="cele"><div class="medal">'+svg("i-target")+'</div><h2>Edital × app</h2>'+
+    '<p style="font-size:.9rem">'+cc.nomeLongo+'. Cada item do programa do cargo, comparado com o que o app tem hoje. Os percentuais mostram quanto do conteúdo existente você já fez.</p>'+
+    '<div class="statgrid"><div class="statbox"><span class="sl">Cobertos</span><span class="sv">'+n.ok+'</span></div>'+
+    '<div class="statbox"><span class="sl">Parciais</span><span class="sv">'+n.parcial+'</span></div>'+
+    '<div class="statbox"><span class="sl">Sem conteúdo</span><span class="sv">'+n.falta+'</span></div></div>'+
+    '<div class="pvdias">'+cc.mapa.map(function(x,i){
+      var tot=0, fe=0;
+      x.discs.forEach(function(d){ DISC[d].mods.forEach(function(m){ if(!REG[m]) return; tot+=licoesDoMod(m).length; fe+=feitasNoMod(m); }); });
+      var pc=tot?Math.round(fe/tot*100):null;
+      return '<div class="pvdia edt-'+x.st+'"><b>'+x.it+' · '+x.tema+'</b>'+
+        '<div class="pvbl"><span><b class="edt-chip">'+rot[x.st]+'</b>'+(pc==null?'':' · '+pc+'% feito')+'</span><small>'+x.nota+'</small></div>'+
+        (x.discs.length?'<div class="hj-pvb" style="margin-top:6px">'+x.discs.map(function(d){ return '<button type="button" class="ghost edt-go" data-d="'+d+'">Abrir '+(DISC[d].curto||DISC[d].nome)+'</button>'; }).join("")+'</div>':'')+
+        '</div>';
+    }).join("")+'</div>'+
+    '<p style="font-size:.86rem"><b>Para fechar as lacunas:</b> envie os textos de Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91, LC 116/2003, LC 73/2009, LC 134/2022, LC 46/2002, LC 108/2017 e os Decretos 1.712/2020 e 1.261/2009. Informática básica, Economia e a parte numérica de RLM/estatística/matemática financeira podem ser criadas a partir do programa do edital, sem precisar de PDF.</p></div>';
+  pvTela(h);
+  ovInner.querySelectorAll(".edt-go").forEach(function(b){ b.onclick=function(){ abrirDisc(b.dataset.d); }; });
+}
+
 /* ---- resumo da semana ---- */
 function resumoSemana(){
   pvE();
@@ -3135,7 +3168,7 @@ function hojeCard(){
     '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
       .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
     '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
-    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button></div>';
+    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button></div>';
   c.appendChild(pvb);
   pvb.querySelector("#hjAlvo").onclick=function(){
     if(focoEhAlvos()){ focoAplicar({}); }
@@ -3144,6 +3177,7 @@ function hojeCard(){
   pvb.querySelector("#hjSimIss").onclick=function(){ PV_SIM.conc="isscwb"; pvSimScreen(); };
   pvb.querySelector("#hjPlano").onclick=function(){ pvE(); S.plano.conc="isscwb"; pvPlanScreen(); };
   pvb.querySelector("#hjSem").onclick=function(){ resumoSemana(); };
+  pvb.querySelector("#hjEdt").onclick=function(){ pvEditalScreen("isscwb"); };
 
   /* ritmo */
   var rt=ritmo();

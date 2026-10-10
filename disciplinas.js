@@ -417,6 +417,24 @@ window.DISC.simples = {
   pesoNota:"Resumos do Radegondes: a LC 123/06: enquadramento, tributos e MEI. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
+window.DISC.legcwb = {
+  id:"legcwb", nome:"Legislação Tributária de Curitiba", cor:"u4", mat:"legcwb",
+  nomeLongo:"Código Tributário Municipal de Curitiba (LC 40/2001)",
+  mods:["legcwb01","legcwb02","legcwb03","legcwb04","legcwb05","legcwb06","legcwb07","legcwb08","legcwb09"],
+  pesos:[
+    {mod:"01", tema:"ISS de Curitiba: incidência, fato imponível, alíquotas e lista de serviços", q:null},
+    {mod:"02", tema:"ISS de Curitiba: sujeição passiva, local da incidência, responsáveis, retenção e MEI", q:null},
+    {mod:"03", tema:"ISS de Curitiba: autônomos, sociedades profissionais, base imponível e Simples", q:null},
+    {mod:"04", tema:"Lançamento do ISS: declaração, auto de infração, ciência e arbitramento", q:null},
+    {mod:"05", tema:"Infrações, multas, denúncia espontânea, pagamento, parcelamento e atualização", q:null},
+    {mod:"06", tema:"IPTU em Curitiba: incidência, base, alíquotas, imóvel não edificado e lançamento", q:null},
+    {mod:"07", tema:"Taxas, contribuição de melhoria e cadastro fiscal (arts. 53 a 78)", q:null},
+    {mod:"08", tema:"Exonerações: isenções de ISS, IPTU e taxas, incentivos e autônomos isentos", q:null},
+    {mod:"09", tema:"Processo administrativo tributário, consulta e disposições gerais (arts. 92 a 119)", q:null}
+  ],
+  pesoNota:"Montado a partir da LC Municipal 40/2001, no texto consolidado até as alterações de 2017/2018. Não cobre ainda a Nota Curitibana (LC 73/2009), o DEC/PROCEC (LC 134/2022), a COSIP (LC 46/2002) nem o ITBI (LC 108/2017). Confira sempre a redação vigente."
+};
+
 window.DISC.consult = {
   id:"consult", nome:"Consultoria", cor:"u4", mat:"consult",
   nomeLongo:"Consultoria Tributária (Reforma Tributária, Simples e Perguntão PJ)",
@@ -551,7 +569,7 @@ window.DISC.dadm = {
    Nenhuma matéria fica guardada: a trilha intercala todas em partes iguais,
    para que nenhuma passe semanas parada.                                     */
 window.DISC_GUARDADAS = [];
-window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ti","simples","consult","fdados"];
+window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ti","simples","consult","fdados"];
 
 /* ---------- as provas, em ordem de prioridade ----------
    fator  = peso da prova na sua prioridade de estudo
@@ -589,6 +607,25 @@ window.CONCURSOS = {
     confirmado:true, pesosEstimados:true,
     fonte:"Edital Normativo nº 5/2026 (retificação nº 1) — Tabela 10.1.1, Anexo II (Auditor Fiscal) e Anexo III",
     etapas:"Objetiva (40 questões, 80 pontos) + títulos (20 pontos)",
+    mapa:[
+      {it:"1.1", tema:"Língua Portuguesa", discs:["port"], st:"ok", nota:"Interpretação, coesão, ortografia, classes de palavras, concordância, pontuação e semântica estão nos 8 módulos. Literatura brasileira (prosa, poesia, autores e obras) não tem módulo."},
+      {it:"1.2", tema:"Noções de Informática", discs:[], st:"falta", nota:"O módulo de TI do app é de banco de dados, BI e segurança. Informática básica (Windows 10/11, Linux Ubuntu, Word, Excel, navegadores, Google Drive, e-mail, atalhos e IA generativa) não existe. São 5 questões."},
+      {it:"2.1", tema:"Legislação municipal (Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91)", discs:[], st:"falta", nota:"Sem conteúdo. Preciso dos PDFs dessas três leis."},
+      {it:"2.2", tema:"Raciocínio lógico, estatística e matemática financeira", discs:["rlm"], st:"parcial", nota:"Há lógica proposicional, argumentação, associações, datas e casa dos pombos. Faltam razão, proporção e porcentagem, combinatória e probabilidade, estatística descritiva e inferência, e matemática financeira (juros, SAC/Price, VPL/TIR)."},
+      {it:"2.3", tema:"TI aplicada à fiscalização, dados e LGPD", discs:["ti","fdados"], st:"parcial", nota:"Cobertos: bancos de dados, SQL, BI, data warehouse, mineração, big data, segurança e governança de dados (NoSQL e Python aparecem em Fluência em Dados). Falta a LGPD (Lei 13.709/2018)."},
+      {it:"2.4", tema:"Direito Constitucional", discs:["dconst","dtrib"], st:"ok", nota:"O Sistema Tributário Nacional está nos módulos 02 a 04 de Direito Tributário, e o orçamento em AFO e LRF. Não há módulo de ordem econômica e financeira."},
+      {it:"2.5", tema:"Direito Administrativo", discs:["dadm","licit"], st:"parcial", nota:"Cobertos: regime jurídico, atos, agentes, poderes, responsabilidade, licitações, improbidade, LAI e controle. Faltam o Decreto 9.830/2019 e as normas municipais (Lei 16.466/2024 e Decreto 435/2026)."},
+      {it:"2.6", tema:"Direito Tributário, teoria geral (CTN)", discs:["dtrib"], st:"ok", nota:"Os 14 módulos seguem o CTN. A norma geral antielisiva não aparece com esse nome."},
+      {it:"2.7", tema:"ISSQN (CF, LC 116/2003, jurisprudência)", discs:["legcwb"], st:"parcial", nota:"O Código de Curitiba cobre incidência, local, responsáveis, retenção, autônomos, uniprofissionais e alíquotas. Falta o texto da LC 116/2003 e a jurisprudência do STF/STJ (Tema 296, ISS × ICMS, construção civil)."},
+      {it:"2.8", tema:"Demais tributos municipais (IPTU, ITBI, taxas, contribuição de melhoria, COSIP)", discs:["legcwb"], st:"parcial", nota:"IPTU, taxas e contribuição de melhoria estão nos módulos 06 e 07. O ITBI saiu do código (LC 108/2017) e a COSIP é a LC 46/2002: preciso desses dois textos."},
+      {it:"2.9", tema:"Legislação tributária de Curitiba", discs:["legcwb"], st:"parcial", nota:"O Código Tributário (LC 40/2001) está nos 9 módulos. Faltam a Nota Curitibana (LC 73/2009 e Decreto 1.712/2020), o DEC e o PROCEC (LC 134/2022), a restituição e compensação (Decreto 1.261/2009), a COSIP e o ITBI."},
+      {it:"2.10", tema:"Processo administrativo tributário", discs:["legcwb","dtrib"], st:"ok", nota:"Impugnação, instrução, JJT, Junta de Recursos, instância especial e consulta no módulo 09. Dívida ativa em Direito Tributário; a Lei 6.830/80 aparece em Direito Administrativo."},
+      {it:"2.11", tema:"Reforma tributária do consumo (EC 132, LC 214, CGIBS)", discs:["consult"], st:"ok", nota:"62 módulos de Consultoria. A Resolução CGIBS 6/2026 citada no edital precisa ser conferida no portal."},
+      {it:"2.12", tema:"Contabilidade", discs:["contab","cavan"], st:"ok", nota:"Teoria das contas, escrituração, estoques, balanço, DRE, DFC, DVA, DMPL e os CPCs."},
+      {it:"2.13", tema:"Direito Civil e Empresarial aplicados", discs:["dciv","demp"], st:"ok", nota:"Pessoas, bens, negócios jurídicos, obrigações, sociedades, títulos de crédito e recuperação."},
+      {it:"2.14", tema:"Penal tributário e finanças públicas", discs:["dpen","lrf","afo"], st:"ok", nota:"Lei 8.137/90, crimes funcionais, LRF e orçamento público."},
+      {it:"2.15", tema:"Economia", discs:[], st:"falta", nota:"Sem módulo: contabilidade nacional, IS-LM, OA-DA, inflação, Curva de Phillips, crescimento e setor externo."}
+    ],
     materias:{ port:5, info:5, legtrib:4, legcwb:3, dtrib:5, consult:3, dconst:3, dadm:3, contab:3, dcivpen:2, lrf:1, econ:1, rlm:1, matem:1 },
     nota:"O edital fixa 5 questões de Português, 5 de Informática e 30 de Conhecimentos Específicos, mas NÃO divulga quantas questões cada matéria tem. Os pesos acima para as matérias específicas são uma estimativa de estudo (ISSQN e legislação de Curitiba no topo, depois Direito Tributário, Reforma Tributária, Constitucional, Administrativo e Contabilidade). Inscrições de 07/10 a 05/11/2026; taxa até 06/11."
   },

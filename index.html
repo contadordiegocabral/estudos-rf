@@ -247,6 +247,8 @@ a{color:var(--brand-ink)}
 .hj-pvh b{font-weight:900}.hj-pvh span{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--brand-ink);font-weight:700;text-align:right}
 .hj-pvm{font-size:.8rem;color:var(--ink-2);line-height:1.45;margin-top:3px}.hj-pvm small{display:block;color:var(--ink-3);margin-top:2px}
 .hj-ok{color:var(--certo);font-weight:800}.hj-no{color:var(--erro,#b3261e);font-weight:800}
+.edt-chip{font-family:"IBM Plex Mono",monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em}
+.edt-ok .edt-chip{color:var(--certo)}.edt-falta .edt-chip{color:var(--erro,#b3261e)}.edt-parcial .edt-chip{color:#a35f00}
 .hj-testes{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:.76rem;color:var(--ink-2);margin:2px 0 8px}
 .hj-tl{font-weight:800;color:var(--ink-3);text-transform:uppercase;font-size:.62rem;letter-spacing:.1em;align-self:center}
 .hj-pvb{display:flex;gap:6px;flex-wrap:wrap}.hj-pvb .ghost{padding:7px 10px;font-size:.76rem}
@@ -991,7 +993,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
         <div class="ip"><span class="ipn">iPad</span><span>Igual ao iPhone: <b>Compartilhar</b> → <b>Adicionar à Tela de Início</b>.</span></div>
         <div class="ip"><span class="ipn">Notebook</span><span>No Chrome ou no Edge, clique no ícone de instalar na barra de endereço, ou no menu <b>Salvar e compartilhar</b> → <b>Instalar</b>.</span></div>
       </div>
-      <p class="sethint">Depois de instalar, abra o app uma vez com internet para ele terminar de guardar os 287 módulos. A partir daí funciona no avião, no metrô e na fila. Seu progresso fica salvo em cada aparelho, separadamente.</p>
+      <p class="sethint">Depois de instalar, abra o app uma vez com internet para ele terminar de guardar os 296 módulos. A partir daí funciona no avião, no metrô e na fila. Seu progresso fica salvo em cada aparelho, separadamente.</p>
 
       <h4 style="margin-top:10px">Zona de risco</h4>
       <button class="ghost" id="resetAll">Zerar todo o progresso</button>
@@ -1005,7 +1007,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 
 <script>
 /* ===== instalação no aparelho e uso offline =====
-   Um service worker guarda os 287 módulos no aparelho. Depois disso o app abre
+   Um service worker guarda os 296 módulos no aparelho. Depois disso o app abre
    sem internet, e o navegador passa a oferecer "instalar" como aplicativo.   */
 (function(){
   "use strict";
@@ -1290,6 +1292,15 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
   <script src="ti11.js"></script>
   <script src="simples01.js"></script>
   <script src="simples02.js"></script>
+  <script src="legcwb01.js"></script>
+  <script src="legcwb02.js"></script>
+  <script src="legcwb03.js"></script>
+  <script src="legcwb04.js"></script>
+  <script src="legcwb05.js"></script>
+  <script src="legcwb06.js"></script>
+  <script src="legcwb07.js"></script>
+  <script src="legcwb08.js"></script>
+  <script src="legcwb09.js"></script>
   <script src="cons01.js"></script>
   <script src="cons02.js"></script>
   <script src="cons03.js"></script>
