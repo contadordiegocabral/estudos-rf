@@ -35,6 +35,7 @@ window.MAT = {
   cepr:    {nome:"Constituição do Estado do Paraná",               curto:"CE-PR"},
   legtjpr: {nome:"Legislação do TJPR",                             curto:"Leg. TJPR"},
   legcwb:  {nome:"Legislação Tributária de Curitiba",              curto:"Leg. Curitiba"},
+  infob:   {nome:"Noções de Informática",                          curto:"Informática"},
   ctb:     {nome:"Legislação de Trânsito e IPVA",                  curto:"CTB e IPVA"},
   tge:     {nome:"Teoria Geral do Estado",                         curto:"TGE"}
 };
@@ -389,7 +390,7 @@ window.DISC.rlm = {
 window.DISC.ti = {
   id:"ti", nome:"TI", cor:"u1", mat:"info",
   nomeLongo:"Tecnologia da Informação",
-  mods:["ti11","ti01","ti02","ti03","ti04","ti05","ti06","ti07","ti08","ti09","ti10"],
+  mods:["ti11","ti01","ti02","ti03","ti04","ti05","ti06","ti07","ti08","ti09","ti10","ti12","ti13","ti14","ti15","ti16"],
   pesos:[
     {mod:"11", tema:"Fundamentos de banco de dados: tipos de dados, dados abertos, qualidade (DAMA) e níveis de modelagem", q:null},
     {mod:"01", tema:"Modelagem de banco de dados: níveis, modelo entidade-relacionamento, atributos, chaves e cardinalidade", q:null},
@@ -401,9 +402,70 @@ window.DISC.ti = {
     {mod:"07", tema:"Data Warehouse: características, ETL, Data Lake, índice bitmap e chaves surrogadas", q:null},
     {mod:"08", tema:"Mineração de dados: KDD, CRISP-DM, técnicas, machine learning, árvore de decisão e anomalias", q:null},
     {mod:"09", tema:"Big Data (5Vs), Hadoop/HDFS e Power BI", q:null},
-    {mod:"10", tema:"Segurança da informação: princípios, criptografia, hash, assinatura e certificado digital", q:null}
+    {mod:"10", tema:"Segurança da informação: princípios, criptografia, hash, assinatura e certificado digital", q:null},
+    {mod:"12", tema:"Gerenciamento de projetos (PMBOK 6ª ed.): conceitos, estrutura, áreas, grupos de processos e ferramentas", q:null},
+    {mod:"13", tema:"BPM e BPMN: gerenciamento de processos de negócio, BPM CBOK, ciclo BPM e notação BPMN 2.0", q:null},
+    {mod:"14", tema:"Governança e qualidade: ITIL, COBIT, CMMI e MPS-BR", q:null},
+    {mod:"15", tema:"Engenharia de software: processos, ciclo de vida, requisitos, UML, testes e métricas", q:null},
+    {mod:"16", tema:"Programação: lógica, paradigmas, orientação a objetos, estruturas de dados e linguagens", q:null}
   ],
-  pesoNota:"Resumos do Radegondes: bancos de dados, SQL, BI, big data e segurança da informação. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
+  pesoNota:"Resumos do Radegondes (módulos 01 a 11: bancos de dados, SQL, BI, big data e segurança) e mapas mentais de revisão (módulos 12 a 16: PMBOK, BPM/BPMN, ITIL/COBIT/CMMI/MPS-BR, engenharia de software e programação). Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
+};
+
+window.DISC.infob = {
+  id:"infob", nome:"Informática", cor:"u1", mat:"infob",
+  nomeLongo:"Noções de Informática (Windows, Linux, Word, Excel, redes, segurança e hardware)",
+  mods:["infob01","infob02","infob03","infob04","infob05","infob06","infob07"],
+  pesos:[
+    {mod:"01", tema:"Redes e Internet: classificações, topologias, arquiteturas, protocolos e serviços", q:null},
+    {mod:"02", tema:"Computação em nuvem, e-mail, listas, transferência, acesso remoto, redes sociais e formatos", q:null},
+    {mod:"03", tema:"Segurança da informação: princípios, ameaças, malwares, criptografia, firewall e backup", q:null},
+    {mod:"04", tema:"Word e PowerPoint: recursos, atalhos, formatação e apresentações", q:null},
+    {mod:"05", tema:"Planilhas eletrônicas Excel: referências, fórmulas, funções, gráficos e formatação condicional", q:null},
+    {mod:"06", tema:"Sistemas operacionais Windows e Linux: arquivos, atalhos, comandos, diretórios e permissões", q:null},
+    {mod:"07", tema:"Hardware e software: componentes, memórias, armazenamento, periféricos, tipos de software e licenças", q:null}
+  ],
+  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Versões de Word e Excel mudam: o edital do ISS Curitiba cita Word e Excel 2016, Windows 10 e 11 e Ubuntu. Não cobre ainda o Google Drive em detalhe, Outlook/Zimbra e busca na web."
+};
+window.DISC.estat = {
+  id:"estat", nome:"Estatística", cor:"u5", mat:"estat",
+  nomeLongo:"Estatística descritiva, probabilidade, inferência, testes e regressão",
+  mods:["estat01","estat02","estat03","estat04","estat05","estat06"],
+  pesos:[
+    {mod:"01", tema:"Distribuições de frequências, apresentação de dados e médias", q:null},
+    {mod:"02", tema:"Medidas separatrizes, moda e medidas de dispersão", q:null},
+    {mod:"03", tema:"Análise combinatória, probabilidade e variáveis aleatórias discretas e contínuas", q:null},
+    {mod:"04", tema:"Distribuições discretas e contínuas de probabilidade: binomial, Poisson, uniforme, normal e outras", q:null},
+    {mod:"05", tema:"Amostragem, estimadores e intervalos de confiança", q:null},
+    {mod:"06", tema:"Testes de hipóteses, análise de variância e regressão linear simples", q:null}
+  ],
+  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. As fórmulas foram reconstruídas e os exercícios numéricos conferidos por cálculo. Quando a prova fornecer tabela de quantis, use a dela."
+};
+window.DISC.matfin = {
+  id:"matfin", nome:"Matemática Financeira", cor:"u5", mat:"matem",
+  nomeLongo:"Matemática Financeira: porcentagem, juros, descontos, VPL/TIR, rendas e amortização",
+  mods:["matfin01","matfin02","matfin03"],
+  pesos:[
+    {mod:"01", tema:"Porcentagem, juros simples e compostos, taxas equivalentes, convenção linear e exponencial", q:null},
+    {mod:"02", tema:"Descontos, valor presente líquido, equivalência de capitais e taxa interna de retorno", q:null},
+    {mod:"03", tema:"Rendas uniformes (anuidades) e planos de amortização: SAC, Price, SAM e sistema americano", q:null}
+  ],
+  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Em prova, o enunciado define a convenção (ano comercial, capitalização, taxa nominal ou efetiva) e prevalece sobre qualquer atalho."
+};
+window.DISC.econ = {
+  id:"econ", nome:"Economia", cor:"u3", mat:"econ",
+  nomeLongo:"Microeconomia e Macroeconomia",
+  mods:["econ01","econ02","econ03","econ04","econ05","econ06","econ07"],
+  pesos:[
+    {mod:"01", tema:"Princípios, CPP, demanda, oferta e equilíbrio de mercado", q:null},
+    {mod:"02", tema:"Elasticidade e teoria do consumidor", q:null},
+    {mod:"03", tema:"Teoria da produção, custos e lucros", q:null},
+    {mod:"04", tema:"Concorrência perfeita e monopólio: equilíbrio, regulação e discriminação de preços", q:null},
+    {mod:"05", tema:"Concorrência monopolística, oligopólio e contas nacionais (PIB, PNB, identidades)", q:null},
+    {mod:"06", tema:"Modelo clássico, políticas econômicas na economia clássica e modelo keynesiano", q:null},
+    {mod:"07", tema:"Modelo IS-LM, modelo OA-DA e curva de Phillips", q:null}
+  ],
+  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Cobre microeconomia, contas nacionais, modelos clássico e keynesiano, IS-LM, OA-DA e Phillips. Não cobre ainda crescimento (Solow), ciclos, setor externo, moeda e sistema financeiro, nem economia do setor público."
 };
 
 window.DISC.simples = {
@@ -569,7 +631,7 @@ window.DISC.dadm = {
    Nenhuma matéria fica guardada: a trilha intercala todas em partes iguais,
    para que nenhuma passe semanas parada.                                     */
 window.DISC_GUARDADAS = [];
-window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ti","simples","consult","fdados"];
+window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","estat","matfin","econ","ti","infob","simples","consult","fdados"];
 
 /* ---------- as provas, em ordem de prioridade ----------
    fator  = peso da prova na sua prioridade de estudo
@@ -609,10 +671,10 @@ window.CONCURSOS = {
     etapas:"Objetiva (40 questões, 80 pontos) + títulos (20 pontos)",
     mapa:[
       {it:"1.1", tema:"Língua Portuguesa", discs:["port"], st:"ok", nota:"Interpretação, coesão, ortografia, classes de palavras, concordância, pontuação e semântica estão nos 8 módulos. Literatura brasileira (prosa, poesia, autores e obras) não tem módulo."},
-      {it:"1.2", tema:"Noções de Informática", discs:[], st:"falta", nota:"O módulo de TI do app é de banco de dados, BI e segurança. Informática básica (Windows 10/11, Linux Ubuntu, Word, Excel, navegadores, Google Drive, e-mail, atalhos e IA generativa) não existe. São 5 questões."},
+      {it:"1.2", tema:"Noções de Informática", discs:["infob"], st:"ok", nota:"7 módulos: redes e internet, nuvem e e-mail, segurança, Word e PowerPoint, Excel, Windows e Linux, hardware e software. Falta o que é específico do edital: Google Drive em detalhe, Outlook/Zimbra, busca na web e IA generativa. Word e Excel do edital são 2016; confira os atalhos na sua versão. São 5 questões."},
       {it:"2.1", tema:"Legislação municipal (Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91)", discs:[], st:"falta", nota:"Sem conteúdo. Preciso dos PDFs dessas três leis."},
-      {it:"2.2", tema:"Raciocínio lógico, estatística e matemática financeira", discs:["rlm"], st:"parcial", nota:"Há lógica proposicional, argumentação, associações, datas e casa dos pombos. Faltam razão, proporção e porcentagem, combinatória e probabilidade, estatística descritiva e inferência, e matemática financeira (juros, SAC/Price, VPL/TIR)."},
-      {it:"2.3", tema:"TI aplicada à fiscalização, dados e LGPD", discs:["ti","fdados"], st:"parcial", nota:"Cobertos: bancos de dados, SQL, BI, data warehouse, mineração, big data, segurança e governança de dados (NoSQL e Python aparecem em Fluência em Dados). Falta a LGPD (Lei 13.709/2018)."},
+      {it:"2.2", tema:"Raciocínio lógico, estatística e matemática financeira", discs:["rlm","estat","matfin"], st:"parcial", nota:"Lógica em RLM; estatística descritiva, probabilidade, amostragem, inferência, testes e regressão em Estatística; porcentagem, juros, descontos, VPL/TIR e amortização (SAC, Price, SAM) em Matemática Financeira. Faltam razão, proporção e regra de três, e conjuntos."},
+      {it:"2.3", tema:"TI aplicada à fiscalização, dados e LGPD", discs:["ti","fdados"], st:"parcial", nota:"Cobertos: bancos de dados, SQL, BI, data warehouse, mineração, big data, segurança e governança de dados (NoSQL e Python aparecem em Fluência em Dados). TI também tem projetos (PMBOK), BPM, ITIL, COBIT, engenharia de software e programação. Falta a LGPD (Lei 13.709/2018)."},
       {it:"2.4", tema:"Direito Constitucional", discs:["dconst","dtrib"], st:"ok", nota:"O Sistema Tributário Nacional está nos módulos 02 a 04 de Direito Tributário, e o orçamento em AFO e LRF. Não há módulo de ordem econômica e financeira."},
       {it:"2.5", tema:"Direito Administrativo", discs:["dadm","licit"], st:"parcial", nota:"Cobertos: regime jurídico, atos, agentes, poderes, responsabilidade, licitações, improbidade, LAI e controle. Faltam o Decreto 9.830/2019 e as normas municipais (Lei 16.466/2024 e Decreto 435/2026)."},
       {it:"2.6", tema:"Direito Tributário, teoria geral (CTN)", discs:["dtrib"], st:"ok", nota:"Os 14 módulos seguem o CTN. A norma geral antielisiva não aparece com esse nome."},
@@ -624,9 +686,9 @@ window.CONCURSOS = {
       {it:"2.12", tema:"Contabilidade", discs:["contab","cavan"], st:"ok", nota:"Teoria das contas, escrituração, estoques, balanço, DRE, DFC, DVA, DMPL e os CPCs."},
       {it:"2.13", tema:"Direito Civil e Empresarial aplicados", discs:["dciv","demp"], st:"ok", nota:"Pessoas, bens, negócios jurídicos, obrigações, sociedades, títulos de crédito e recuperação."},
       {it:"2.14", tema:"Penal tributário e finanças públicas", discs:["dpen","lrf","afo"], st:"ok", nota:"Lei 8.137/90, crimes funcionais, LRF e orçamento público."},
-      {it:"2.15", tema:"Economia", discs:[], st:"falta", nota:"Sem módulo: contabilidade nacional, IS-LM, OA-DA, inflação, Curva de Phillips, crescimento e setor externo."}
+      {it:"2.15", tema:"Economia", discs:["econ"], st:"parcial", nota:"7 módulos: microeconomia, contas nacionais, modelo clássico e keynesiano, IS-LM, OA-DA e Curva de Phillips. Faltam crescimento (Solow), ciclos, inflação e índices (IPCA, IGP-M), desemprego, setor externo (balanço de pagamentos, câmbio, PPC) e moeda."}
     ],
-    materias:{ port:5, info:5, legtrib:4, legcwb:3, dtrib:5, consult:3, dconst:3, dadm:3, contab:3, dcivpen:2, lrf:1, econ:1, rlm:1, matem:1 },
+    materias:{ port:5, infob:5, legtrib:4, legcwb:3, dtrib:5, consult:3, dconst:3, dadm:3, contab:3, dcivpen:2, lrf:1, econ:1, rlm:1, matem:1 },
     nota:"O edital fixa 5 questões de Português, 5 de Informática e 30 de Conhecimentos Específicos, mas NÃO divulga quantas questões cada matéria tem. Os pesos acima para as matérias específicas são uma estimativa de estudo (ISSQN e legislação de Curitiba no topo, depois Direito Tributário, Reforma Tributária, Constitucional, Administrativo e Contabilidade). Inscrições de 07/10 a 05/11/2026; taxa até 06/11."
   },
   tjpr: {

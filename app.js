@@ -2446,7 +2446,7 @@ function pvE(){
   if(!S.plano.datas)S.plano.datas={};
 }
 var PV_CONC=["isscwb","atrfb","tjpr","creapr","crqpr"].filter(function(k){return CONC[k];});
-var PV_MATMAP={tjpr:{contab:["contab","afo","lrf"]},isscwb:{contab:["contab"]},atrfb:{contab:["contab","cavan"]},creapr:{contab:["contab","cavan"]},crqpr:{contab:["contab","cavan"]}};
+var PV_MATMAP={tjpr:{contab:["contab","afo","lrf"]},isscwb:{contab:["contab"],rlm:["rlm","estat"]},atrfb:{contab:["contab","cavan"]},creapr:{contab:["contab","cavan"]},crqpr:{contab:["contab","cavan"]}};
 var PV_EXTRA={matem:"Matemática",legpr:"Legislação do Paraná",ingles:"Inglês"};
 function pvMatNome(k){ return (window.MAT&&MAT[k])?MAT[k].nome:(PV_EXTRA[k]||k); }
 function pvDiscs(conc,k){
