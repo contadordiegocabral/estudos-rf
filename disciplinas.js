@@ -373,7 +373,7 @@ window.DISC.port = {
 window.DISC.rlm = {
   id:"rlm", nome:"RLM", cor:"u5", mat:"rlm",
   nomeLongo:"Raciocínio Lógico",
-  mods:["rlm01","rlm02","rlm03","rlm04","rlm05","rlm06","rlm07","rlm08"],
+  mods:["rlm01","rlm02","rlm03","rlm04","rlm05","rlm06","rlm07","rlm08","rlm09","rlm10"],
   pesos:[
     {mod:"01", tema:"Proposições, conectivos lógicos e tabelas-verdade", q:null},
     {mod:"02", tema:"Negação de proposições simples, categóricas e compostas", q:null},
@@ -382,7 +382,9 @@ window.DISC.rlm = {
     {mod:"05", tema:"Associações lógicas: tabela, informações diretas e indiretas e hipóteses", q:null},
     {mod:"06", tema:"Verdades e mentiras: par contraditório, V e F e quem fala a verdade", q:null},
     {mod:"07", tema:"Datas e calendários: dias da semana, anos normais e bissextos e ciclos", q:null},
-    {mod:"08", tema:"Princípio da casa dos pombos: distribuição uniforme e pior cenário (maior azar)", q:null}
+    {mod:"08", tema:"Princípio da casa dos pombos: distribuição uniforme e pior cenário (maior azar)", q:null},
+    {mod:"09", tema:"Razão, proporção, regra de três, divisão proporcional, médias e misturas", q:null},
+    {mod:"10", tema:"Conjuntos: pertinência, inclusão, operações, diagramas de Venn e problemas de contagem", q:null}
   ],
   pesoNota:"Resumos do Radegondes: lógica proposicional, argumentos e problemas de raciocínio. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
@@ -455,7 +457,7 @@ window.DISC.matfin = {
 window.DISC.econ = {
   id:"econ", nome:"Economia", cor:"u3", mat:"econ",
   nomeLongo:"Microeconomia e Macroeconomia",
-  mods:["econ01","econ02","econ03","econ04","econ05","econ06","econ07"],
+  mods:["econ01","econ02","econ03","econ04","econ05","econ06","econ07","econ08","econ09","econ10"],
   pesos:[
     {mod:"01", tema:"Princípios, CPP, demanda, oferta e equilíbrio de mercado", q:null},
     {mod:"02", tema:"Elasticidade e teoria do consumidor", q:null},
@@ -463,9 +465,12 @@ window.DISC.econ = {
     {mod:"04", tema:"Concorrência perfeita e monopólio: equilíbrio, regulação e discriminação de preços", q:null},
     {mod:"05", tema:"Concorrência monopolística, oligopólio e contas nacionais (PIB, PNB, identidades)", q:null},
     {mod:"06", tema:"Modelo clássico, políticas econômicas na economia clássica e modelo keynesiano", q:null},
-    {mod:"07", tema:"Modelo IS-LM, modelo OA-DA e curva de Phillips", q:null}
+    {mod:"07", tema:"Modelo IS-LM, modelo OA-DA e curva de Phillips", q:null},
+    {mod:"08", tema:"Crescimento econômico e ciclos econômicos: modelo de Solow, regra de ouro, produtividade, fases e indicadores", q:null},
+    {mod:"09", tema:"Inflação, índices de preços, desemprego e mercado de trabalho: IPCA, INPC, IGP-M, IGP-DI, tipos de inflação, efeitos, taxa natural", q:null},
+    {mod:"10", tema:"Setor externo: balanço de pagamentos, câmbio nominal e real, regimes cambiais, PPC e Marshall-Lerner", q:null}
   ],
-  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Cobre microeconomia, contas nacionais, modelos clássico e keynesiano, IS-LM, OA-DA e Phillips. Não cobre ainda crescimento (Solow), ciclos, setor externo, moeda e sistema financeiro, nem economia do setor público."
+  pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Cobre microeconomia, contas nacionais, modelos clássico e keynesiano, IS-LM, OA-DA e Phillips. Os módulos 08 a 10 (crescimento e ciclos, inflação e desemprego, setor externo) foram feitos a partir do programa do edital e de conteúdo-padrão, sem mapa mental. Não cobre moeda e sistema financeiro nem economia do setor público."
 };
 
 window.DISC.simples = {
@@ -673,7 +678,7 @@ window.CONCURSOS = {
       {it:"1.1", tema:"Língua Portuguesa", discs:["port"], st:"ok", nota:"Interpretação, coesão, ortografia, classes de palavras, concordância, pontuação e semântica estão nos 8 módulos. Literatura brasileira (prosa, poesia, autores e obras) não tem módulo."},
       {it:"1.2", tema:"Noções de Informática", discs:["infob"], st:"ok", nota:"7 módulos: redes e internet, nuvem e e-mail, segurança, Word e PowerPoint, Excel, Windows e Linux, hardware e software. Falta o que é específico do edital: Google Drive em detalhe, Outlook/Zimbra, busca na web e IA generativa. Word e Excel do edital são 2016; confira os atalhos na sua versão. São 5 questões."},
       {it:"2.1", tema:"Legislação municipal (Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91)", discs:[], st:"falta", nota:"Sem conteúdo. Preciso dos PDFs dessas três leis."},
-      {it:"2.2", tema:"Raciocínio lógico, estatística e matemática financeira", discs:["rlm","estat","matfin"], st:"parcial", nota:"Lógica em RLM; estatística descritiva, probabilidade, amostragem, inferência, testes e regressão em Estatística; porcentagem, juros, descontos, VPL/TIR e amortização (SAC, Price, SAM) em Matemática Financeira. Faltam razão, proporção e regra de três, e conjuntos."},
+      {it:"2.2", tema:"Raciocínio lógico, estatística e matemática financeira", discs:["rlm","estat","matfin"], st:"ok", nota:"Lógica em RLM; estatística descritiva, probabilidade, amostragem, inferência, testes e regressão em Estatística; porcentagem, juros, descontos, VPL/TIR e amortização (SAC, Price, SAM) em Matemática Financeira. Razão, proporção, regra de três e conjuntos nos módulos 09 e 10 de RLM."},
       {it:"2.3", tema:"TI aplicada à fiscalização, dados e LGPD", discs:["ti","fdados"], st:"parcial", nota:"Cobertos: bancos de dados, SQL, BI, data warehouse, mineração, big data, segurança e governança de dados (NoSQL e Python aparecem em Fluência em Dados). TI também tem projetos (PMBOK), BPM, ITIL, COBIT, engenharia de software e programação. Falta a LGPD (Lei 13.709/2018)."},
       {it:"2.4", tema:"Direito Constitucional", discs:["dconst","dtrib"], st:"ok", nota:"O Sistema Tributário Nacional está nos módulos 02 a 04 de Direito Tributário, e o orçamento em AFO e LRF. Não há módulo de ordem econômica e financeira."},
       {it:"2.5", tema:"Direito Administrativo", discs:["dadm","licit"], st:"parcial", nota:"Cobertos: regime jurídico, atos, agentes, poderes, responsabilidade, licitações, improbidade, LAI e controle. Faltam o Decreto 9.830/2019 e as normas municipais (Lei 16.466/2024 e Decreto 435/2026)."},
@@ -686,7 +691,7 @@ window.CONCURSOS = {
       {it:"2.12", tema:"Contabilidade", discs:["contab","cavan"], st:"ok", nota:"Teoria das contas, escrituração, estoques, balanço, DRE, DFC, DVA, DMPL e os CPCs."},
       {it:"2.13", tema:"Direito Civil e Empresarial aplicados", discs:["dciv","demp"], st:"ok", nota:"Pessoas, bens, negócios jurídicos, obrigações, sociedades, títulos de crédito e recuperação."},
       {it:"2.14", tema:"Penal tributário e finanças públicas", discs:["dpen","lrf","afo"], st:"ok", nota:"Lei 8.137/90, crimes funcionais, LRF e orçamento público."},
-      {it:"2.15", tema:"Economia", discs:["econ"], st:"parcial", nota:"7 módulos: microeconomia, contas nacionais, modelo clássico e keynesiano, IS-LM, OA-DA e Curva de Phillips. Faltam crescimento (Solow), ciclos, inflação e índices (IPCA, IGP-M), desemprego, setor externo (balanço de pagamentos, câmbio, PPC) e moeda."}
+      {it:"2.15", tema:"Economia", discs:["econ"], st:"ok", nota:"10 módulos: microeconomia, contas nacionais, modelo clássico e keynesiano, IS-LM, OA-DA e Curva de Phillips. Mais 3 módulos: crescimento (Solow) e ciclos, inflação, índices e desemprego, e setor externo (balanço de pagamentos, câmbio, PPC). Esses três vêm do programa do edital e de conteúdo-padrão, sem mapa. Falta moeda e sistema financeiro."}
     ],
     materias:{ port:5, infob:5, legtrib:4, legcwb:3, dtrib:5, consult:3, dconst:3, dadm:3, contab:3, dcivpen:2, lrf:1, econ:1, rlm:1, matem:1 },
     nota:"O edital fixa 5 questões de Português, 5 de Informática e 30 de Conhecimentos Específicos, mas NÃO divulga quantas questões cada matéria tem. Os pesos acima para as matérias específicas são uma estimativa de estudo (ISSQN e legislação de Curitiba no topo, depois Direito Tributário, Reforma Tributária, Constitucional, Administrativo e Contabilidade). Inscrições de 07/10 a 05/11/2026; taxa até 06/11."
