@@ -1660,14 +1660,34 @@ function cadernoHtml(links){
   }).join("");
 }
 
+/* ---------- cadernos do Guia de Estudo (por bloco e banca) ---------- */
+var GUIA=window.GUIA||{};
+function guiaBlocosDe(discId, modNum){
+  var d=GUIA[discId]; if(!d) return [];
+  return d.blocos.filter(function(b){ return b.mods.indexOf(modNum)>=0; });
+}
+function guiaLinksHtml(cad){
+  return cad.map(function(l){
+    return '<a href="'+l.u+'" target="_blank" rel="noopener"><span class="bn">'+l.b+'</span><span class="bu">'+l.q+' questões</span></a>';
+  }).join("");
+}
+function guiaBlocoHtml(bl){
+  return '<p class="tec-h">'+bl.k+(bl.tema?' <span style="font-weight:400">— '+bl.tema+'</span>':'')+'</p>'+
+         '<div class="teclist mini">'+guiaLinksHtml(bl.cad)+'</div>';
+}
+
 /* ---------- links de questões do TEC dentro das revisões ---------- */
 function tecLinksDe(mod){
   var m=REG[mod]; if(!m) return [];
-  var cad=cadernosDe(discOf(mod), m.n);
-  if(cad&&cad.links&&cad.links.length) return cad.links.map(function(l){ return {n:(l.b==="?"?"Caderno":l.b),u:l.u,real:true}; });
-  return (m.TEC||[]).map(function(t){
+  var cad=cadernosDe(discOf(mod), m.n), out=[];
+  if(cad&&cad.links&&cad.links.length) out=cad.links.map(function(l){ return {n:(l.b==="?"?"Caderno":l.b),u:l.u,real:true}; });
+  else out=(m.TEC||[]).map(function(t){
     return {n:t[0], u:(/^https?:/.test(t[1])?t[1]:("https://www.tecconcursos.com.br/s/"+t[1])), real:!/\/questoes\/filtro/.test(t[1])};
   });
+  guiaBlocosDe(discOf(mod), m.n).forEach(function(bl){
+    bl.cad.forEach(function(l){ out.push({n:l.b+" · "+bl.k, u:l.u, real:true}); });
+  });
+  return out;
 }
 function tecBloco(mods){
   var itens=[], cut=Math.min(mods.length,8);
@@ -1699,6 +1719,10 @@ function runMissao(l){
                '<span class="bn">'+t[0]+'</span><span class="bu">'+(t[2]||t[1])+'</span></a>';
       }).join("");
     })() +'</div>'+
+    (function(){
+      var bs=guiaBlocosDe(S.disc, M.n);
+      return bs.length?'<div class="fig" style="margin-top:14px;text-align:left"><div class="fig-t">Cadernos por bloco e banca</div>'+bs.map(guiaBlocoHtml).join("")+'</div>':"";
+    })()+
     '<label class="checkrow"><input type="checkbox" id="mchk"><span>Já resolvi pelo menos 15 questões e favoritei as que errei.</span></label>';
   setFoot("",'<button class="big" id="mdone" disabled>Concluir missão</button>');
   var chk=document.getElementById("mchk"),btn=document.getElementById("mdone");
@@ -2138,7 +2162,28 @@ function cadernosDiretorio(){
                               :'<p class="empty" style="text-align:left;padding:2px 0">Sem caderno próprio no PDF — use o do módulo anterior.</p>')+'</div>';
       }).join("")+'</details>';
   }).join("");
+  h+=guiaDiretorio();
   return h;
+}
+function guiaDiretorio(){
+  var ks=Object.keys(GUIA).filter(function(k){return DISC[k];});
+  if(!ks.length) return "";
+  var h='<div class="fig"><div class="fig-t">Cadernos do Guia — por bloco de assuntos</div>'+
+        '<div class="fig-s">FGV · FCC · CESPE, na ordem da trilha de cada matéria</div></div>';
+  ks.sort(function(a,b){var i=DISC_ORDER.indexOf(a),j=DISC_ORDER.indexOf(b);return (i<0?99:i)-(j<0?99:j);});
+  return h+ks.map(function(k){
+    var d=GUIA[k], x=d.completo||[];
+    return '<details class="cadmat"><summary><span class="cm-n">'+DISC[k].nomeLongo+'</span><span class="cm-q">'+d.blocos.length+' blocos</span></summary>'+
+      (x.length?'<div class="cadmod"><div class="cd-h"><span class="cd-t">Cadernos completos</span></div><div class="teclist mini">'+
+        x.map(function(l){return '<a href="'+l.u+'" target="_blank" rel="noopener"><span class="bn">'+l.b+(l.g?' · '+l.g:'')+'</span><span class="bu">'+l.q+' questões</span></a>';}).join("")+'</div></div>':"")+
+      d.blocos.map(function(bl){
+        return '<div class="cadmod"><div class="cd-h"><span class="cd-n">'+bl.k+'</span><span class="cd-t">'+(bl.tema||"")+'</span></div>'+
+               '<div class="teclist mini">'+guiaLinksHtml(bl.cad)+'</div></div>';}).join("")+
+      (d.provas||[]).map(function(p){
+        return '<div class="cadmod"><div class="cd-h"><span class="cd-t">Provas anteriores — '+p.b+'</span></div><div class="teclist mini">'+
+          p.itens.map(function(l){return '<a href="'+l.u+'" target="_blank" rel="noopener"><span class="bn">'+l.r+'</span><span class="bu">'+l.q+' questões</span></a>';}).join("")+'</div></div>';}).join("")+
+      '</details>';
+  }).join("");
 }
 
 /* ---------- drawer / ajustes ---------- */

@@ -46,7 +46,7 @@ window.DISC = {
     id:"cpub", nome:"Cont. Pública", cor:"u2", mat:"afo",
     nomeLongo:"Contabilidade Pública",
     mods:["cpub01","cpub02","cpub03","cpub04","cpub05","cpub06","cpub07",
-          "cpub08","cpub09","cpub10","cpub11","cpub12","cpub13"],
+          "cpub08","cpub09","cpub10","cpub11","cpub12","cpub13","cpub14","cpub15"],
     pesos:[
       {mod:"01", tema:"Conceitos iniciais e NBC TSP Estrutura Conceitual (parte 1)", q:null},
       {mod:"02", tema:"NBC TSP Estrutura Conceitual (parte 2)",                      q:null},
@@ -60,14 +60,16 @@ window.DISC = {
       {mod:"10", tema:"Balanço patrimonial",                                         q:null},
       {mod:"11", tema:"Demonstração das variações patrimoniais (DVP)",               q:null},
       {mod:"12", tema:"Demonstração dos fluxos de caixa (DFC)",                      q:null},
-      {mod:"13", tema:"Demonstração das mutações no patrimônio líquido (DMPL)",      q:null}
+      {mod:"13", tema:"Demonstração das mutações no patrimônio líquido (DMPL)",      q:null},
+      {mod:"14", tema:"Ativo imobilizado e intangível, depreciação, amortização e redução ao valor recuperável", q:null},
+      {mod:"15", tema:"Bens públicos e inventário, estoques e provisões, passivos e ativos contingentes", q:null}
     ],
     pesoNota:"ordem do sumário do resumo Radegondes — do conceito até as demonstrações, um assunto puxando o seguinte"
   },
   afo: {
     id:"afo", nome:"AFO", cor:"u1", mat:"afo",
     nomeLongo:"Administração Financeira e Orçamentária",
-    mods:["m01","m02","m03","m04","m05","m06","m07","m08","m09","m10","m11"],
+    mods:["m01","m02","m03","m04","m05","m06","m07","m08","m09","m10","m11","afo12","afo13"],
     pesos:null
   },
   lrf: {
@@ -87,7 +89,7 @@ window.DISC = {
     id:"contab", nome:"Contabilidade", cor:"u3", mat:"contab",
     nomeLongo:"Contabilidade Geral e de Custos",
     mods:["contab01","contab02","contab03","contab04","contab05","contab06",
-          "contab07","contab08","contab09","contab10","contab11","contab12","contab13"],
+          "contab07","contab08","contab09","contab10","contab11","contab12","contab13","contab14","contab15","contab16","contab17","contab18"],
     pesos:[
       {mod:"01", tema:"Conceito, objeto, finalidade e teoria das contas", q:null},
       {mod:"02", tema:"Escrituração e regimes contábeis",               q:null},
@@ -101,7 +103,12 @@ window.DISC = {
       {mod:"10", tema:"DRE, DRA e CPC 26",                               q:null},
       {mod:"11", tema:"Demonstração do valor adicionado (CPC 09)",       q:null},
       {mod:"12", tema:"Demonstração dos fluxos de caixa (CPC 03)",       q:null},
-      {mod:"13", tema:"DLPA e DMPL",                                     q:null}
+      {mod:"13", tema:"DLPA e DMPL",                                     q:null},
+      {mod:"14", tema:"Investimentos: propriedade para investimento (CPC 28), transferências, goodwill x mais-valia e equivalência patrimonial", q:null},
+      {mod:"15", tema:"Arrendamento (CPC 06), subvenção governamental (CPC 07) e receita de contrato com cliente (CPC 47)", q:null},
+      {mod:"16", tema:"Custos I: gasto, custo, despesa e perda; classificação dos custos; fluxo do CPP, CPA e CPV", q:null},
+      {mod:"17", tema:"Custos II: custeio por absorção, departamentalização, equivalente de produção, ordem x processo e absorção x variável", q:null},
+      {mod:"18", tema:"Custos III: margem de contribuição, ponto de equilíbrio, GAO, markup, ABC, RKW e custo padrão", q:null}
     ],
     pesoNota:"ordem do sumário do resumo Radegondes — a base da matéria, na sequência em que ela se constrói"
   }
@@ -110,7 +117,7 @@ window.DISC.dtrib = {
   id:"dtrib", nome:"Dir. Tributário", cor:"u4", mat:"dtrib",
   nomeLongo:"Direito Tributário e Legislação Tributária",
   mods:["dtrib01","dtrib02","dtrib03","dtrib04","dtrib05","dtrib06","dtrib07",
-        "dtrib08","dtrib09","dtrib10","dtrib11","dtrib12","dtrib13","dtrib14"],
+        "dtrib08","dtrib09","dtrib10","dtrib11","dtrib12","dtrib13","dtrib14","dtrib15","dtrib16","dtrib17","dtrib18"],
   pesos:[
     {mod:"01", tema:"Conceito de tributo e natureza jurídica",                   q:null},
     {mod:"02", tema:"Limitações constitucionais ao poder de tributar",           q:null},
@@ -125,8 +132,12 @@ window.DISC.dtrib = {
     {mod:"11", tema:"Exclusão do crédito tributário",                            q:null},
     {mod:"12", tema:"Garantias e privilégios do crédito tributário",             q:null},
     {mod:"13", tema:"Administração tributária — fiscalização",                    q:null},
-    {mod:"14", tema:"Dívida ativa e certidões negativas",                        q:null}
-  ],
+    {mod:"14", tema:"Dívida ativa e certidões negativas",                        q:null},
+      {mod:"15", tema:"Impostos da União (arts. 153 e 154 da CF): II, IE, IR, IPI, IOF, ITR e IGF, com exceções e pegadinhas", q:null},
+      {mod:"16", tema:"ICMS: competência, não cumulatividade, alíquotas, DIFAL e jurisprudência do STF e do STJ", q:null},
+      {mod:"17", tema:"Impostos municipais (ISS, IPTU e ITBI): regras constitucionais, súmulas e pegadinhas", q:null},
+      {mod:"18", tema:"IPVA, ITCMD e Súmulas Vinculantes tributárias: regras, tese e pegadinhas", q:null}
+    ],
   pesoNota:"ordem do sumário do resumo Radegondes — segue a espinha do próprio Código Tributário Nacional, do conceito de tributo até dívida ativa e certidões"
 };
 
@@ -183,12 +194,15 @@ window.DISC.audpriv = {
 window.DISC.audfis = {
   id:"audfis", nome:"Aud. Fiscal", cor:"u2", mat:"audit",
   nomeLongo:"Auditoria Fiscal",
-  mods:["audfis01","audfis02","audfis03"],
+  mods:["audfis01","audfis02","audfis03","audfis04","audfis05","audfis06"],
   pesos:[
     {mod:"01", tema:"Presunção de omissão de receitas, fraudes e técnicas de auditoria", q:null},
     {mod:"02", tema:"Documentos eletrônicos: SPED, NF-e, NFC-e, NFS-e, ECD, ECF e EFD", q:null},
-    {mod:"03", tema:"Blocos da EFD, grupos da NF-e, comunicação com a SEFAZ e eventos", q:null}
-  ],
+    {mod:"03", tema:"Blocos da EFD, grupos da NF-e, comunicação com a SEFAZ e eventos", q:null},
+      {mod:"04", tema:"Auditoria independente: TA 200 e 300, auditoria interna, materialidade, risco e evidência", q:null},
+      {mod:"05", tema:"Testes, procedimentos e amostragem em auditoria (TA 330, 500, 505, 520 e 530)", q:null},
+      {mod:"06", tema:"Fraude, papéis de trabalho, relatório do auditor (TA 700, 705, 706) e sigilo da LC 105", q:null}
+    ],
   pesoNota:"a auditoria que a Receita faz: omissão de receitas e escrituração digital (SPED, NF-e, EFD). Material de Auditoria Fiscal do Radegondes — leiautes e regras da EFD mudam; confira a versão vigente."
 };
 
@@ -252,7 +266,7 @@ window.DISC.adger = {
 window.DISC.dconst = {
   id:"dconst", nome:"Dir. Constitucional", cor:"u4", mat:"dconst",
   nomeLongo:"Direito Constitucional",
-  mods:["dconst01","dconst02","dconst03","dconst04","dconst05","dconst06","dconst07","dconst08","dconst09","dconst10","dconst11","dconst12","dconst13","dconst14","dconst15","dconst16"],
+  mods:["dconst01","dconst02","dconst03","dconst04","dconst05","dconst06","dconst07","dconst08","dconst09","dconst10","dconst11","dconst12","dconst13","dconst14","dconst15","dconst16","dconst17","dconst18","dconst19"],
   pesos:[
     {mod:"01", tema:"Dos Princípios Fundamentais (arts. 1º a 4º da CF): fundamentos, separação de Poderes, objetivos e relações internacionais", q:null},
     {mod:"02", tema:"Eficácia e aplicabilidade das normas constitucionais: eficácia plena, contida e limitada", q:null},
@@ -269,8 +283,11 @@ window.DISC.dconst = {
     {mod:"13", tema:"Poder Judiciário (2): CNJ, STJ, Justiças Federal, do Trabalho, Eleitoral, Militar e dos Estados", q:null},
     {mod:"14", tema:"Funções Essenciais à Justiça: Ministério Público, CNMP, Advocacia Pública e Privada e Defensoria Pública (arts. 127 a 135)", q:null},
     {mod:"15", tema:"Defesa do Estado e das Instituições Democráticas: estado de defesa, estado de sítio, Forças Armadas e segurança pública (arts. 136 a 144)", q:null},
-    {mod:"16", tema:"Controle de constitucionalidade: sistemas, difuso, ADI, ADC, ADO, ADPF e reserva de plenário", q:null}
-  ],
+    {mod:"16", tema:"Controle de constitucionalidade: sistemas, difuso, ADI, ADC, ADO, ADPF e reserva de plenário", q:null},
+      {mod:"17", tema:"Administração Pública na CF (arts. 37 a 41): concurso, teto, acumulação e estabilidade", q:null},
+      {mod:"18", tema:"Ordem econômica e ordem social na CF: monopólios, seguridade social e jurisprudência", q:null},
+      {mod:"19", tema:"Teoria da Constituição: classificação, interpretação, princípios e direito intertemporal", q:null}
+    ],
   pesoNota:"Resumos do Radegondes: da CF/88: princípios, direitos fundamentais, organização do Estado e dos Poderes, controle de constitucionalidade. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
@@ -292,7 +309,7 @@ window.DISC.licit = {
 window.DISC.dciv = {
   id:"dciv", nome:"Dir. Civil", cor:"u1", mat:"dcivpen",
   nomeLongo:"Direito Civil",
-  mods:["dciv01","dciv02","dciv03","dciv04","dciv05","dciv06","dciv07","dciv08","dciv09","dciv10","dciv11","dciv12","dciv13"],
+  mods:["dciv01","dciv02","dciv03","dciv04","dciv05","dciv06","dciv07","dciv08","dciv09","dciv10","dciv11","dciv12","dciv13","dciv14","dciv15"],
   pesos:[
     {mod:"01", tema:"LINDB: vigência, integração, eficácia no tempo e segurança jurídica na gestão pública", q:null},
     {mod:"02", tema:"Pessoas naturais: personalidade, capacidade, direitos da personalidade e ausência", q:null},
@@ -306,15 +323,17 @@ window.DISC.dciv = {
     {mod:"10", tema:"Contratos em espécie: compra e venda, doação, empréstimo, serviço, depósito, mandato, seguro, fiança e transação", q:null},
     {mod:"11", tema:"Responsabilidade civil: ato ilícito, teorias subjetiva e objetiva, responsabilidade por terceiros e indenização", q:null},
     {mod:"12", tema:"Direito das Coisas: posse, propriedade, usucapião, acessão, usufruto e direitos reais de garantia", q:null},
-    {mod:"13", tema:"Direito das Sucessões: saisine, vocação hereditária, herdeiros necessários, testamento e inventário", q:null}
-  ],
+    {mod:"13", tema:"Direito das Sucessões: saisine, vocação hereditária, herdeiros necessários, testamento e inventário", q:null},
+      {mod:"14", tema:"Negócio jurídico, prescrição e decadência: pegadinhas, prazos e entendimento do STJ", q:null},
+      {mod:"15", tema:"Obrigações e contratos em detalhe e direitos da personalidade na jurisprudência", q:null}
+    ],
   pesoNota:"Resumos do Radegondes: LINDB, pessoas, bens, negócio jurídico, obrigações, contratos, coisas e sucessões. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
 window.DISC.demp = {
   id:"demp", nome:"Dir. Empresarial", cor:"u2", mat:"dcivpen",
   nomeLongo:"Direito Empresarial",
-  mods:["demp13","demp01","demp02","demp03","demp04","demp05","demp06","demp07","demp08","demp09","demp10","demp11","demp12"],
+  mods:["demp13","demp01","demp02","demp03","demp04","demp05","demp06","demp07","demp08","demp09","demp10","demp11","demp12","demp14","demp15"],
   pesos:[
     {mod:"13", tema:"Empresa e empresário: conceito, registro, empresário rural, capacidade e empresário casado", q:null},
     {mod:"01", tema:"Estabelecimento empresarial: conceito, trespasse, débitos, concorrência e contratos (CC arts. 1.142-1.149)", q:null},
@@ -328,15 +347,17 @@ window.DISC.demp = {
     {mod:"09", tema:"Operações societárias: transformação, incorporação, fusão e cisão (CC arts. 1.113 a 1.122; LSA art. 229)", q:null},
     {mod:"10", tema:"Falência (Lei 11.101/05): âmbito, efeitos, classificação de créditos e pedido", q:null},
     {mod:"11", tema:"Recuperação judicial e extrajudicial (Lei 11.101/05): requisitos, convolação e plano", q:null},
-    {mod:"12", tema:"Títulos de crédito: princípios, endosso, aval, cheque, duplicata, nota promissória e protesto", q:null}
-  ],
+    {mod:"12", tema:"Títulos de crédito: princípios, endosso, aval, cheque, duplicata, nota promissória e protesto", q:null},
+      {mod:"14", tema:"Registro de empresas (Lei 8.934/94), desconsideração da personalidade e coligadas", q:null},
+      {mod:"15", tema:"S.A. em detalhe: ações, voto, controlador, quóruns, capital e comparação com a Ltda", q:null}
+    ],
   pesoNota:"Resumos do Radegondes: empresário, sociedades, falência e recuperação, títulos de crédito. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
 window.DISC.dpen = {
   id:"dpen", nome:"Dir. Penal", cor:"u3", mat:"dcivpen",
   nomeLongo:"Direito Penal",
-  mods:["dpen11","dpen01","dpen02","dpen03","dpen04","dpen05","dpen06","dpen07","dpen08","dpen09","dpen10"],
+  mods:["dpen11","dpen01","dpen02","dpen03","dpen04","dpen05","dpen06","dpen07","dpen08","dpen09","dpen10","dpen12","dpen13"],
   pesos:[
     {mod:"11", tema:"Princípios do Direito Penal: legalidade, insignificância, intervenção mínima e outros", q:null},
     {mod:"01", tema:"Aplicação da lei penal (tempo, espaço, extraterritorialidade) e classificação dos crimes quanto ao resultado", q:null},
@@ -348,15 +369,17 @@ window.DISC.dpen = {
     {mod:"07", tema:"Crimes praticados por particular contra a Administração (arts. 328 a 337-A do CP)", q:null},
     {mod:"08", tema:"Crimes em licitações e contratos e crimes contra a Administração da Justiça (arts. 337-E a 359 do CP)", q:null},
     {mod:"09", tema:"Crimes contra as finanças públicas (arts. 359-A a 359-H do Código Penal)", q:null},
-    {mod:"10", tema:"Crimes contra a ordem tributária, a economia e as relações de consumo (Lei 8.137/90)", q:null}
-  ],
+    {mod:"10", tema:"Crimes contra a ordem tributária, a economia e as relações de consumo (Lei 8.137/90)", q:null},
+      {mod:"12", tema:"Crimes contra a fé pública (arts. 289 a 311-A do CP): falsidades e documento falso", q:null},
+      {mod:"13", tema:"Crimes funcionais em detalhe, advocacia administrativa e corrupção internacional", q:null}
+    ],
   pesoNota:"Resumos do Radegondes: teoria do crime e crimes contra a Administração e a ordem tributária. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
 window.DISC.port = {
   id:"port", nome:"Português", cor:"u4", mat:"port",
   nomeLongo:"Língua Portuguesa",
-  mods:["port01","port02","port03","port04","port05","port06","port07","port08"],
+  mods:["port01","port02","port03","port04","port05","port06","port07","port08","port09","port10"],
   pesos:[
     {mod:"01", tema:"Ortografia, acentuação, hífen e morfologia (classes de palavras)", q:null},
     {mod:"02", tema:"Semântica vocabular, sintaxe (AA x CN, orações reduzidas) e pontuação", q:null},
@@ -365,15 +388,17 @@ window.DISC.port = {
     {mod:"05", tema:"Linguagem, figuras e vícios de linguagem, funções da linguagem e os vocábulos SE e QUE", q:null},
     {mod:"06", tema:"Tipologia e gênero textual, texto dissertativo, argumentação, descrição, narração e injunção", q:null},
     {mod:"07", tema:"Paralelismo sintático e semântico, reescrita de frases, clareza e correção", q:null},
-    {mod:"08", tema:"Interpretação e compreensão textual, erros de interpretação e estratégias argumentativas", q:null}
-  ],
+    {mod:"08", tema:"Interpretação e compreensão textual, erros de interpretação e estratégias argumentativas", q:null},
+      {mod:"09", tema:"Pronomes e verbos: colocação pronominal, relativos, demonstrativos, tempos compostos e verbos como odiar", q:null},
+      {mod:"10", tema:"Vírgula em orações adjetivas, crase facultativa, regência (atender, visar), termos da oração e verbos impessoais", q:null}
+    ],
   pesoNota:"Resumos do Radegondes: gramática, interpretação e redação oficial. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
 window.DISC.rlm = {
   id:"rlm", nome:"RLM", cor:"u5", mat:"rlm",
   nomeLongo:"Raciocínio Lógico",
-  mods:["rlm01","rlm02","rlm03","rlm04","rlm05","rlm06","rlm07","rlm08","rlm09","rlm10"],
+  mods:["rlm01","rlm02","rlm03","rlm04","rlm05","rlm06","rlm07","rlm08","rlm09","rlm10","rlm11"],
   pesos:[
     {mod:"01", tema:"Proposições, conectivos lógicos e tabelas-verdade", q:null},
     {mod:"02", tema:"Negação de proposições simples, categóricas e compostas", q:null},
@@ -384,15 +409,16 @@ window.DISC.rlm = {
     {mod:"07", tema:"Datas e calendários: dias da semana, anos normais e bissextos e ciclos", q:null},
     {mod:"08", tema:"Princípio da casa dos pombos: distribuição uniforme e pior cenário (maior azar)", q:null},
     {mod:"09", tema:"Razão, proporção, regra de três, divisão proporcional, médias e misturas", q:null},
-    {mod:"10", tema:"Conjuntos: pertinência, inclusão, operações, diagramas de Venn e problemas de contagem", q:null}
-  ],
+    {mod:"10", tema:"Conjuntos: pertinência, inclusão, operações, diagramas de Venn e problemas de contagem", q:null},
+      {mod:"11", tema:"Análise combinatória, probabilidade, porcentagem e geometria básica: fórmulas e pegadinhas", q:null}
+    ],
   pesoNota:"Resumos do Radegondes: lógica proposicional, argumentos e problemas de raciocínio. Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
 window.DISC.ti = {
   id:"ti", nome:"TI", cor:"u1", mat:"info",
   nomeLongo:"Tecnologia da Informação",
-  mods:["ti11","ti01","ti02","ti03","ti04","ti05","ti06","ti07","ti08","ti09","ti10","ti12","ti13","ti14","ti15","ti16","ti17"],
+  mods:["ti11","ti01","ti02","ti03","ti04","ti05","ti06","ti07","ti08","ti09","ti10","ti12","ti13","ti14","ti15","ti16","ti17","ti18","ti19","ti20","ti24","ti25","ti26"],
   pesos:[
     {mod:"11", tema:"Fundamentos de banco de dados: tipos de dados, dados abertos, qualidade (DAMA) e níveis de modelagem", q:null},
     {mod:"01", tema:"Modelagem de banco de dados: níveis, modelo entidade-relacionamento, atributos, chaves e cardinalidade", q:null},
@@ -410,8 +436,14 @@ window.DISC.ti = {
     {mod:"14", tema:"Governança e qualidade: ITIL, COBIT, CMMI e MPS-BR", q:null},
     {mod:"15", tema:"Engenharia de software: processos, ciclo de vida, requisitos, UML, testes e métricas", q:null},
     {mod:"16", tema:"Programação: lógica, paradigmas, orientação a objetos, estruturas de dados e linguagens", q:null},
-    {mod:"17", tema:"TI aplicada à fiscalização: documentos fiscais eletrônicos, SPED, certificação digital, sigilo e governo digital", q:null}
-  ],
+    {mod:"17", tema:"TI aplicada à fiscalização: documentos fiscais eletrônicos, SPED, certificação digital, sigilo e governo digital", q:null},
+      {mod:"18", tema:"Processos: PDCA, AS-IS/TO-BE/TO-RUN, simulação, indicadores e DMN (DRD, FEEL, hit policy)", q:null},
+      {mod:"19", tema:"Administração de BD: perfis e privilégios, backup, alta disponibilidade, tuning e cluster", q:null},
+      {mod:"20", tema:"Pipeline ETL/ELT, MapReduce, Spark e NoSQL (chave-valor, documentos, colunas e grafos)", q:null},
+      {mod:"24", tema:"Pré-processamento e análise descritiva de dados: limpeza, imputação, normalização, discretização e medidas", q:null},
+      {mod:"25", tema:"Detecção de anomalias, overfitting, validação cruzada (k-fold, leave-one-out) e funções de ativação", q:null},
+      {mod:"26", tema:"Segurança da informação: ativos, classificação, políticas (ISO 27001/27002), autenticação e controle de acesso", q:null}
+    ],
   pesoNota:"Resumos do Radegondes (módulos 01 a 11: bancos de dados, SQL, BI, big data e segurança) e mapas mentais de revisão (módulos 12 a 16: PMBOK, BPM/BPMN, ITIL/COBIT/CMMI/MPS-BR, engenharia de software e programação). Confira sempre a legislação, as súmulas e os valores vigentes antes da prova."
 };
 
@@ -434,32 +466,34 @@ window.DISC.infob = {
 window.DISC.estat = {
   id:"estat", nome:"Estatística", cor:"u5", mat:"estat",
   nomeLongo:"Estatística descritiva, probabilidade, inferência, testes e regressão",
-  mods:["estat01","estat02","estat03","estat04","estat05","estat06"],
+  mods:["estat01","estat02","estat03","estat04","estat05","estat06","estat07"],
   pesos:[
     {mod:"01", tema:"Distribuições de frequências, apresentação de dados e médias", q:null},
     {mod:"02", tema:"Medidas separatrizes, moda e medidas de dispersão", q:null},
     {mod:"03", tema:"Análise combinatória, probabilidade e variáveis aleatórias discretas e contínuas", q:null},
     {mod:"04", tema:"Distribuições discretas e contínuas de probabilidade: binomial, Poisson, uniforme, normal e outras", q:null},
     {mod:"05", tema:"Amostragem, estimadores e intervalos de confiança", q:null},
-    {mod:"06", tema:"Testes de hipóteses, análise de variância e regressão linear simples", q:null}
-  ],
+    {mod:"06", tema:"Testes de hipóteses, análise de variância e regressão linear simples", q:null},
+      {mod:"07", tema:"Assimetria e curtose, qui-quadrado, regressão múltipla e séries temporais", q:null}
+    ],
   pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. As fórmulas foram reconstruídas e os exercícios numéricos conferidos por cálculo. Quando a prova fornecer tabela de quantis, use a dela."
 };
 window.DISC.matfin = {
   id:"matfin", nome:"Matemática Financeira", cor:"u5", mat:"matem",
   nomeLongo:"Matemática Financeira: porcentagem, juros, descontos, VPL/TIR, rendas e amortização",
-  mods:["matfin01","matfin02","matfin03"],
+  mods:["matfin01","matfin02","matfin03","matfin04"],
   pesos:[
     {mod:"01", tema:"Porcentagem, juros simples e compostos, taxas equivalentes, convenção linear e exponencial", q:null},
     {mod:"02", tema:"Descontos, valor presente líquido, equivalência de capitais e taxa interna de retorno", q:null},
-    {mod:"03", tema:"Rendas uniformes (anuidades) e planos de amortização: SAC, Price, SAM e sistema americano", q:null}
-  ],
+    {mod:"03", tema:"Rendas uniformes (anuidades) e planos de amortização: SAC, Price, SAM e sistema americano", q:null},
+      {mod:"04", tema:"Cálculos de prova: renda antecipada, perpetuidade crescente, carência, SAC e Price, desconto e TIR", q:null}
+    ],
   pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Em prova, o enunciado define a convenção (ano comercial, capitalização, taxa nominal ou efetiva) e prevalece sobre qualquer atalho."
 };
 window.DISC.econ = {
   id:"econ", nome:"Economia", cor:"u3", mat:"econ",
   nomeLongo:"Microeconomia e Macroeconomia",
-  mods:["econ01","econ02","econ03","econ04","econ05","econ06","econ07","econ08","econ09","econ10"],
+  mods:["econ01","econ02","econ03","econ04","econ05","econ06","econ07","econ08","econ09","econ10","econ11","econ12"],
   pesos:[
     {mod:"01", tema:"Princípios, CPP, demanda, oferta e equilíbrio de mercado", q:null},
     {mod:"02", tema:"Elasticidade e teoria do consumidor", q:null},
@@ -470,8 +504,10 @@ window.DISC.econ = {
     {mod:"07", tema:"Modelo IS-LM, modelo OA-DA e curva de Phillips", q:null},
     {mod:"08", tema:"Crescimento econômico e ciclos econômicos: modelo de Solow, regra de ouro, produtividade, fases e indicadores", q:null},
     {mod:"09", tema:"Inflação, índices de preços, desemprego e mercado de trabalho: IPCA, INPC, IGP-M, IGP-DI, tipos de inflação, efeitos, taxa natural", q:null},
-    {mod:"10", tema:"Setor externo: balanço de pagamentos, câmbio nominal e real, regimes cambiais, PPC e Marshall-Lerner", q:null}
-  ],
+    {mod:"10", tema:"Setor externo: balanço de pagamentos, câmbio nominal e real, regimes cambiais, PPC e Marshall-Lerner", q:null},
+      {mod:"11", tema:"Eficiência e falhas de mercado: Pareto, externalidades, bens públicos, informação e federalismo", q:null},
+      {mod:"12", tema:"Economia da tributação, dívida pública e NFSP; base monetária e multiplicador", q:null}
+    ],
   pesoNota:"Montado a partir de mapas mentais de revisão, complementado com conteúdo-padrão da disciplina. Confira sempre a bibliografia do edital e o que for atualizável. Cobre microeconomia, contas nacionais, modelos clássico e keynesiano, IS-LM, OA-DA e Phillips. Os módulos 08 a 10 (crescimento e ciclos, inflação e desemprego, setor externo) foram feitos a partir do programa do edital e de conteúdo-padrão, sem mapa mental. Não cobre moeda e sistema financeiro nem economia do setor público."
 };
 
@@ -525,7 +561,7 @@ window.DISC.simples = {
 window.DISC.legcwb = {
   id:"legcwb", nome:"Legislação Tributária de Curitiba", cor:"u4", mat:"legcwb",
   nomeLongo:"Código Tributário Municipal de Curitiba (LC 40/2001)",
-  mods:["legcwb01","legcwb02","legcwb03","legcwb04","legcwb05","legcwb06","legcwb07","legcwb08","legcwb09"],
+  mods:["legcwb01","legcwb02","legcwb03","legcwb04","legcwb05","legcwb06","legcwb07","legcwb08","legcwb09","legcwb10","legcwb11","legcwb12"],
   pesos:[
     {mod:"01", tema:"ISS de Curitiba: incidência, fato imponível, alíquotas e lista de serviços", q:null},
     {mod:"02", tema:"ISS de Curitiba: sujeição passiva, local da incidência, responsáveis, retenção e MEI", q:null},
@@ -535,8 +571,11 @@ window.DISC.legcwb = {
     {mod:"06", tema:"IPTU em Curitiba: incidência, base, alíquotas, imóvel não edificado e lançamento", q:null},
     {mod:"07", tema:"Taxas, contribuição de melhoria e cadastro fiscal (arts. 53 a 78)", q:null},
     {mod:"08", tema:"Exonerações: isenções de ISS, IPTU e taxas, incentivos e autônomos isentos", q:null},
-    {mod:"09", tema:"Processo administrativo tributário, consulta e disposições gerais (arts. 92 a 119)", q:null}
-  ],
+    {mod:"09", tema:"Processo administrativo tributário, consulta e disposições gerais (arts. 92 a 119)", q:null},
+      {mod:"10", tema:"LC 116/2003 (ISS): competência, incidência, não incidência, lista de serviços e ISS x ICMS", q:null},
+      {mod:"11", tema:"LC 116/2003 (ISS): local da incidência, responsabilidade, base de cálculo e alíquotas mínima e máxima", q:null},
+      {mod:"12", tema:"IPTU e ITBI nas normas gerais (CF e CTN), jurisprudência e a reforma tributária (EC 132)", q:null}
+    ],
   pesoNota:"Montado a partir da LC Municipal 40/2001, no texto consolidado até as alterações de 2017/2018. Não cobre ainda a Nota Curitibana (LC 73/2009), o DEC/PROCEC (LC 134/2022), a COSIP (LC 46/2002) nem o ITBI (LC 108/2017). Confira sempre a redação vigente."
 };
 
@@ -614,7 +653,7 @@ window.DISC.consult = {
 window.DISC.fdados = {
   id:"fdados", nome:"Fluência em Dados", cor:"u2", mat:"dados",
   nomeLongo:"Fluência em Dados",
-  mods:["fdados01","fdados02","fdados03","fdados04","fdados05","fdados06","fdados07","fdados08","fdados09","fdados10","fdados11","fdados12","fdados13","fdados14","fdados15","fdados16","fdados17","fdados18","fdados19","fdados20","fdados21"],
+  mods:["fdados01","fdados02","fdados03","fdados04","fdados05","fdados06","fdados07","fdados08","fdados09","fdados10","fdados11","fdados12","fdados13","fdados14","fdados15","fdados16","fdados17","fdados18","fdados19","fdados20","fdados21","fdados22","fdados23"],
   pesos:[
     {mod:"01", tema:"Dados, Big Data, ciência de dados, governança e arquiteturas", q:null},
     {mod:"02", tema:"Dados, informação, conhecimento e inteligência; estruturação; dados abertos; XML, JSON, CSV e SQL", q:null},
@@ -636,8 +675,10 @@ window.DISC.fdados = {
     {mod:"18", tema:"Engenharia de prompts, técnicas de prompting, agentes de IA, modelos fundacionais e plataformas de IA como serviço", q:null},
     {mod:"19", tema:"Governança e ética em IA: viés, transparência e XAI, responsabilidade, privacidade, segurança e framework", q:null},
     {mod:"20", tema:"Ciência de dados na prática: ciclo de vida, papéis, atributos, transformação, análise, indicadores, Python e R", q:null},
-    {mod:"21", tema:"Computação em nuvem e Big Data: NIST, modelos de serviço e implantação, plataformas, elasticidade, serverless e riscos", q:null}
-  ],
+    {mod:"21", tema:"Computação em nuvem e Big Data: NIST, modelos de serviço e implantação, plataformas, elasticidade, serverless e riscos", q:null},
+      {mod:"22", tema:"Governança de dados (DAMA) e preparação: valores ausentes, normalização e discretização", q:null},
+      {mod:"23", tema:"Python e R na prova: leitura de código, listas, vetores, matrizes, indexação e laços", q:null}
+    ],
   pesoNota:"Dados, Big Data, ciência de dados, governança e arquiteturas. Os módulos 02 a 19 vêm de material de revisão de Ciência de Dados (estruturação, Big Data, NoSQL, Hadoop, mineração, aprendizado de máquina, PLN, recomendação e IA); os módulos 20 e 21 (ciência de dados na prática, Python e R, nuvem) foram feitos a partir do programa do edital e de conteúdo-padrão. Ferramentas, versões e modelos de IA mudam: confira a versão atual."
 };
 
@@ -665,7 +706,7 @@ window.DISC.dadm = {
   id:"dadm", nome:"Dir. Administrativo", cor:"u3", mat:"dadm",
   nomeLongo:"Direito Administrativo",
   mods:["dadm01","dadm02","dadm03","dadm04","dadm05","dadm06","dadm07",
-        "dadm08","dadm09","dadm10","dadm11","dadm12","dadm13"],
+        "dadm08","dadm09","dadm10","dadm11","dadm12","dadm13","dadm14","dadm15","dadm16"],
   pesos:[
     {mod:"01", tema:"Origem do Estado, sistemas administrativos e fontes",    q:null},
     {mod:"02", tema:"Regime jurídico administrativo e princípios",            q:null},
@@ -679,8 +720,11 @@ window.DISC.dadm = {
     {mod:"10", tema:"PPP, consórcios públicos e convênios",                   q:null},
     {mod:"11", tema:"Lei 8.429/92 — improbidade administrativa",              q:null},
     {mod:"12", tema:"Lei 12.527/11 — acesso à informação",                    q:null},
-    {mod:"13", tema:"Controle da Administração Pública",                      q:null}
-  ],
+    {mod:"13", tema:"Controle da Administração Pública",                      q:null},
+      {mod:"14", tema:"Licitações (Lei 14.133/2021): âmbito, modalidades, prazos, contratação direta e comparação com a Lei 8.666/1993", q:null},
+      {mod:"15", tema:"Contratos administrativos (Lei 14.133/2021): cláusulas, duração, alteração, equilíbrio, extinção e sanções", q:null},
+      {mod:"16", tema:"LGPD (Lei 13.709/2018) e Processo Administrativo Federal (Lei 9.784/1999): literalidade e pegadinhas", q:null}
+    ],
   pesoNota:"ordem do sumário do resumo Radegondes — do conceito de Administração até o controle que recai sobre ela"
 };
 
