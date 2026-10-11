@@ -3397,8 +3397,40 @@ function pvBarScroll(b){
 }
 
 /* ---- FOCO: filtro no topo para escolher as matérias que quero estudar ---- */
+/* provas: conjuntos de matérias para focar (ISS Curitiba, ATRFB, Consultoria) */
+var FOCO_PROVAS=[{k:"isscwb",n:"ISS Curitiba"},{k:"atrfb",n:"ATRFB"},{k:"consult",n:"Consultoria"}];
+var _focoPv=null;
+function focoDiscsDaProva(k){
+  if(_focoPv&&_focoPv[k]) return _focoPv[k];
+  var set={};
+  function add(d){ if(DISC[d]) set[d]=1; }
+  if(k==="consult"){ add("consult"); }
+  else{
+    (k==="atrfb"?["atrfb","afrfb"]:[k]).forEach(function(c){
+      var cc=CONC[c]; if(!cc) return;
+      Object.keys(cc.materias||{}).forEach(function(m){ pvDiscs(c,m).forEach(add); });
+      (cc.mapa||[]).forEach(function(r){ (r.discs||[]).forEach(add); });
+    });
+  }
+  _focoPv=_focoPv||{}; _focoPv[k]=Object.keys(set);
+  return _focoPv[k];
+}
+function focoUniao(keys){
+  var s={}; keys.forEach(function(k){ focoDiscsDaProva(k).forEach(function(d){ s[d]=1; }); });
+  return Object.keys(s);
+}
+function focoProvasAtivas(){
+  var f=focoAtivo(); if(!f) return [];
+  var ks=FOCO_PROVAS.map(function(p){return p.k;}), n=ks.length;
+  for(var m=1;m<(1<<n);m++){
+    var sub=ks.filter(function(_,i){return m&(1<<i);}), u=focoUniao(sub).filter(function(d){return DISC[d]&&DISC[d].mods.some(function(x){return REG[x];});});
+    if(u.length===f.length&&u.every(function(d){return f.indexOf(d)>=0;})) return sub;
+  }
+  return [];
+}
 function focoNome(){
   var f=focoAtivo(); if(!f) return "Todas as matérias";
+  var pa=focoProvasAtivas(); if(pa.length) return pa.map(function(k){return FOCO_PROVAS.filter(function(p){return p.k===k;})[0].n;}).join(" + ");
   var ns=f.filter(function(d){return DISC[d];}).map(function(d){return DISC[d].curto||DISC[d].nome;});
   if(ns.length<=2) return ns.join(" + ");
   return ns.slice(0,2).join(" + ")+" +"+(ns.length-2);
@@ -3425,6 +3457,7 @@ function focoAbrir(){
   var w=document.createElement("div"); w.id="focoSheet"; w.className="focosheet";
   w.innerHTML='<div class="fs-bg"></div><div class="fs-box" role="dialog" aria-label="Escolher matérias">'+
     '<div class="fs-h"><b>O que você quer estudar?</b><button type="button" class="ix" id="fsX" aria-label="Fechar">✕</button></div>'+
+    '<div class="fs-prov" id="fsProv"></div>'+
     '<div class="fs-tools"><button type="button" class="ghost" id="fsAll">Todas</button><button type="button" class="ghost" id="fsNone">Limpar</button><input type="search" id="fsQ" placeholder="Buscar matéria…"></div>'+
     '<div class="fs-list" id="fsList"></div>'+
     '<div class="fs-f"><button type="button" class="big" id="fsOk">Aplicar</button></div></div>';
@@ -3443,11 +3476,27 @@ function focoAbrir(){
       list.appendChild(r);
     });
   }
+  var provas=focoProvasAtivas(), provBox=w.querySelector("#fsProv");
+  function pintaProv(){
+    provBox.innerHTML='<span class="fs-pl">Focar só em</span>';
+    FOCO_PROVAS.forEach(function(p){
+      var bt=document.createElement("button"); bt.type="button"; bt.textContent=p.n;
+      bt.setAttribute("aria-pressed",provas.indexOf(p.k)>=0?"true":"false");
+      bt.onclick=function(){
+        var i=provas.indexOf(p.k); if(i>=0) provas.splice(i,1); else provas.push(p.k);
+        var u=focoUniao(provas);
+        todas.forEach(function(d){ sel[d]=provas.length?u.indexOf(d)>=0:true; });
+        pintaProv(); pinta();
+      };
+      provBox.appendChild(bt);
+    });
+  }
+  pintaProv();
   pinta();
   function fecha(){ w.remove(); }
   w.querySelector("#fsQ").oninput=pinta;
-  w.querySelector("#fsAll").onclick=function(){ todas.forEach(function(d){sel[d]=true;}); pinta(); };
-  w.querySelector("#fsNone").onclick=function(){ todas.forEach(function(d){sel[d]=false;}); pinta(); };
+  w.querySelector("#fsAll").onclick=function(){ provas.length=0; todas.forEach(function(d){sel[d]=true;}); pintaProv(); pinta(); };
+  w.querySelector("#fsNone").onclick=function(){ provas.length=0; todas.forEach(function(d){sel[d]=false;}); pintaProv(); pinta(); };
   w.querySelector("#fsX").onclick=fecha; w.querySelector(".fs-bg").onclick=fecha;
   w.querySelector("#fsOk").onclick=function(){ fecha(); focoAplicar(sel); };
 }

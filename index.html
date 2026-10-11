@@ -279,6 +279,10 @@ a{color:var(--brand-ink)}
 .fs-bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
 .fs-box{position:relative;width:100%;max-width:34rem;max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border-radius:18px 18px 0 0;padding:14px 14px calc(14px + env(safe-area-inset-bottom))}
 .fs-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.fs-prov{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}
+.fs-pl{font-family:"IBM Plex Mono",monospace;font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);margin-right:2px}
+.fs-prov button{font:inherit;font-weight:800;font-size:.86rem;padding:7px 12px;border-radius:999px;border:2px solid var(--line-strong);background:var(--surface);color:var(--ink);cursor:pointer}
+.fs-prov button[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:#fff}
 .fs-tools{display:flex;gap:8px;margin-bottom:8px}
 .fs-tools input{flex:1;min-width:0;padding:8px 10px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
 .fs-list{overflow-y:auto;flex:1;display:grid;gap:4px;padding:2px 0 8px}
