@@ -1315,7 +1315,7 @@ function openDaily(){
       '<div class="statbox"><span class="sl">Tempo estimado</span><span class="sv">~'+Math.max(1,Math.round(ids.length*0.75))+' min</span></div>'+
     '</div>'+
     (feitas?'<p style="font-size:.9rem">Você já revisou <b>'+feitas+'</b> carta'+(feitas===1?"":"s")+' hoje.</p>':'')+
-    '<p style="font-size:.9rem">Na mistura: '+mods.map(function(m){return modNome(m);}).join(" · ")+'</p></div>';
+    '<p style="font-size:.9rem">Na mistura: '+mods.map(function(m){return modNome(m);}).join(" · ")+'</p>'+tecBloco(mods)+'</div>';
   setFoot("", '<button class="big" id="dgo">Começar revisão</button>');
   document.getElementById("dgo").onclick=function(){ startDaily(); };
   scrollTop();
@@ -1363,7 +1363,7 @@ function runReview(l){
       '<div class="statbox"><span class="sl">Exercícios</span><span class="sv">'+n+'</span></div>'+
       '<div class="statbox"><span class="sl">Vidas</span><span class="sv">5</span></div>'+
     '</div>'+
-    '<p style="font-size:.9rem">Unidades no sorteio: '+us.map(function(u){return u.n+". "+u.title;}).join(" · ")+'</p></div>';
+    '<p style="font-size:.9rem">Unidades no sorteio: '+us.map(function(u){return u.n+". "+u.title;}).join(" · ")+'</p>'+tecBloco([S.cur])+'</div>';
   setFoot("", '<button class="big" id="rgo">Começar revisão</button>');
   document.getElementById("rgo").onclick=function(){
     startReviewDrill(l,shuffle(pool).slice(0,n));
@@ -1660,6 +1660,29 @@ function cadernoHtml(links){
   }).join("");
 }
 
+/* ---------- links de questões do TEC dentro das revisões ---------- */
+function tecLinksDe(mod){
+  var m=REG[mod]; if(!m) return [];
+  var cad=cadernosDe(discOf(mod), m.n);
+  if(cad&&cad.links&&cad.links.length) return cad.links.map(function(l){ return {n:(l.b==="?"?"Caderno":l.b),u:l.u,real:true}; });
+  return (m.TEC||[]).map(function(t){
+    return {n:t[0], u:(/^https?:/.test(t[1])?t[1]:("https://www.tecconcursos.com.br/s/"+t[1])), real:!/\/questoes\/filtro/.test(t[1])};
+  });
+}
+function tecBloco(mods){
+  var itens=[], cut=Math.min(mods.length,8);
+  for(var i=0;i<cut;i++){
+    var ls=tecLinksDe(mods[i]); if(!ls.length) continue;
+    itens.push('<p class="tec-h">'+modNome(mods[i])+'</p><div class="teclist mini">'+ls.map(function(l){
+      return '<a href="'+l.u+'" target="_blank" rel="noopener"><span class="bn">'+String(l.n).replace(/^Monte seu caderno no TEC — /,"").replace(/^[^:]*: /,"")+'</span><span class="bu">'+(l.real?'caderno pronto':'filtro do TEC')+'</span></a>';
+    }).join("")+'</div>');
+  }
+  if(!itens.length) return "";
+  return '<details class="tecdet"><summary>Questões no TEC desta revisão</summary>'+itens.join("")+
+         (mods.length>cut?'<p class="tec-n">Mostrando '+cut+' de '+mods.length+' módulos.</p>':'')+
+         '<p class="tec-n">Favorite no TEC as que errar. “Filtro do TEC” abre a busca para você escolher matéria, assunto e banca.</p></details>';
+}
+
 function runMissao(l){
   setProg(30);
   ovInner.innerHTML=
@@ -1828,7 +1851,8 @@ function finish(l,stats){
       (l.daily?'<div class="statbox"><span class="sl">Cartas hoje</span><span class="sv">'+dailyDoneToday()+'</span></div>'+
                '<div class="statbox"><span class="sl">Retenção</span><span class="sv">'+(sst.ret!=null?sst.ret+"%":"—")+'</span></div>':'')+
     '</div>'+
-    '<p><b>'+r.name+'</b>'+(r.next?(" · faltam "+(r.next[0]-S.xp)+" XP para "+r.next[1]):" · patente máxima")+'</p></div>';
+    '<p><b>'+r.name+'</b>'+(r.next?(" · faltam "+(r.next[0]-S.xp)+" XP para "+r.next[1]):" · patente máxima")+'</p>'+
+    (l.daily?tecBloco(modsNaMistura(l.ids||[])):(l.type==="review"?tecBloco([S.cur]):""))+'</div>';
   countUp(document.getElementById("xpBig"),gain,700);
   setFoot("good",
     (l.daily&&sst.due)?'<button class="ghost" id="cq" style="flex:1">Trilha</button><button class="big green" id="cd">Outra rodada</button>'
