@@ -3102,6 +3102,7 @@ function provaRow(c,main){
       return {r:r,n:n,por:por,min:Math.round(por*mpl)};
     });
     var at=cenas.filter(function(x){return x.r===base;})[0];
+    h+=semRow("Lições hoje",licoesHoje(),at.por,licoesHoje(),at.por+" lições");
     h+='<div class="hj-pvm">Para terminar a teoria '+(dias>PV_RESERVA?PV_RESERVA+' dias antes':'a tempo')+' e ficar com o fim só para revisão: '+
       '<b>'+at.por+' lições/dia</b> (~'+at.min+' min) no ritmo '+({completo:"Completo",rapido:"Rápido",turbo:"Turbo"})[base]+'. '+
       (function(){
@@ -3215,6 +3216,33 @@ function pontosFracos(){
   arr.sort(function(x,y){ return y.n-x.n; });
   return arr.slice(0,5);
 }
+/* ---- semáforos da meta do dia: vermelho < 40%, amarelo até 99%, verde ao bater ---- */
+function semCls(p){ return p>=1?"ok":(p>=0.4?"mid":"low"); }
+function semNome(p){ return p>=1?"meta batida":(p>=0.4?"a caminho":"longe da meta"); }
+function semRow(label,val,meta,txtV,txtM){
+  var p=meta>0?val/meta:0, c=semCls(p), w=Math.min(100,Math.round(p*100));
+  return '<div class="sem-row '+c+'" title="'+semNome(p)+'"><span class="sem-dot" aria-hidden="true"></span>'+
+    '<span class="sem-l">'+label+'</span><span class="sem-bar"><i style="width:'+w+'%"></i></span>'+
+    '<span class="sem-v"><b>'+txtV+'</b>/'+txtM+'<small>'+Math.round(p*100)+'%</small></span></div>';
+}
+function licoesHoje(){
+  var hoje=today(), n=0;
+  Object.keys(S.mods||{}).forEach(function(k){
+    var d=S.mods[k]&&S.mods[k].done; if(!d) return;
+    Object.keys(d).forEach(function(id){ var x=d[id]; if(x&&x.ts&&!x.skip&&dayKeyDe(x.ts)===hoje) n++; });
+  });
+  return n;
+}
+function dayKeyDe(ts){ var d=new Date(ts); return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function semaforosHtml(){
+  var mm=metaMin(), mq=metaQ(), gx=S.goal||50, tmin=Math.round(tempoHoje()/60), qh=questoesHoje(), xh=todayXp(),
+      rd=dailyDoneToday(), rm=dailyTarget();
+  return '<div class="hj-sem">'+
+    semRow("Tempo",tmin,mm,tmin,mm+" min")+
+    semRow("Questões",qh,mq,qh,mq)+
+    semRow("XP",xh,gx,xh,gx)+
+    semRow("Revisão do dia",rd,rm,rd,rm)+'</div>';
+}
 function hojeRow(ic,t,s,btn,fn,cls){
   var r=el("div","hrow"+(cls?" "+cls:""),
     '<span class="hr-i">'+svg(ic)+'</span><span class="hr-t"><b>'+t+'</b><small>'+s+'</small></span>'+
@@ -3227,10 +3255,10 @@ function hojeCard(){
   var hoje=today(), tmin=Math.round(((S.tempo&&S.tempo[hoje])||0)/60), ds=(S.dstat&&S.dstat[hoje])||{ok:0,err:0};
   var mm=S.metaMin||120, mq=S.metaQ||40, qh=(ds.ok||0)+(ds.err||0), xh=todayXp(), gx=S.goal||50;
   var bateu=(tmin>=mm?1:0)+(qh>=mq?1:0)+(xh>=gx?1:0);
+  var pg=(Math.min(1,tmin/mm)+Math.min(1,qh/mq)+Math.min(1,xh/gx))/3;
   c.appendChild(el("div","hj-h",
-    '<div class="hj-t">Plano de hoje</div><div class="hj-m">'+bateu+' de 3 metas</div>'));
-  c.appendChild(el("div","hj-metas",
-    '<span><b>'+tmin+'</b>/'+mm+' min</span><span><b>'+qh+'</b>/'+mq+' questões</span><span><b>'+xh+'</b>/'+gx+' XP</span>'));
+    '<div class="hj-t">Plano de hoje</div><div class="hj-m"><span class="sem-dot lg '+(bateu===3?"ok":semCls(pg))+'" aria-hidden="true"></span>'+bateu+' de 3 metas</div>'));
+  c.appendChild(el("div","hj-semwrap",semaforosHtml()));
   /* provas: as duas principais com meta diária; as demais são testes */
   var pvb=el("div","hj-provas");
   pvb.innerHTML=provaRow("isscwb",true)+provaRow("atrfb",true)+
