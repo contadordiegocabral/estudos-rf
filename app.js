@@ -16,7 +16,52 @@ var COMX={};   /* comentários longos do módulo corrente, por índice de QS */
 /* todos os módulos registrados, de todas as matérias */
 function focoAtivo(){ return S.foco&&S.foco.length?S.foco:null; }
 function focoOk(d){ var f=focoAtivo(); return !f||f.indexOf(d)>=0; }
-function allModsFoco(){ return allMods().filter(function(k){ return focoOk(discOf(k)); }); }
+/* ---- Essencial 80%: conjunto de módulos que concentra ~80% do peso estimado da prova ---- */
+function pctPeso(d,prontos){
+  /* peso de cada módulo: prioridade da matéria dividida entre os módulos; se o edital traz peso (q) por tema, usa ele */
+  var D=DISC[d], pr=Math.max(1,prioridadeDe(D.mat)), q={}, soma=0, nq=0;
+  (D.pesos||[]).forEach(function(p){ if(typeof p.q==="number"){ q[p.mod]=p.q; soma+=p.q; nq++; } });
+  var out={};
+  if(nq){
+    var med=soma/nq, tot=0;
+    prontos.forEach(function(k){ var v=q[REG[k].n]; if(typeof v!=="number") v=med; out[k]=v; tot+=v; });
+    prontos.forEach(function(k){ out[k]=pr*out[k]/tot; });
+  }else{
+    prontos.forEach(function(k){ out[k]=pr/prontos.length; });
+  }
+  return out;
+}
+function pctPlano(discs,pct){
+  var itens=[], ord=0, soma=0;
+  discs.forEach(function(d){
+    var prontos=DISC[d].mods.filter(function(k){return REG[k];}); if(!prontos.length) return;
+    var v=pctPeso(d,prontos);
+    prontos.forEach(function(k){
+      var n=Math.max(1,licoesAtivas(k).length);
+      itens.push({k:k,d:d,v:v[k],n:n,o:ord++}); soma+=v[k];
+    });
+  });
+  var alvo=(pct||100)/100*soma, sel={}, acc=0;
+  var rank=itens.slice().sort(function(a,b){ return (b.v/b.n)-(a.v/a.n) || a.o-b.o; });
+  rank.forEach(function(x){ if(pct&&acc>=alvo-1e-9) return; sel[x.k]=1; acc+=x.v; });
+  var mpl=minPorLicao(), lic=0, rest=0, mods=0;
+  itens.forEach(function(x){ if(!sel[x.k]) return; mods++; var ls=licoesAtivas(x.k); lic+=ls.length; ls.forEach(function(y){ if(!lDone(x.k,y.l)) rest++; }); });
+  return {sel:sel,mods:mods,total:itens.length,lic:lic,rest:rest,min:Math.round(rest*mpl),cob:soma?Math.round(acc/soma*100):0};
+}
+var _pctMemo=null, _pctKey="";
+function pctSelAtual(){
+  if(!S.focoPct) return null;
+  var key=(S.foco||[]).join(",")+"|"+ritmo()+"|"+S.focoPct;
+  if(_pctKey!==key||!_pctMemo){
+    var ds=DISC_ORDER.filter(function(d){ return focoOk(d)&&DISC[d].mods.some(function(m){return REG[m];}); });
+    _pctMemo=pctPlano(ds,S.focoPct).sel; _pctKey=key;
+  }
+  return _pctMemo;
+}
+function pctOk(k){ var s=pctSelAtual(); return !s||!!s[k]; }
+function focoModOk(k){ return focoOk(discOf(k))&&pctOk(k); }
+function fmtHoras(min){ var h=min/60; return (h>=10?Math.round(h):Math.round(h*10)/10).toString().replace(".",",")+" h"; }
+function allModsFoco(){ return allMods().filter(focoModOk); }
 function allMods(){
   var out=[];
   DISC_ORDER.forEach(function(d){
@@ -118,7 +163,7 @@ function cursoOrdem(){
   var itens=[];
   DISC_ORDER.forEach(function(d){
     if(!focoOk(d)) return;
-    var prontos=DISC[d].mods.filter(function(k){return REG[k];});
+    var prontos=DISC[d].mods.filter(function(k){return REG[k]&&pctOk(k);});
     if(!prontos.length) return;
     var w=Math.max(1,prioridadeDe(DISC[d].mat));
     /* posição fracionária: quanto maior o peso, mais cedo e mais vezes a
@@ -357,7 +402,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -1079,7 +1124,7 @@ function srsValid(fid){
 function srsAll(){ return Object.keys(srs()).filter(srsValid); }
 function srsDue(){
   var t=today();
-  return srsAll().filter(function(k){ return daysBetween(srs()[k].due,t)>=0 && focoOk(discOf(qsplit(k).m)); });
+  return srsAll().filter(function(k){ return daysBetween(srs()[k].due,t)>=0 && focoModOk(qsplit(k).m); });
 }
 function srsOverdue(fid){ return Math.max(0,daysBetween(srs()[fid].due,today())); }
 function dailyTarget(){ return S.dailyN||20; }
@@ -3271,6 +3316,11 @@ function hojeCard(){
   c.appendChild(el("div","hj-h",
     '<div class="hj-t">Plano de hoje</div><div class="hj-m"><span class="sem-dot lg '+(bateu===3?"ok":semCls(pg))+'" aria-hidden="true"></span>'+bateu+' de 3 metas</div>'));
   c.appendChild(el("div","hj-semwrap",semaforosHtml()));
+  (function(){
+    var ds=DISC_ORDER.filter(function(d){return focoOk(d)&&DISC[d].mods.some(function(m){return REG[m];});}); if(!ds.length) return;
+    var p=pctPlano(ds,S.focoPct||0), h=S.plano&&S.plano.hpd>0?S.plano.hpd:2;
+    c.appendChild(el("div","fs-info","<b>"+(S.focoPct?"Essencial "+S.focoPct+"%":"Conteúdo completo")+":</b> faltam "+p.rest+" lições ≈ <b>"+fmtHoras(p.min)+"</b> de estudo (~"+Math.ceil(p.min/60/h)+" dias a "+String(h).replace(".",",")+" h/dia)"));
+  })();
   /* provas: as duas principais com meta diária; as demais são testes */
   var pvb=el("div","hj-provas");
   pvb.innerHTML=provaRow("isscwb",true)+provaRow("atrfb",true)+
@@ -3469,7 +3519,8 @@ function focoProvasAtivas(){
   }
   return [];
 }
-function focoNome(){
+function focoNome(){ var n=focoNome0(); return S.focoPct?n+" · "+S.focoPct+"%":n; }
+function focoNome0(){
   var f=focoAtivo(); if(!f) return "Todas as matérias";
   var pa=focoProvasAtivas(); if(pa.length) return pa.map(function(k){return FOCO_PROVAS.filter(function(p){return p.k===k;})[0].n;}).join(" + ");
   var ns=f.filter(function(d){return DISC[d];}).map(function(d){return DISC[d].curto||DISC[d].nome;});
@@ -3479,9 +3530,10 @@ function focoNome(){
 function focoPaint(){
   var b=document.getElementById("focoBtn"); if(!b) return;
   b.innerHTML='<span class="fkk">Estudando</span><span class="fnn">'+focoNome()+'</span><span class="fcc">▾</span>';
-  b.classList.toggle("on",!!focoAtivo());
+  b.classList.toggle("on",!!focoAtivo()||!!S.focoPct);
 }
-function focoAplicar(sel){
+function focoAplicar(sel,pct){
+  S.focoPct=pct||null; _pctMemo=null;
   var todas=DISC_ORDER.filter(function(d){return DISC[d].mods.some(function(m){return REG[m];});});
   var ok=todas.filter(function(d){return sel[d];});
   S.foco=(ok.length===0||ok.length===todas.length)?[]:ok;
@@ -3499,6 +3551,7 @@ function focoAbrir(){
   w.innerHTML='<div class="fs-bg"></div><div class="fs-box" role="dialog" aria-label="Escolher matérias">'+
     '<div class="fs-h"><b>O que você quer estudar?</b><button type="button" class="ix" id="fsX" aria-label="Fechar">✕</button></div>'+
     '<div class="fs-prov" id="fsProv"></div>'+
+    '<div class="fs-prov" id="fsPct"></div><div class="fs-info" id="fsInfo"></div>'+
     '<div class="fs-tools"><button type="button" class="ghost" id="fsAll">Todas</button><button type="button" class="ghost" id="fsNone">Limpar</button><input type="search" id="fsQ" placeholder="Buscar matéria…"></div>'+
     '<div class="fs-list" id="fsList"></div>'+
     '<div class="fs-f"><button type="button" class="big" id="fsOk">Aplicar</button></div></div>';
@@ -3513,9 +3566,25 @@ function focoAbrir(){
       prontos.forEach(function(k){ total+=REG[k].UNITS.reduce(function(a,u){return a+u.lessons.length;},0); if(S.mods&&S.mods[k]) feitas+=Object.keys(S.mods[k].done||{}).length; });
       var r=document.createElement("label"); r.className="fs-row";
       r.innerHTML='<input type="checkbox"'+(sel[d]?" checked":"")+'><span class="fs-n">'+dd.nome+'</span><span class="fs-p">'+feitas+'/'+total+'</span>';
-      r.querySelector("input").onchange=function(e){ sel[d]=e.target.checked; };
+      r.querySelector("input").onchange=function(e){ sel[d]=e.target.checked; pintaInfo(); };
       list.appendChild(r);
     });
+  }
+  var pctSel=S.focoPct||0, pctBox=w.querySelector("#fsPct"), infoBox=w.querySelector("#fsInfo");
+  function pintaPct(){
+    pctBox.innerHTML='<span class="fs-pl">Conteúdo</span>';
+    [[0,"Tudo"],[80,"Essencial 80%"]].forEach(function(o){
+      var bt=document.createElement("button"); bt.type="button"; bt.textContent=o[1];
+      bt.setAttribute("aria-pressed",pctSel===o[0]?"true":"false");
+      bt.onclick=function(){ pctSel=o[0]; pintaPct(); pintaInfo(); };
+      pctBox.appendChild(bt);
+    });
+  }
+  function pintaInfo(){
+    var ds=todas.filter(function(d){return sel[d];}); if(!ds.length){ infoBox.textContent="Selecione ao menos uma matéria."; return; }
+    var p=pctPlano(ds,pctSel||0), h=S.plano&&S.plano.hpd>0?S.plano.hpd:2;
+    infoBox.innerHTML='<b>'+p.mods+' de '+p.total+' módulos</b>'+(pctSel?' (cobrem ~'+p.cob+'% do peso estimado)':'')+
+      ' · faltam <b>'+p.rest+'</b> lições ≈ <b>'+fmtHoras(p.min)+'</b> de estudo · ~'+Math.ceil(p.min/60/h)+' dias a '+String(h).replace(".",",")+' h/dia';
   }
   var provas=focoProvasAtivas(), provBox=w.querySelector("#fsProv");
   function pintaProv(){
@@ -3527,19 +3596,19 @@ function focoAbrir(){
         var i=provas.indexOf(p.k); if(i>=0) provas.splice(i,1); else provas.push(p.k);
         var u=focoUniao(provas);
         todas.forEach(function(d){ sel[d]=provas.length?u.indexOf(d)>=0:true; });
-        pintaProv(); pinta();
+        pintaProv(); pinta(); pintaInfo();
       };
       provBox.appendChild(bt);
     });
   }
   pintaProv();
-  pinta();
+  pinta(); pintaPct(); pintaInfo();
   function fecha(){ w.remove(); }
   w.querySelector("#fsQ").oninput=pinta;
-  w.querySelector("#fsAll").onclick=function(){ provas.length=0; todas.forEach(function(d){sel[d]=true;}); pintaProv(); pinta(); };
-  w.querySelector("#fsNone").onclick=function(){ provas.length=0; todas.forEach(function(d){sel[d]=false;}); pintaProv(); pinta(); };
+  w.querySelector("#fsAll").onclick=function(){ provas.length=0; todas.forEach(function(d){sel[d]=true;}); pintaProv(); pinta(); pintaInfo(); };
+  w.querySelector("#fsNone").onclick=function(){ provas.length=0; todas.forEach(function(d){sel[d]=false;}); pintaProv(); pinta(); pintaInfo(); };
   w.querySelector("#fsX").onclick=fecha; w.querySelector(".fs-bg").onclick=fecha;
-  w.querySelector("#fsOk").onclick=function(){ fecha(); focoAplicar(sel); };
+  w.querySelector("#fsOk").onclick=function(){ fecha(); focoAplicar(sel,pctSel); };
 }
 (function(){ var b=document.getElementById("focoBtn"); if(b) b.onclick=focoAbrir; })();
 function pvApplyTheme(){
@@ -3914,7 +3983,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
