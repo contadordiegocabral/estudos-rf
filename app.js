@@ -31,6 +31,18 @@ function discOf(mod){
   }
   return DISC_ORDER[0];
 }
+/* módulos que mudaram de matéria (ex.: reforma tributária): o progresso é por módulo, só os ponteiros se ajustam */
+function migraDisc(){
+  try{
+    if(S.cur&&REG[S.cur]) S.disc=discOf(S.cur);
+    if(S.last&&S.last.mod&&REG[S.last.mod]) S.last.disc=discOf(S.last.mod);
+    if(S.foco&&S.foco.indexOf("consult")>=0&&S.foco.indexOf("reforma")<0) S.foco.push("reforma");
+    if(S.lastMod) Object.keys(S.lastMod).forEach(function(d){
+      var m=S.lastMod[d], dd=REG[m]?discOf(m):null;
+      if(dd&&dd!==d){ delete S.lastMod[d]; S.lastMod[dd]=m; }
+    });
+  }catch(e){}
+}
 function loadDisc(id){
   if(!DISC[id]) id=DISC_ORDER[0];
   S.disc=id; DC=DISC[id];
@@ -3426,13 +3438,14 @@ function pvBarScroll(b){
 
 /* ---- FOCO: filtro no topo para escolher as matérias que quero estudar ---- */
 /* provas: conjuntos de matérias para focar (ISS Curitiba, ATRFB, Consultoria) */
-var FOCO_PROVAS=[{k:"isscwb",n:"ISS Curitiba"},{k:"atrfb",n:"ATRFB"},{k:"consult",n:"Consultoria"}];
+var FOCO_PROVAS=[{k:"isscwb",n:"ISS Curitiba"},{k:"atrfb",n:"ATRFB"},{k:"consult",n:"Consultoria"},{k:"reforma",n:"Reforma tributária"}];
 var _focoPv=null;
 function focoDiscsDaProva(k){
   if(_focoPv&&_focoPv[k]) return _focoPv[k];
   var set={};
   function add(d){ if(DISC[d]) set[d]=1; }
-  if(k==="consult"){ add("consult"); }
+  if(k==="consult"){ add("consult"); add("reforma"); }
+  else if(k==="reforma"){ add("reforma"); }
   else{
     (k==="atrfb"?["atrfb","afrfb"]:[k]).forEach(function(c){
       var cc=CONC[c]; if(!cc) return;
@@ -3550,7 +3563,7 @@ try{ if(window.matchMedia) matchMedia("(prefers-color-scheme: dark)").addEventLi
    ===================================================================== */
 function pvInjetaVideo(){
   if(!window.DISC||!DISC.consult) return;
-  DISC.consult.mods.forEach(function(m){
+  DISC.consult.mods.concat(DISC.reforma?DISC.reforma.mods:[]).forEach(function(m){
     var mod=REG[m]; if(!mod||!mod.UNITS) return;
     mod.UNITS.forEach(function(u){
       if(u.lessons.some(function(l){return l.type==="video"||l.type==="prova";})) return;
@@ -3780,7 +3793,7 @@ function syncNow(manual){
     });
   }).then(function(r){
     if(r&&r.changed){
-      loadDisc(S.disc); if(!S.cur||!REG[S.cur]||ORDER.indexOf(S.cur)<0) S.cur=ORDER[0]||"m01"; loadModule(S.cur);
+      migraDisc(); loadDisc(S.disc); if(!S.cur||!REG[S.cur]||ORDER.indexOf(S.cur)<0) S.cur=ORDER[0]||"m01"; loadModule(S.cur);
       pvApplyTheme(); paintSettings(); renderTrail(); buildPanel();
     }
     var d=new Date(); syncStatus("Sincronizado às "+("0"+d.getHours()).slice(-2)+":"+("0"+d.getMinutes()).slice(-2)+".");
@@ -3863,6 +3876,7 @@ if(S.lastDay){var dd=daysBetween(S.lastDay,today());if(dd>1)S.streak=0;}
    quem já tem progresso volta exatamente onde parou */
 if(_novo && DISC_ORDER.length){ S.disc=DISC_ORDER[0]; S.cur=null; }
 /* se a matéria salva sumiu, ou o módulo salvo não pertence a ela, corrige */
+migraDisc();
 if(!DISC[S.disc]) S.disc=DISC_ORDER[0];
 loadDisc(S.disc);
 if(!S.cur || !REG[S.cur] || ORDER.indexOf(S.cur)<0) S.cur=ORDER[0]||"m01";

@@ -579,10 +579,10 @@ window.DISC.legcwb = {
   pesoNota:"Montado a partir da LC Municipal 40/2001, no texto consolidado até as alterações de 2017/2018. Não cobre ainda a Nota Curitibana (LC 73/2009), o DEC/PROCEC (LC 134/2022), a COSIP (LC 46/2002) nem o ITBI (LC 108/2017). Confira sempre a redação vigente."
 };
 
-window.DISC.consult = {
-  id:"consult", nome:"Consultoria", cor:"u4", mat:"consult",
-  nomeLongo:"Consultoria Tributária (Reforma Tributária, Simples e Perguntão PJ)",
-  mods:["cons01","cons02","cons03","cons04","cons05","cons06","cons07","cons08","cons09","cons10","cons11","cons12","cons13","cons14","cons15","cons16","cons17","cons18","cons19","cons20","cons21","cons22","cons23","cons24","cons25","cons26","cons27","cons28","cons29","cons30","cons31","cons32","cons33","cons34","cons35","cons36","cons37","cons38","cons39","cons40","cons41","cons42","cons43","cons44","cons45","cons46","cons47","cons48","cons49","cons50","cons51","cons52","cons53","cons54","cons55","cons56","cons57","cons58","cons59","cons60","cons61","cons62"],
+window.DISC.reforma = {
+  id:"reforma", nome:"Reforma Tributária", cor:"u4", mat:"consult",
+  nomeLongo:"Reforma Tributária do Consumo (EC 132, LC 214, LC 227, IBS, CBS, CGIBS e documentos fiscais)",
+  mods:["cons01","cons02","cons03","cons04","cons05","cons06","cons07","cons08","cons09","cons10","cons11","cons12","cons13","cons14","cons15","cons16","cons17","cons18","cons51","cons52","cons53","cons54","cons55","cons56","cons57","cons58","cons59","cons60","cons61","cons62"],
   pesos:[
     {mod:"01", tema:"Opção pelo regime regular de IBS e CBS no Simples Nacional (regime híbrido)", q:null},
     {mod:"02", tema:"Opção pelo Simples Nacional para 2027: prazos, indeferimento e regime regular", q:null},
@@ -602,6 +602,27 @@ window.DISC.consult = {
     {mod:"16", tema:"LC 227/2026 — Transição do ICMS: saldo credor, homologação, compensação com o IBS e estoque de ST", q:null},
     {mod:"17", tema:"ITCMD — normas gerais (LC 227/2026, Livro II): incidência, base, alíquota e competência", q:null},
     {mod:"18", tema:"LC 227/2026 — CTN (ITBI e COSIP), processo federal (Dec. 70.235), outras alterações e vigência", q:null},
+    {mod:"51", tema:"Casos práticos 1: como calcular IBS e CBS (base, alíquota, débito x crédito, transição)", q:null},
+    {mod:"52", tema:"Casos práticos 2: notas fiscais de entrada e saída (compra, venda, devolução, remessas, transferência)", q:null},
+    {mod:"53", tema:"Casos práticos 3: nota de débito, nota de crédito, notas complementares e adiantamentos", q:null},
+    {mod:"54", tema:"Casos práticos 4: split payment (pagamento, retenção, crédito e conciliação)", q:null},
+    {mod:"55", tema:"Casos práticos 5: créditos de IBS e CBS (o que gera, o que não gera e estorno)", q:null},
+    {mod:"56", tema:"Casos práticos 6: estoque, perdas, roubo, furto, sinistro e doações", q:null},
+    {mod:"57", tema:"Casos práticos 7: agronegócio (produtor rural, cooperativa, agroindústria, insumos, exportação)", q:null},
+    {mod:"58", tema:"Casos práticos 8: indústria, comércio, importação e exportação", q:null},
+    {mod:"59", tema:"Casos práticos 9: serviços (profissionais, saúde, educação, construção, imóveis, transporte, plataformas)", q:null},
+    {mod:"60", tema:"Casos práticos 10: lucro real, presumido, Simples Nacional e MEI diante da reforma", q:null},
+    {mod:"61", tema:"Casos práticos 11: casos integrados e FAQ do consultor (para treinar e gravar vídeo)", q:null},
+    {mod:"62", tema:"Classificação tributária (CST e cClassTrib), documentos fiscais eletrônicos e CGIBS", q:null}
+  ],
+  pesoNota:"Material oficial: EC 132, LC 214 e 227, CGIBS, Classificação Tributária (DF-e) e roteiro do Simples Nacional. Confira sempre a legislação e os manuais vigentes antes da prova."
+};
+
+window.DISC.consult = {
+  id:"consult", nome:"Consultoria", cor:"u4", mat:"consult",
+  nomeLongo:"Consultoria Tributária (Pessoa Jurídica 2026: IRPJ, CSLL, PIS/Cofins, preços de transferência)",
+  mods:["cons19","cons20","cons21","cons22","cons23","cons24","cons25","cons26","cons27","cons28","cons29","cons30","cons31","cons32","cons33","cons34","cons35","cons36","cons37","cons38","cons39","cons40","cons41","cons42","cons43","cons44","cons45","cons46","cons47","cons48","cons49","cons50"],
+  pesos:[
     {mod:"19", tema:"LC 224/2025: redução de incentivos e benefícios tributários federais", q:null},
     {mod:"20", tema:"PJ 2026, Cap. I: ECF, DCTFWeb, retificação e entidades imunes ou isentas", q:null},
     {mod:"21", tema:"PJ 2026: contagem de prazos e equiparação da pessoa física à pessoa jurídica", q:null},
@@ -633,19 +654,7 @@ window.DISC.consult = {
     {mod:"47", tema:"PIS/Cofins-Importação, PIS sobre a folha de salários e sobre receitas governamentais", q:null},
     {mod:"48", tema:"PJ 2026: Cide-Combustíveis e EFD-Contribuições (obrigação, prazo, retificação, multa)", q:null},
     {mod:"49", tema:"PJ 2026: novos métodos contábeis, adoção inicial (FCONT, subcontas), ágio e arrendamento", q:null},
-    {mod:"50", tema:"PJ 2026: valor justo, concessões, depreciação, moeda funcional, hedge e pagamento em ações", q:null},
-    {mod:"51", tema:"Casos práticos 1: como calcular IBS e CBS (base, alíquota, débito x crédito, transição)", q:null},
-    {mod:"52", tema:"Casos práticos 2: notas fiscais de entrada e saída (compra, venda, devolução, remessas, transferência)", q:null},
-    {mod:"53", tema:"Casos práticos 3: nota de débito, nota de crédito, notas complementares e adiantamentos", q:null},
-    {mod:"54", tema:"Casos práticos 4: split payment (pagamento, retenção, crédito e conciliação)", q:null},
-    {mod:"55", tema:"Casos práticos 5: créditos de IBS e CBS (o que gera, o que não gera e estorno)", q:null},
-    {mod:"56", tema:"Casos práticos 6: estoque, perdas, roubo, furto, sinistro e doações", q:null},
-    {mod:"57", tema:"Casos práticos 7: agronegócio (produtor rural, cooperativa, agroindústria, insumos, exportação)", q:null},
-    {mod:"58", tema:"Casos práticos 8: indústria, comércio, importação e exportação", q:null},
-    {mod:"59", tema:"Casos práticos 9: serviços (profissionais, saúde, educação, construção, imóveis, transporte, plataformas)", q:null},
-    {mod:"60", tema:"Casos práticos 10: lucro real, presumido, Simples Nacional e MEI diante da reforma", q:null},
-    {mod:"61", tema:"Casos práticos 11: casos integrados e FAQ do consultor (para treinar e gravar vídeo)", q:null},
-    {mod:"62", tema:"Classificação tributária (CST e cClassTrib), documentos fiscais eletrônicos e CGIBS", q:null}
+    {mod:"50", tema:"PJ 2026: valor justo, concessões, depreciação, moeda funcional, hedge e pagamento em ações", q:null}
   ],
   pesoNota:"Material oficial: EC 132, LC 214, 224 e 227, manuais e roteiro do Simples Nacional e Perguntas e Respostas da Pessoa Jurídica 2026 (Receita Federal). Confira sempre a legislação e os manuais vigentes antes da prova."
 };
@@ -738,7 +747,7 @@ window.DISC.dadm = {
    Nenhuma matéria fica guardada: a trilha intercala todas em partes iguais,
    para que nenhuma passe semanas parada.                                     */
 window.DISC_GUARDADAS = [];
-window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ingles","estat","matfin","econ","ti","infob","lgpd","simples","consult","fdados"];
+window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ingles","estat","matfin","econ","ti","infob","lgpd","simples","reforma","consult","fdados"];
 
 /* ---------- as provas, em ordem de prioridade ----------
    fator  = peso da prova na sua prioridade de estudo
@@ -789,7 +798,7 @@ window.CONCURSOS = {
       {it:"2.8", tema:"Demais tributos municipais (IPTU, ITBI, taxas, contribuição de melhoria, COSIP)", discs:["legcwb"], st:"parcial", nota:"IPTU, taxas e contribuição de melhoria estão nos módulos 06 e 07. O ITBI saiu do código (LC 108/2017) e a COSIP é a LC 46/2002: preciso desses dois textos."},
       {it:"2.9", tema:"Legislação tributária de Curitiba", discs:["legcwb"], st:"parcial", nota:"O Código Tributário (LC 40/2001) está nos 9 módulos. Faltam a Nota Curitibana (LC 73/2009 e Decreto 1.712/2020), o DEC e o PROCEC (LC 134/2022), a restituição e compensação (Decreto 1.261/2009), a COSIP e o ITBI."},
       {it:"2.10", tema:"Processo administrativo tributário", discs:["legcwb","dtrib"], st:"ok", nota:"Impugnação, instrução, JJT, Junta de Recursos, instância especial e consulta no módulo 09. Dívida ativa em Direito Tributário; a Lei 6.830/80 aparece em Direito Administrativo."},
-      {it:"2.11", tema:"Reforma tributária do consumo (EC 132, LC 214, CGIBS)", discs:["consult"], st:"ok", nota:"62 módulos de Consultoria. A Resolução CGIBS 6/2026 citada no edital precisa ser conferida no portal."},
+      {it:"2.11", tema:"Reforma tributária do consumo (EC 132, LC 214, CGIBS)", discs:["reforma","consult"], st:"ok", nota:"30 módulos de Reforma Tributária (e mais de Consultoria PJ). A Resolução CGIBS 6/2026 citada no edital precisa ser conferida no portal."},
       {it:"2.12", tema:"Contabilidade", discs:["contab","cavan"], st:"ok", nota:"Teoria das contas, escrituração, estoques, balanço, DRE, DFC, DVA, DMPL e os CPCs."},
       {it:"2.13", tema:"Direito Civil e Empresarial aplicados", discs:["dciv","demp"], st:"ok", nota:"Pessoas, bens, negócios jurídicos, obrigações, sociedades, títulos de crédito e recuperação."},
       {it:"2.14", tema:"Penal tributário e finanças públicas", discs:["dpen","lrf","afo"], st:"ok", nota:"Lei 8.137/90, crimes funcionais, LRF e orçamento público."},
