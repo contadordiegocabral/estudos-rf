@@ -402,7 +402,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},tecMod:S.tecMod||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3297,8 +3297,79 @@ function semaforosHtml(){
   return '<div class="hj-sem">'+
     semRow("Tempo",tmin,mm,tmin,mm+" min")+
     semRow("Questões",qh,mq,qh,mq)+
+    semRow("TEC hoje",tecHojeQ(),metaTec(),tecHojeQ(),metaTec())+
     semRow("XP",xh,gx,xh,gx)+
     semRow("Revisão do dia",rd,rm,rd,rm)+'</div>';
+}
+
+/* ---------- TEC do dia: questões diárias encaixadas no plano ---------- */
+function metaTec(){ return S.metaTec||20; }
+function tecDiaObj(){ if(!S.tecDia)S.tecDia={}; return S.tecDia; }
+function tecHojeQ(){ var x=tecDiaObj()[today()]; return x?x.q:0; }
+function tecEscolhe(){
+  var out=[], seen={};
+  function add(m,why){
+    if(!m||seen[m]||!REG[m]||!focoModOk(m)||out.length>=3) return;
+    if(!tecLinksDe(m).length) return;
+    seen[m]=1; out.push({m:m,why:why});
+  }
+  if(S.last&&S.last.mod) add(S.last.mod,"Assunto que você estudou por último");
+  var p=null; try{ p=cursoProxima(); }catch(e){}
+  if(p) add(p.mod,"Próximo assunto da trilha");
+  var best=null, bs=0;
+  Object.keys(S.mods||{}).forEach(function(k){
+    if(!REG[k]||!focoModOk(k)||seen[k]) return;
+    var s=0, ms=(S.mods[k]&&S.mods[k].misses)||{}; for(var i in ms) s+=ms[i]||0;
+    if(s>bs){ bs=s; best=k; }
+  });
+  if(best) add(best,"Onde você mais errou");
+  var tm=S.tecMod||{};
+  var cand=allModsFoco().filter(function(k){ return !seen[k]&&modFeito(k)&&tecLinksDe(k).length; })
+    .sort(function(a,b){ return (tm[a]||"")<(tm[b]||"")?-1:((tm[a]||"")>(tm[b]||"")?1:0); });
+  if(cand.length) add(cand[0],"Revisão: faz tempo que você não treina este");
+  if(out.length<3) allModsFoco().filter(function(k){return !seen[k];}).some(function(k){ add(k,"Prática do dia"); return out.length>=3; });
+  return out;
+}
+function tecRegistra(mod,q,ok){
+  q=Math.max(0,Math.min(300,Math.round(q)||0)); ok=Math.max(0,Math.min(q,Math.round(ok)||0));
+  if(!q) return;
+  var d=tecDiaObj(), t=today(), x=d[t]||(d[t]={q:0,ok:0,mods:{}});
+  var mm=x.mods[mod]||(x.mods[mod]={q:0,ok:0});
+  x.q+=q; x.ok+=ok; mm.q+=q; mm.ok+=ok;
+  var ks=Object.keys(d).sort(); while(ks.length>60){ delete d[ks.shift()]; }
+  if(!S.tecMod)S.tecMod={}; S.tecMod[mod]=t;
+  for(var i=0;i<q;i++) dstatBump(i<ok);
+  addXp(Math.ceil(q/2));
+  persist(); renderTrail();
+}
+function tecHojeCard(){
+  var box=el("div","tecd"), q=tecHojeQ(), meta=metaTec(), x=tecDiaObj()[today()]||{q:0,ok:0,mods:{}};
+  var pc=x.q?Math.round(x.ok/x.q*100):null;
+  box.innerHTML='<div class="tecd-h"><b>Questões do TEC hoje</b><span class="tecd-m">'+q+' / '+meta+(pc!=null?' · '+pc+'% de acerto':'')+'</span></div>'+
+    '<div class="tecd-meta"><label for="tecMeta">Meta de questões do TEC por dia</label><input type="number" id="tecMeta" min="5" max="200" step="5" value="'+meta+'"></div>';
+  box.querySelector("#tecMeta").onchange=function(e){ var v=parseInt(e.target.value,10); if(v>=5&&v<=200){ S.metaTec=v; persist(); renderTrail(); } };
+  var itens=tecEscolhe();
+  if(!itens.length){ box.appendChild(el("p","tec-n","Conclua uma lição para o app sugerir o caderno do dia.")); return box; }
+  itens.forEach(function(it){
+    var ls=tecLinksDe(it.m).slice(0,3), r=x.mods[it.m];
+    var d=el("div","tecd-it",
+      '<div class="tecd-t"><b>'+modNome(it.m)+'</b><small>'+it.why+(r?' · hoje: '+r.ok+'/'+r.q+' certas':'')+'</small></div>'+
+      '<div class="teclist mini">'+ls.map(function(l){
+        return '<a href="'+l.u+'" target="_blank" rel="noopener"><span class="bn">'+String(l.n).replace(/^Monte seu caderno no TEC — /,"").replace(/^[^:]*: /,"")+'</span><span class="bu">'+(l.real?'caderno pronto':'filtro do TEC')+'</span></a>';
+      }).join("")+'</div>'+
+      '<div class="tecd-reg"><button type="button" class="ghost tecd-b">Registrei questões</button>'+
+      '<span class="tecd-f" hidden><input type="number" class="tq" min="1" max="300" placeholder="Feitas" aria-label="Questões feitas"><input type="number" class="to" min="0" max="300" placeholder="Acertos" aria-label="Acertos"><button type="button" class="big tecd-s">Salvar</button></span></div>');
+    var f=d.querySelector(".tecd-f"), b=d.querySelector(".tecd-b");
+    b.onclick=function(){ f.hidden=!f.hidden; };
+    d.querySelector(".tecd-s").onclick=function(){
+      var qq=parseInt(d.querySelector(".tq").value,10), oo=parseInt(d.querySelector(".to").value,10)||0;
+      if(!(qq>0)) return;
+      tecRegistra(it.m,qq,Math.min(oo,qq));
+    };
+    box.appendChild(d);
+  });
+  box.appendChild(el("p","tec-n","Abra o caderno no TEC, resolva e volte aqui para registrar quantas fez e quantas acertou. Favorite no TEC as que errar."));
+  return box;
 }
 function hojeRow(ic,t,s,btn,fn,cls){
   var r=el("div","hrow"+(cls?" "+cls:""),
@@ -3321,6 +3392,7 @@ function hojeCard(){
     var p=pctPlano(ds,S.focoPct||0), h=S.plano&&S.plano.hpd>0?S.plano.hpd:2;
     c.appendChild(el("div","fs-info","<b>"+(S.focoPct?"Essencial "+S.focoPct+"%":"Conteúdo completo")+":</b> faltam "+p.rest+" lições ≈ <b>"+fmtHoras(p.min)+"</b> de estudo (~"+Math.ceil(p.min/60/h)+" dias a "+String(h).replace(".",",")+" h/dia)"));
   })();
+  c.appendChild(tecHojeCard());
   /* provas: as duas principais com meta diária; as demais são testes */
   var pvb=el("div","hj-provas");
   pvb.innerHTML=provaRow("isscwb",true)+provaRow("atrfb",true)+
@@ -3795,7 +3867,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -3983,7 +4055,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.tecMod)S.tecMod=d.tecMod; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
