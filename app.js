@@ -209,6 +209,7 @@ function cursoProxima(){
   var ord=cursoOrdem();
   for(var i=0;i<ord.length;i++){
     var k=ord[i], pm=S.mods&&S.mods[k], ls=licoesAtivas(k);
+    if(ls.length&&!modFeito(k)&&typeof spqBloqueioDe==="function"&&spqBloqueioDe(k)) continue;
     for(var j=0;j<ls.length;j++){
       if(!pm || !pm.done || !pm.done[ls[j].l.id]){
         return {mod:k, disc:discOf(k), idx:i, li:j, lesson:ls[j].l, unit:ls[j].u,
@@ -530,6 +531,13 @@ function renderTrail(){
               }).join("")+
             '</div>'
           : '');
+    }else if(cursoBloqueio()){
+      var cb=cursoBloqueio(), bs=spqStat(cb.bloq);
+      corpo='<div class="cu-next"><span class="cu-ic">'+svg("i-lock")+'</span>'+
+        '<div class="cu-nx"><span class="cu-lab">Fase do Método SPQ</span>'+
+        '<span class="cu-tit">Falta bater 80% em '+REG[cb.bloq].nome+'</span>'+
+        '<span class="cu-sub">Você está em '+(bs.n?Math.round(bs.acc*100)+'% ('+bs.r+'/'+bs.n+')':'0 respostas')+'. Resolva questões do tópico para liberar a trilha.</span></div></div>'+
+        '<button class="big" id="cuSpq">Treinar este tópico</button>';
     }else{
       corpo='<div class="cu-next"><span class="cu-ic">'+svg("i-trophy")+'</span>'+
         '<div class="cu-nx"><span class="cu-lab">Trilha completa</span>'+
@@ -550,6 +558,8 @@ function renderTrail(){
     root.appendChild(card);
     var go=document.getElementById("cuGo");
     if(go) go.onclick=function(){ irParaCurso(); };
+    var gs=document.getElementById("cuSpq");
+    if(gs) gs.onclick=function(){ var cb=cursoBloqueio(); if(cb) spqFase(discOf(cb.bloq),cb.bloq); };
 
     /* mapa do curso inteiro, para quem quiser ver a estrada toda */
     var det=el("details","cursomapa",
@@ -651,6 +661,12 @@ function renderTrail(){
   var act=mb.querySelector('[aria-current="true"]');
   if(act) mb.scrollLeft=Math.max(0, act.offsetLeft-mb.clientWidth/2+act.offsetWidth/2);
 
+  var bqMod=spqBloqueioDe(S.cur);
+  if(bqMod){
+    var bb=spqStat(bqMod), bn=el("div","hojecard",'<div class="hj-h"><div class="hj-t">Módulo bloqueado pelo SPQ</div></div><p class="tec-n">Para abrir este módulo, bata 80% de acerto em <b>'+REG[bqMod].nome+'</b> ('+(bb.n?Math.round(bb.acc*100)+"% agora":"sem respostas")+').</p><button type="button" class="big" id="bqGo">Treinar o tópico</button>');
+    root.appendChild(bn);
+    bn.querySelector("#bqGo").onclick=function(){ spqFase(discOf(bqMod),bqMod); };
+  }
   var cur=unlockedIndex(), gi=0;
   var pulaN=ALL.filter(function(x){return licaoPula(x)&&!P().done[x.id];}).length;
   UNITS.forEach(function(u){
@@ -1226,6 +1242,8 @@ function modsNaMistura(ids){
    LIÇÕES
    ======================================================= */
 function startLesson(l){
+  (function(){ var bq=spqBloqueioDe(S.cur); if(bq&&!lDone(S.cur,l)) { l=null; spqFase(discOf(bq),bq); } })();
+  if(!l) return;
   try{ S.last={disc:S.disc,mod:S.cur,id:l.id,title:l.title||l.id,at:Date.now()}; persist(); }catch(e){}
   L={lesson:l,finished:false,correct:0,total:0};
   openOv();setHearts(null);setProg(0);stopTimer();
@@ -3992,10 +4010,36 @@ function spqStat(mod){
   return {n:n,r:r,acc:n?r/n:0,ok:!!spqS().ok[mod]};
 }
 var _spqTop={};
+/* quem já tinha o módulo concluído antes do SPQ não fica preso: só vale a trava para o que ainda não foi feito */
+function spqPassou(k){ var sp=spqS(); return !!sp.ok[k] || (!sp.h[k] && modFeito(k)); }
+function spqBloqueioDe(mod){
+  if(!REG[mod]) return null;
+  var d=discOf(mod), mods=DISC[d].mods, idx=mods.indexOf(mod); if(idx<0) return null;
+  var top=spqTopicos(d);
+  for(var i=0;i<idx;i++){ var k=mods[i]; if(REG[k]&&top.indexOf(k)>=0&&!spqPassou(k)) return k; }
+  return null;
+}
+function cursoBloqueio(){
+  var ord=cursoOrdem();
+  for(var i=0;i<ord.length;i++){
+    var k=ord[i]; if(modFeito(k)) continue;
+    var b=spqBloqueioDe(k); if(b) return {mod:k,bloq:b};
+  }
+  return null;
+}
 function spqTopicos(d){
+  var ck=d; if(_spqTop[ck]) return _spqTop[ck];
+  return (_spqTop[ck]=spqTopicos0(d));
+}
+function spqTopicos0(d){
   var D=DISC[d]; if(!D) return [];
   var prontos=D.mods.filter(function(k){return REG[k];});
-  var sel=null; try{ sel=pctPlano([d],80).sel; }catch(e){}
+  /* seleção estável (não muda com o progresso): módulos que cobrem 80% do peso da matéria, do mais valioso por lição ao menos */
+  var sel={}; try{
+    var v=pctPeso(d,prontos), itens=prontos.map(function(k,o){ return {k:k,v:v[k],n:Math.max(1,licoesDoMod(k).length),o:o}; }), soma=0, acc=0;
+    itens.forEach(function(x){ soma+=x.v; });
+    itens.slice().sort(function(a,b){ return (b.v/b.n)-(a.v/a.n)||a.o-b.o; }).forEach(function(x){ if(acc>=soma*0.8-1e-9) return; sel[x.k]=1; acc+=x.v; });
+  }catch(e){ sel=null; }
   function tem(k){ var m=REG[k], n=0; for(var e in (m.EX||{})) if(m.EX[e]&&m.EX[e].t!=="match") n++; return n>=3||tecLinksDe(k).length>0; }
   var out=prontos.filter(function(k){ return (!sel||sel[k])&&tem(k); });
   if(!out.length) out=prontos.filter(tem).slice(0,5);
