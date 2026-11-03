@@ -402,7 +402,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},tecMod:S.tecMod||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -715,7 +715,8 @@ function openOv(){
 function closeOv(){stopTimer();if(typeof pvVidLimpa==="function")pvVidLimpa();fecharTeoria();ov.classList.remove("on");document.body.style.overflow="";L=null;CUR_FID=null;renderTrail();buildPanel();}
 function quitLesson(){
   if(L&&L.finished){closeOv();return;}
-  if(confirm("Sair da lição? O progresso desta lição será perdido."))closeOv();
+  var t0=Date.now(), ok=confirm("Sair da lição? O progresso desta lição será perdido.");
+  if(ok||Date.now()-t0<40) closeOv(); /* dentro do Claude o confirm() volta falso na hora: sair mesmo assim */
 }
 document.getElementById("ovX").addEventListener("click",quitLesson);
 function setFoot(cls,html){ovFoot.className="ov-foot"+(cls?" "+cls:"");ovFootIn.innerHTML=html;}
@@ -3371,6 +3372,184 @@ function tecHojeCard(){
   box.appendChild(el("p","tec-n","Abra o caderno no TEC, resolva e volte aqui para registrar quantas fez e quantas acertou. Favorite no TEC as que errar."));
   return box;
 }
+
+/* =====================================================================
+   HUB DA REFORMA TRIBUTÁRIA: flashcards, questões e técnicas de memorização
+   sobre todos os módulos da Reforma (LC 214/2025 e correlatos).
+   ===================================================================== */
+function rfMods(){ return (DISC.reforma?DISC.reforma.mods:[]).filter(function(k){return REG[k];}); }
+function rfIds(kind){
+  var out=[];
+  rfMods().forEach(function(k){
+    var m=REG[k];
+    if(kind==="cards"||kind==="all") (m.CARDS||[]).forEach(function(_,i){ out.push(qjoin(k,"c"+i)); });
+    if(kind!=="cards") for(var e in (m.EX||{})){
+      var tp=m.EX[e]&&m.EX[e].t; if(!tp||tp==="match") continue;
+      if(kind==="ce"&&tp!=="ce") continue;
+      if(kind==="obj"&&tp==="ce") continue;
+      out.push(qjoin(k,e));
+    }
+  });
+  return out;
+}
+function rfEstado(ids){
+  var s=srs(), t=today(), r={novo:[],due:[],leech:[],erro:[],all:ids};
+  ids.forEach(function(f){
+    var st=s[f];
+    if(!st) r.novo.push(f);
+    else{
+      if((st.lap||0)>=LEECH) r.leech.push(f);
+      else if(daysBetween(st.due,t)>=0) r.due.push(f);
+      if((st.lap||0)>0) r.erro.push(f);
+    }
+  });
+  return r;
+}
+function rfPick(lista,n){ return shuffle(lista.slice()).slice(0,n); }
+function rfOpen(){
+  L={lesson:{id:"rfhub",type:"hub",title:"Reforma Tributária"},finished:true,correct:0,total:0};
+  openOv(); setHearts(null); setProg(0); stopTimer();
+}
+function rfVoltar(){ return '<button class="ghost" id="rfBack" style="flex:1">Voltar</button>'; }
+function rfBtn(id,tit,sub,n,dis){
+  return '<button type="button" class="rf-b" id="'+id+'"'+(dis?" disabled":"")+'><span class="rf-bt"><b>'+tit+'</b><small>'+sub+'</small></span><span class="rf-bn">'+n+'</span></button>';
+}
+function rfHub(){
+  rfOpen();
+  var mods=rfMods(), cards=rfIds("cards"), ce=rfIds("ce"), obj=rfIds("obj");
+  var ec=rfEstado(cards), eq=rfEstado(ce.concat(obj));
+  var feitas=0,total=0; mods.forEach(function(k){ var ls=licoesAtivas(k); total+=ls.length; ls.forEach(function(l){ if(lDone(k,l.l)) feitas++; }); });
+  ovInner.innerHTML=
+    '<div class="rf-h"><span class="q-kicker">Reforma Tributária</span><h2>Estude tudo da Reforma</h2>'+
+    '<p>'+mods.length+' módulos · '+cards.length+' flashcards · '+(ce.length+obj.length)+' questões. Trilha: '+feitas+' de '+total+' lições feitas.</p></div>'+
+    '<div class="rf-sec"><h3>Flashcards</h3>'+
+      rfBtn("rfFcDue","Revisar os vencidos","Cartas que voltam hoje pela revisão espaçada",ec.due.length,!ec.due.length)+
+      rfBtn("rfFcNew","Cartas novas","20 cartas que você ainda não viu",Math.min(20,ec.novo.length),!ec.novo.length)+
+      rfBtn("rfFcLeech","Os teimosos","Cartas que você erra de novo e de novo",ec.leech.length,!ec.leech.length)+
+      rfBtn("rfFcMix","Rodada mista","20 cartas: vencidas, novas e sorteadas",Math.min(20,cards.length),!cards.length)+
+    '</div>'+
+    '<div class="rf-sec"><h3>Questões</h3>'+
+      rfBtn("rfQce","Certo ou errado","Estilo CEBRASPE, 15 afirmações sobre a lei",Math.min(15,ce.length),!ce.length)+
+      rfBtn("rfQobj","Objetivas e exercícios","Múltipla escolha, ordenar, completar e mais",Math.min(15,obj.length),!obj.length)+
+      rfBtn("rfQerr","Só as que errei","Questões da Reforma em que você já errou",eq.erro.length,!eq.erro.length)+
+      rfBtn("rfQmix","Simulado misto","25 questões sorteadas, sem aviso de tema",Math.min(25,ce.length+obj.length),!(ce.length+obj.length))+
+    '</div>'+
+    '<div class="rf-sec"><h3>Técnicas de memorização</h3>'+
+      rfBtn("rfTrap","Pegadinhas e macetes","Treino com os alertas e atalhos de cada módulo","Treinar")+
+      rfBtn("rfRec","Evocação livre","Escreva de memória e depois confira com os cartões","Praticar")+
+      rfBtn("rfTec","Guia das técnicas","Como usar espaçamento, intercalação e explicação em voz alta","Ver")+
+    '</div>'+
+    '<div class="rf-sec"><h3>Trilha</h3>'+
+      rfBtn("rfTrilha","Estudar a trilha da Reforma","Filtra o app só na Reforma Tributária","Ir")+
+    '</div>';
+  setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
+  function sprint(ids,n,tit){ if(!ids.length) return; L.finished=true; closeOv(); startSprint(Math.min(n,ids.length),rfPick(ids,n),tit); }
+  function on(id,fn){ var b=document.getElementById(id); if(b&&!b.disabled) b.onclick=fn; }
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  on("rfFcDue",function(){ sprint(ec.due,20,"Flashcards vencidos · Reforma"); });
+  on("rfFcNew",function(){ sprint(ec.novo,20,"Flashcards novos · Reforma"); });
+  on("rfFcLeech",function(){ sprint(ec.leech,20,"Os teimosos · Reforma"); });
+  on("rfFcMix",function(){
+    var pick=ec.due.slice(0,8).concat(ec.novo.slice(0,8)); var rest=shuffle(cards.slice());
+    for(var i=0;pick.length<20&&i<rest.length;i++) if(pick.indexOf(rest[i])<0) pick.push(rest[i]);
+    sprint(pick,20,"Rodada mista · Reforma");
+  });
+  on("rfQce",function(){ var e=rfEstado(ce); sprint(e.due.concat(e.novo).length>=15?e.due.concat(e.novo):ce,15,"Certo ou errado · Reforma"); });
+  on("rfQobj",function(){ var e=rfEstado(obj); sprint(e.due.concat(e.novo).length>=15?e.due.concat(e.novo):obj,15,"Objetivas · Reforma"); });
+  on("rfQerr",function(){ sprint(eq.erro,15,"Questões que errei · Reforma"); });
+  on("rfQmix",function(){ sprint(ce.concat(obj),25,"Simulado misto · Reforma"); });
+  on("rfTrap",function(){ rfTraps(); });
+  on("rfRec",function(){ rfRecall(); });
+  on("rfTec",function(){ rfGuia(); });
+  on("rfTrilha",function(){ L.finished=true; closeOv(); var sel={}; sel.reforma=true; focoAplicar(sel); });
+}
+function rfCaixas(){
+  var out=[];
+  rfMods().forEach(function(k){
+    var m=REG[k], T=m.TEORIA||{};
+    Object.keys(T).forEach(function(a){
+      (T[a]||[]).forEach(function(s,si){
+        var b=s.b||""; if(!/class="box (trap|tip)"/.test(b)) return;
+        var doc=new DOMParser().parseFromString("<div>"+b+"</div>","text/html");
+        doc.querySelectorAll(".box.trap, .box.tip").forEach(function(bx,bi){
+          var lb=bx.querySelector(".bl"), lab=lb?lb.textContent:"";
+          if(lb) lb.remove();
+          var txt=(bx.textContent||"").replace(/\s+/g," ").trim(); if(txt.length<20) return;
+          out.push({id:k+"|"+a+"|"+si+"|"+bi,m:k,trap:bx.classList.contains("trap"),lab:lab,txt:txt});
+        });
+      });
+    });
+  });
+  return out;
+}
+function rfTraps(){
+  rfOpen();
+  var all=rfCaixas(), rev=S.rfRev||{};
+  var pend=all.filter(function(c){return rev[c.id];});
+  var fila=shuffle(all.filter(function(c){return !rev[c.id];})).slice(0,12);
+  fila=shuffle(pend.slice(0,4).concat(fila)).slice(0,12);
+  var i=0, certas=0;
+  function draw(){
+    if(i>=fila.length){
+      ovInner.innerHTML='<div class="cele"><div class="medal">'+svg("i-repeat")+'</div><h2>Rodada concluída</h2><p>Você viu '+fila.length+' alertas. Os marcados para rever voltam na próxima rodada.</p></div>';
+      setFoot("",rfVoltar()+'<button class="big" id="rfMais">Outra rodada</button>');
+      document.getElementById("rfBack").onclick=rfHub; document.getElementById("rfMais").onclick=rfTraps;
+      addXp(Math.min(20,fila.length)); persist(); setProg(100); return;
+    }
+    var c=fila[i]; setProg(i/fila.length*100);
+    ovInner.innerHTML='<span class="q-kicker">'+(c.trap?"Pegadinha":"Macete")+' · '+(i+1)+' de '+fila.length+'</span>'+
+      '<h3 style="font-size:1.1rem">'+modNome(c.m)+'</h3>'+
+      '<div class="box'+(c.trap?" trap":" tip")+'"><span class="bl">'+(c.lab||(c.trap?"Atenção":"Dica"))+'</span><p>'+c.txt.replace(/</g,"&lt;")+'</p></div>'+
+      '<p class="tec-n">Leia, tape o texto e tente dizer com as suas palavras. Depois marque como se saiu.</p>';
+    setFoot("",'<button class="ghost" id="rfRev" style="flex:1">Rever depois</button><button class="big" id="rfOk">Sei explicar</button>');
+    document.getElementById("rfRev").onclick=function(){ if(!S.rfRev)S.rfRev={}; S.rfRev[c.id]=today(); i++; persist(); draw(); };
+    document.getElementById("rfOk").onclick=function(){ if(S.rfRev)delete S.rfRev[c.id]; i++; persist(); draw(); };
+    scrollTop();
+  }
+  if(!fila.length){ ovInner.innerHTML='<div class="cele"><h2>Sem alertas ainda</h2></div>'; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=rfHub; return; }
+  draw();
+}
+function rfRecall(){
+  rfOpen();
+  var us=[]; rfMods().forEach(function(k){ (REG[k].UNITS||[]).forEach(function(u){ var cs=[]; (u.lessons||[]).forEach(function(l){ if(l.type==="flash") (l.data||[]).forEach(function(ix){ if(REG[k].CARDS[ix]) cs.push(REG[k].CARDS[ix]); }); }); if(cs.length>=3) us.push({k:k,u:u,cs:cs}); }); });
+  if(!us.length){ ovInner.innerHTML='<div class="cele"><h2>Sem unidades para praticar</h2></div>'; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=rfHub; return; }
+  var ev=S.rfEv||{};
+  us.sort(function(a,b){ var x=ev[a.k+"|"+a.u.n]||{d:""}, y=ev[b.k+"|"+b.u.n]||{d:""}; return x.d<y.d?-1:(x.d>y.d?1:0); });
+  var it=us[Math.floor(Math.random()*Math.min(8,us.length))];
+  ovInner.innerHTML='<span class="q-kicker">Evocação livre</span><h3 style="font-size:1.2rem">'+it.u.title+'</h3><p style="color:var(--ink-2)">'+modNome(it.k)+'</p>'+
+    '<p>Sem olhar nada, escreva ou diga em voz alta tudo o que lembra sobre este assunto: regras, prazos, exceções e artigos. Só depois confira.</p>'+
+    '<textarea id="rfTx" rows="6" style="width:100%;font:inherit;padding:10px;border:2px solid var(--line-strong);border-radius:12px;background:var(--surface);color:var(--ink)" placeholder="O que eu lembro…"></textarea>';
+  setFoot("",rfVoltar()+'<button class="big" id="rfMostra">Conferir</button>');
+  document.getElementById("rfBack").onclick=rfHub;
+  document.getElementById("rfMostra").onclick=function(){
+    var tx=(document.getElementById("rfTx").value||"").trim();
+    ovInner.innerHTML='<span class="q-kicker">Confira</span><h3 style="font-size:1.2rem">'+it.u.title+'</h3>'+
+      (tx?'<div class="box"><span class="bl">O que você escreveu</span><p>'+tx.replace(/</g,"&lt;").replace(/\n/g,"<br>")+'</p></div>':"")+
+      it.cs.slice(0,8).map(function(c){ return '<div class="box tip"><span class="bl">'+c[0]+'</span><p>'+c[1]+'</p></div>'; }).join("")+
+      '<p class="tec-n">Quanto você lembrou antes de olhar?</p>';
+    setFoot("",'<button class="ghost" id="rfP" style="flex:1">Pouco</button><button class="ghost" id="rfM" style="flex:1">Metade</button><button class="big" id="rfT">Quase tudo</button>');
+    function fim(n){ if(!S.rfEv)S.rfEv={}; S.rfEv[it.k+"|"+it.u.n]={d:today(),n:n}; addXp(5+n*2); persist(); rfRecall(); }
+    document.getElementById("rfP").onclick=function(){fim(0);}; document.getElementById("rfM").onclick=function(){fim(1);}; document.getElementById("rfT").onclick=function(){fim(2);};
+    scrollTop();
+  };
+}
+function rfGuia(){
+  rfOpen();
+  var tec=[
+    ["Recuperação ativa","Tente lembrar antes de ler. No app: flashcards, certo ou errado e a evocação livre. Errar e corrigir fixa mais que reler."],
+    ["Repetição espaçada","Revise no limite do esquecimento. As cartas voltam sozinhas em 1, 3, 7, 14 dias e mais. Cumpra a revisão do dia antes de matéria nova."],
+    ["Intercalação","Misture assuntos na mesma sessão. A rodada mista e o simulado misto trocam de tema para treinar a escolha da regra certa."],
+    ["Agrupar por artigo","Guarde cada artigo como um bloco curto: quem, o quê, quando, quanto. Depois ligue os blocos pela remissão (art. X remete ao art. Y)."],
+    ["Pegadinhas por contraste","Compare pares parecidos: IBS x CBS, crédito x ressarcimento, alíquota zero x isenção, redução de 60% x 100%. A prova troca um pelo outro."],
+    ["Explicar em voz alta","Se você não explica em 30 segundos sem olhar, ainda não sabe. Use o botão Sei explicar nas pegadinhas e macetes."],
+    ["Números e prazos em âncoras","Associe cada número a uma imagem ou a uma data conhecida. Escreva os percentuais e os anos de transição em uma folha só e refaça de memória."]
+  ];
+  ovInner.innerHTML='<span class="q-kicker">Técnicas de memorização</span><h2>Como estudar a Reforma</h2>'+
+    tec.map(function(x){ return '<div class="box"><span class="bl">'+x[0]+'</span><p>'+x[1]+'</p></div>'; }).join("")+
+    '<p class="tec-n">Sugestão de rotina: 10 min de revisão vencida, 20 min de trilha, 15 questões e 5 min de evocação livre.</p>';
+  setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=rfHub;
+}
+window.__rfHub=rfHub;
 function hojeRow(ic,t,s,btn,fn,cls){
   var r=el("div","hrow"+(cls?" "+cls:""),
     '<span class="hr-i">'+svg(ic)+'</span><span class="hr-t"><b>'+t+'</b><small>'+s+'</small></span>'+
@@ -3399,7 +3578,7 @@ function hojeCard(){
     '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
       .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
     '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
-    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button></div>';
+    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button><button type="button" class="ghost" id="hjRf">Reforma Tributária</button></div>';
   c.appendChild(pvb);
   pvb.querySelector("#hjAlvo").onclick=function(){
     if(focoEhAlvos()){ focoAplicar({}); }
@@ -3409,6 +3588,7 @@ function hojeCard(){
   pvb.querySelector("#hjPlano").onclick=function(){ pvE(); S.plano.conc="isscwb"; pvPlanScreen(); };
   pvb.querySelector("#hjSem").onclick=function(){ resumoSemana(); };
   pvb.querySelector("#hjEdt").onclick=function(){ pvEditalScreen("isscwb"); };
+  pvb.querySelector("#hjRf").onclick=function(){ rfHub(); };
 
   /* ritmo */
   var rt=ritmo();
@@ -3867,7 +4047,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -4055,7 +4235,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.tecMod)S.tecMod=d.tecMod; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
