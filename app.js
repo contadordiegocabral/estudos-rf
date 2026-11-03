@@ -3468,6 +3468,110 @@ function rfHub(){
   on("rfTrilha",function(){ L.finished=true; closeOv(); var sel={}; sel.reforma=true; focoAplicar(sel); });
 }
 
+/* ---------- CICLO GUIADO: o que estudar hoje, pelo seu desempenho em questões ---------- */
+function cgModStats(){
+  var out={}, t=today();
+  allModsFoco().forEach(function(k){ out[k]={k:k,s:0,r:0,due:0,leech:0,qids:[],cids:[]}; });
+  var mapa=srs();
+  Object.keys(mapa).forEach(function(f){
+    if(!srsValid(f)) return;
+    var m=qsplit(f).m, o=out[m]; if(!o) return;
+    var st=mapa[f]; o.s+=st.s||0; o.r+=st.r||0;
+    if((st.lap||0)>=LEECH) o.leech++;
+    if(daysBetween(st.due,t)>=0) o.due++;
+  });
+  Object.keys(out).forEach(function(k){
+    var mod=REG[k]; if(!mod) return;
+    for(var e in mod.EX){ if(mod.EX[e]&&mod.EX[e].t!=="match") out[k].qids.push(qjoin(k,e)); }
+    if(mod.CARDS) for(var i=0;i<mod.CARDS.length;i++) out[k].cids.push(qjoin(k,"c"+i));
+  });
+  return out;
+}
+function cgAcc(o){ return o.s>0?o.r/o.s:null; }
+function cgScore(o){
+  var peso=Math.max(1,prioridadeDoMod(o.k)||1), acc=cgAcc(o);
+  var need=(o.s>=4)?(1-acc):0.35;
+  if(!o.qids.length&&!o.cids.length) return -1;
+  return peso*(need+0.04*Math.min(o.due,10)+0.05*Math.min(o.leech,6));
+}
+function cgNome(k){ var m=REG[k]; return (DISC[discOf(k)]?DISC[discOf(k)].nome+" · ":"")+"Mód. "+m.n+" · "+m.nome; }
+function cgMotivo(o){
+  var acc=cgAcc(o), p=[];
+  if(acc==null||o.s<4) p.push("pouco treino (ainda sem base de acertos)");
+  else p.push(Math.round(acc*100)+"% de acerto em "+o.s+" respostas");
+  if(o.due) p.push(o.due+" vencida"+(o.due>1?"s":""));
+  if(o.leech) p.push(o.leech+" teimosa"+(o.leech>1?"s":""));
+  return p.join(" · ");
+}
+/* só questões do módulo: teimosas, erradas, vencidas e depois as inéditas */
+function cgIdsQ(o,n){
+  var base=o.qids.length?o.qids:o.cids, s=srs(), t=today(), a=[],b=[],c=[],d=[];
+  base.forEach(function(f){
+    var st=s[f];
+    if(!st) d.push(f);
+    else if((st.lap||0)>=LEECH) a.push(f);
+    else if(daysBetween(st.due,t)>=0) b.push(f);
+    else if((st.lap||0)>0) c.push(f);
+  });
+  return a.concat(shuffle(b),shuffle(c),shuffle(d)).slice(0,n);
+}
+function cgSemana(){
+  var ok=0,er=0; for(var i=-6;i<=0;i++){ var x=dstat()[dayKey(i)]; if(x){ ok+=x.ok||0; er+=x.err||0; } }
+  var ok2=0,er2=0; for(var j=-13;j<=-7;j++){ var y=dstat()[dayKey(j)]; if(y){ ok2+=y.ok||0; er2+=y.err||0; } }
+  return {n:ok+er,acc:ok+er?ok/(ok+er):null,n2:ok2+er2,acc2:ok2+er2?ok2/(ok2+er2):null};
+}
+function cicloGuiado(){
+  rfOpen();
+  var st=cgModStats(), lista=Object.keys(st).map(function(k){return st[k];});
+  var rank=lista.filter(function(o){return cgScore(o)>=0;}).sort(function(a,b){return cgScore(b)-cgScore(a);});
+  var topo=rank.slice(0,3);
+  var sem=cgSemana();
+  var h='<div class="rf-h"><span class="q-kicker">Ciclo guiado</span><h2>O que estudar hoje</h2>'+
+    '<p>O app olha seus acertos, as questões vencidas e o peso de cada matéria nas suas provas, e aponta onde treinar primeiro.</p></div>';
+  h+='<div class="rf-sec"><h3>Treino de hoje</h3>';
+  if(!topo.length) h+='<p class="tec-n">Nenhum módulo com questões no filtro atual.</p>';
+  topo.forEach(function(o,i){ h+=rfBtn("cgT"+i,cgNome(o.k),cgMotivo(o),"Treinar"); });
+  h+='</div>';
+  var cic=rank.slice(0,3).reduce(function(a,o){return a.concat(cgIdsQ(o,7));},[]);
+  h+='<div class="rf-sec"><h3>Modo só questões</h3>'+
+    rfBtn("cgCic","Ciclo de hoje","Questões dos 3 pontos fracos, intercaladas (sem teoria)",Math.min(21,cic.length),!cic.length)+
+    rfBtn("cgErr","Só as que errei","Todas as questões em que você já errou, das mais urgentes",lista.reduce(function(a,o){return a+o.qids.filter(function(f){return (srs()[f]||{}).lap>0;}).length;},0),false)+
+  '</div>';
+  /* evolução por matéria */
+  var porD={};
+  lista.forEach(function(o){ var d=discOf(o.k); var x=porD[d]||(porD[d]={s:0,r:0,due:0}); x.s+=o.s; x.r+=o.r; x.due+=o.due; });
+  h+='<div class="rf-sec"><h3>Evolução por matéria</h3>';
+  var ds=Object.keys(porD).filter(function(d){return porD[d].s>0;}).sort(function(a,b){return porD[a].r/porD[a].s-porD[b].r/porD[b].s;});
+  if(!ds.length) h+='<p class="tec-n">Ainda não há respostas registradas. Faça um treino para o painel aparecer.</p>';
+  ds.forEach(function(d){
+    var x=porD[d], p=Math.round(100*x.r/x.s);
+    h+='<div class="cg-l"><div class="cg-t"><b>'+DISC[d].nome+'</b><span>'+p+'% · '+x.s+' respostas'+(x.due?' · '+x.due+' vencidas':'')+'</span></div><div class="cg-bar"><i style="width:'+p+'%" class="'+(p>=75?"ok":p>=55?"md":"ru")+'"></i></div></div>';
+  });
+  h+='</div>';
+  /* tópicos mais fracos */
+  var fracos=lista.filter(function(o){return o.s>=4;}).sort(function(a,b){return cgAcc(a)-cgAcc(b);}).slice(0,5);
+  if(fracos.length){
+    h+='<div class="rf-sec"><h3>Tópicos mais fracos</h3>';
+    fracos.forEach(function(o,i){ h+=rfBtn("cgF"+i,cgNome(o.k),cgMotivo(o),"Treinar"); });
+    h+='</div>';
+  }
+  /* tendência */
+  var tend=sem.n?('Últimos 7 dias: '+Math.round(100*sem.acc)+'% de acerto em '+sem.n+' questões'+(sem.acc2!=null?(' (semana anterior: '+Math.round(100*sem.acc2)+'%)'):'')+'.'):'Sem questões respondidas nos últimos 7 dias.';
+  h+='<div class="rf-sec"><h3>Tendência</h3><p class="tec-n">'+tend+'</p></div>';
+  ovInner.innerHTML=h;
+  setFoot("",'<button class="ghost" id="cgFecha" style="flex:1">Fechar</button>');
+  function go(ids,tit){ if(!ids.length) return; L.finished=true; closeOv(); startSprint(ids.length,ids,tit); }
+  function on(id,fn){ var b=document.getElementById(id); if(b&&!b.disabled) b.onclick=fn; }
+  document.getElementById("cgFecha").onclick=function(){ closeOv(); };
+  topo.forEach(function(o,i){ on("cgT"+i,function(){ go(cgIdsQ(o,15),"Só questões · "+REG[o.k].nome); }); });
+  fracos.forEach(function(o,i){ on("cgF"+i,function(){ go(cgIdsQ(o,15),"Ponto fraco · "+REG[o.k].nome); }); });
+  on("cgCic",function(){ go(intercalar(cic),"Ciclo de hoje"); });
+  on("cgErr",function(){
+    var ids=[]; lista.forEach(function(o){ o.qids.forEach(function(f){ var x=srs()[f]; if(x&&x.lap>0) ids.push(f); }); });
+    ids.sort(function(a,b){ return (srs()[b].lap||0)-(srs()[a].lap||0); }); go(ids.slice(0,20),"Questões que errei");
+  });
+}
+
 /* ---------- mapas mentais da LC 214 (montados a partir dos cartões de cada módulo) ---------- */
 function rfStrip(h){ return String(h).replace(/<br\s*\/?>/g," / ").replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim(); }
 function rfCurto(s,max){
@@ -3765,7 +3869,7 @@ function hojeCard(){
     '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
       .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
     '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
-    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button><button type="button" class="ghost" id="hjRf">Reforma Tributária</button><button type="button" class="ghost" id="hjMp">Mapas de estudo</button></div>';
+    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button><button type="button" class="ghost" id="hjRf">Reforma Tributária</button><button type="button" class="ghost" id="hjMp">Mapas de estudo</button><button type="button" class="ghost" id="hjCg">Ciclo guiado</button></div>';
   c.appendChild(pvb);
   pvb.querySelector("#hjAlvo").onclick=function(){
     if(focoEhAlvos()){ focoAplicar({}); }
@@ -3777,6 +3881,7 @@ function hojeCard(){
   pvb.querySelector("#hjEdt").onclick=function(){ pvEditalScreen("isscwb"); };
   pvb.querySelector("#hjRf").onclick=function(){ rfHub(); };
   pvb.querySelector("#hjMp").onclick=function(){ mapasHub(); };
+  pvb.querySelector("#hjCg").onclick=function(){ cicloGuiado(); };
 
   /* ritmo */
   var rt=ritmo();
