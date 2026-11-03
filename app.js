@@ -1500,6 +1500,18 @@ function runFlash(l){
    inteira. Embaixo, de onde saiu (artigo, súmula, banca) e o atalho para a
    teoria daquele ponto, que é o que falta quando o erro não foi desatenção. */
 function temTeoria(fid){ return !!(fid && teoriaDoItem(fid)); }
+var MOT=[["t","Falta de teoria"],["p","Pegadinha"],["d","Desatenção"],["c","Chute"]];
+function ligarMotivo(fid){
+  var row=document.getElementById("motRow"); if(!row) return;
+  row.querySelectorAll(".mot-b").forEach(function(b){
+    b.onclick=function(){
+      var sp=spqS(); if(!sp.mot) sp.mot={}; var mod=qsplit(fid).m, x=sp.mot[mod]||(sp.mot[mod]={t:0,p:0,d:0,c:0});
+      if(row.getAttribute("data-done")) return; row.setAttribute("data-done","1");
+      x[b.dataset.m]=(x[b.dataset.m]||0)+1; persist();
+      row.querySelectorAll(".mot-b").forEach(function(o){ o.setAttribute("aria-pressed",String(o===b)); o.disabled=true; });
+    };
+  });
+}
 function comentario(res,fid){
   var tem=temTeoria(fid);
   return '<div class="fb '+(res.ok?"good":"bad")+'" role="status">'+
@@ -1508,6 +1520,7 @@ function comentario(res,fid){
     (!res.ok&&res.sol?'<div class="sol">'+res.sol+'</div>':'')+
     (res.why?'<p class="fb-why">'+res.why+'</p>':'')+
     (res.more?'<div class="fb-more">'+res.more+'</div>':'')+
+    ((!res.ok&&fid)?'<div class="mot" id="motRow"><span>Por que errei?</span>'+MOT.map(function(m){ return '<button type="button" class="mot-b" data-m="'+m[0]+'">'+m[1]+'</button>'; }).join("")+'</div>':'')+
     ((res.src||tem)?'<div class="fb-foot">'+
       (res.src?'<span class="fb-src">'+res.src+'</span>':'')+
       (tem?'<button type="button" class="fb-teo" id="fbTeo">'+svg("i-book")+
@@ -1592,7 +1605,7 @@ function runDrill(l,ids,maxHearts){
     ovFootIn.innerHTML='<div style="flex:1;display:grid;gap:10px">'+comentario(res,exId)+
       '<button class="big '+(res.ok?"green":"red")+'" id="nx">Continuar</button>'+
       (DESKTOP?'<div class="kbhint">Enter para continuar</div>':'')+'</div>';
-    ligarTeoBtn(exId);
+    ligarTeoBtn(exId); ligarMotivo(exId);
     document.getElementById("nx").onclick=function(){
       i++;
       if(i>=ids.length){setProg(100);finish(l,{correct:L.correct,total:ids.length});}
@@ -3218,6 +3231,15 @@ function abrirDisc(d){
   loadModule(f); persist(); renderTrail(); buildPanel();
   window.scrollTo({top:0,behavior:"smooth"});
 }
+function pvEditalEscolha(){
+  var ks=Object.keys(CONC).filter(function(k){ return CONC[k].mapa; });
+  rfOpen();
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Edital × app</span><h2>Escolha o concurso</h2><p>Compara o programa do edital com o conteúdo que o app tem.</p></div><div class="rf-sec">'+
+    ks.map(function(k,i){ var c=CONC[k]; return rfBtn("edC"+i,c.nome,(c.confirmado?"Edital publicado":"Edital ainda não publicado (provisório)")+" · "+c.banca,"Ver"); }).join("")+'</div>';
+  setFoot("",'<button class="ghost" id="edFecha" style="flex:1">Fechar</button>');
+  document.getElementById("edFecha").onclick=function(){ closeOv(); };
+  ks.forEach(function(k,i){ document.getElementById("edC"+i).onclick=function(){ pvEditalScreen(k); }; });
+}
 function pvEditalScreen(conc){
   var cc=CONC[conc]; if(!cc||!cc.mapa) return;
   var n={ok:0,parcial:0,falta:0}; cc.mapa.forEach(function(x){ n[x.st]++; });
@@ -3236,7 +3258,7 @@ function pvEditalScreen(conc){
         (x.discs.length?'<div class="hj-pvb" style="margin-top:6px">'+x.discs.map(function(d){ return '<button type="button" class="ghost edt-go" data-d="'+d+'">Abrir '+(DISC[d].curto||DISC[d].nome)+'</button>'; }).join("")+'</div>':'')+
         '</div>';
     }).join("")+'</div>'+
-    '<p style="font-size:.86rem"><b>Para fechar as lacunas:</b> envie os textos de Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91, LC 116/2003, LC 73/2009, LC 134/2022, LC 46/2002, LC 108/2017 e os Decretos 1.712/2020 e 1.261/2009. Informática básica, Economia e a parte numérica de RLM/estatística/matemática financeira podem ser criadas a partir do programa do edital, sem precisar de PDF.</p></div>';
+    (cc.lacunas?'<p style="font-size:.86rem">'+(cc.nota?'<b>Atenção:</b> '+cc.nota+'<br><br>':'')+'<b>Para fechar as lacunas:</b> '+cc.lacunas+'</p></div>':'<p style="font-size:.86rem"><b>Para fechar as lacunas:</b> envie os textos de Lei Orgânica, Estatuto 1.656/58, Lei 7.671/91, LC 116/2003, LC 73/2009, LC 134/2022, LC 46/2002, LC 108/2017 e os Decretos 1.712/2020 e 1.261/2009. Informática básica, Economia e a parte numérica de RLM/estatística/matemática financeira podem ser criadas a partir do programa do edital, sem precisar de PDF.</p></div>');
   pvTela(h);
   ovInner.querySelectorAll(".edt-go").forEach(function(b){ b.onclick=function(){ abrirDisc(b.dataset.d); }; });
 }
@@ -3577,6 +3599,30 @@ function cicloGuiado(){
     fracos.forEach(function(o,i){ h+=rfBtn("cgF"+i,cgNome(o.k),cgMotivo(o),"Treinar"); });
     h+='</div>';
   }
+  /* por que você erra */
+  (function(){
+    var tot={t:0,p:0,d:0,c:0}, mot=(spqS().mot)||{}, n=0;
+    Object.keys(mot).forEach(function(k){ ["t","p","d","c"].forEach(function(c){ tot[c]+=mot[k][c]||0; n+=mot[k][c]||0; }); });
+    h+='<div class="rf-sec"><h3>Por que você erra</h3>';
+    if(!n) h+='<p class="tec-n">Quando errar uma questão, toque em "Por que errei?" no comentário. Aqui aparece o seu padrão.</p>';
+    else{
+      var dica={t:"Falta de teoria: volte ao resumo curto do tópico antes de fazer mais questões.",p:"Pegadinha: compare pares parecidos e sublinhe palavras como sempre, nunca e exceto.",d:"Desatenção: leia o enunciado inteiro e faça blocos menores, sem pressa.",c:"Chute: só marque quando tiver ao menos dois motivos; na dúvida, estude o ponto."};
+      var mx="t"; ["p","d","c"].forEach(function(c){ if(tot[c]>tot[mx]) mx=c; });
+      MOT.forEach(function(m){ var p=Math.round(100*tot[m[0]]/n); h+='<div class="cg-l"><div class="cg-t"><b>'+m[1]+'</b><span>'+tot[m[0]]+' ('+p+'%)</span></div><div class="cg-bar"><i style="width:'+p+'%" class="md"></i></div></div>'; });
+      h+='<p class="tec-n"><b>Seu maior motivo:</b> '+dica[mx]+'</p>';
+    }
+    h+='</div>';
+  })();
+  /* plano da semana */
+  (function(){
+    var hpd=(S.plano&&S.plano.hpd>0)?S.plano.hpd:2, min=Math.round(hpd*60), dI=pvDias("isscwb");
+    var f1=rank[0]?REG[rank[0].k].nome:null, f2=rank[1]?REG[rank[1].k].nome:null;
+    var rev=15, sim=Math.round(min*0.5), teo=Math.round(min*0.2), fase=min-rev-sim-teo;
+    h+='<div class="rf-sec"><h3>Plano da semana ('+hpd+' h por dia)</h3>'+
+      '<p class="tec-n"><b>Segunda a sexta:</b> '+rev+' min de revisão do dia, '+teo+' min de teoria curta e '+(fase+sim)+' min de questões'+(f1?' (comece por <b>'+f1+'</b>'+(f2?' e depois <b>'+f2+'</b>':'')+')':'')+'. Leia o comentário de cada erro e marque o motivo.</p>'+
+      '<p class="tec-n"><b>Sábado:</b> um simulado por concurso ('+(dI!=null&&dI>=0?'ISS Curitiba em '+dI+' dias':'escolha o concurso')+') e depois refaça só os erros.</p>'+
+      '<p class="tec-n"><b>Domingo:</b> revisão leve, mapas mentais e os tópicos que ficaram abaixo de 80%.</p></div>';
+  })();
   /* tendência */
   var tend=sem.n?('Últimos 7 dias: '+Math.round(100*sem.acc)+'% de acerto em '+sem.n+' questões'+(sem.acc2!=null?(' (semana anterior: '+Math.round(100*sem.acc2)+'%)'):'')+'.'):'Sem questões respondidas nos últimos 7 dias.';
   h+='<div class="rf-sec"><h3>Tendência</h3><p class="tec-n">'+tend+'</p></div>';
@@ -3909,7 +3955,7 @@ function hojeCard(){
     '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
       .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
     '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
-    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button></div>';
+    '<button type="button" class="ghost" id="hjSimIss">Simulados</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button></div>';
   c.appendChild(pvb);
   pvb.querySelector("#hjAlvo").onclick=function(){
     if(focoEhAlvos()){ focoAplicar({}); }
@@ -3918,7 +3964,7 @@ function hojeCard(){
   pvb.querySelector("#hjSimIss").onclick=function(){ PV_SIM.conc="isscwb"; pvSimScreen(); };
   pvb.querySelector("#hjPlano").onclick=function(){ pvE(); S.plano.conc="isscwb"; pvPlanScreen(); };
   pvb.querySelector("#hjSem").onclick=function(){ resumoSemana(); };
-  pvb.querySelector("#hjEdt").onclick=function(){ pvEditalScreen("isscwb"); };
+  pvb.querySelector("#hjEdt").onclick=function(){ pvEditalEscolha(); };
 
   /* ritmo */
   var rt=ritmo();
@@ -4172,7 +4218,7 @@ function treinarHub(){
     rfBtn("trCg","Ciclo guiado","O app aponta onde você mais precisa treinar","Ver")+
     rfBtn("trSp","Sprint de memorização",sprintN()+" itens do banco, sem teoria","Começar")+
     rfBtn("trSr","Super revisão","Erros e vencidos de todas as matérias","Abrir")+
-    rfBtn("trSim","Simulado ISS Curitiba","Prova completa com tempo","Abrir")+
+    rfBtn("trSim","Simulados por concurso","ISS Curitiba, ATRFB, TJ-PR e outros, com tempo","Abrir")+
     rfBtn("trRf","Reforma Tributária","Flashcards, questões e memorização","Abrir")+
     '</div>';
   setFoot("",'<button class="ghost" id="trFecha" style="flex:1">Fechar</button>');

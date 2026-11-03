@@ -875,6 +875,33 @@ window.CONCURSOS = {
     materias:{ port:10, contab:10, afo:10, lrf:10, audit:10 },
     nota:"Prova-teste. O edital lista Legislação (CF, Lei 4.320, LRF, 14.133, LC 123), Orçamento e Contabilidade Pública, Contabilidade Geral e Auditoria; os pesos por matéria são uma estimativa."
   },
+  petrobras: {
+    id:"petrobras", nome:"Petrobras · Contador", curto:"Petrobras", cor:"u2", prioridade:5, fator:0.03,
+    nomeLongo:"Contador(a) — Petrobras (nível superior, previsto)",
+    orgao:"Petrobras", banca:"Cesgranrio (contratada; contrato até 2028)",
+    data:null, dataNota:"edital ainda não publicado; previsão 2026/2027, entre 1.100 e 1.400 vagas (não oficial)",
+    vagas:"a definir", salario:"R$ 15.200,52 (referência de nível superior, não oficial)", total:null,
+    confirmado:false, estimado:true,
+    fonte:"Programa de Contador(a) Júnior do edital Petrobras PSP RH 2017 (conteúdos programáticos) — PROVISÓRIO até sair o edital novo",
+    etapas:"a definir (Cesgranrio costuma aplicar objetiva de múltipla escolha)",
+    materias:{ contab:null, cavan:null, demp:null, matfin:null, port:null, ingles:null },
+    mapa:[
+      {it:"B1.1", tema:"Contabilidade societária (CPCs, demonstrações, impairment, instrumentos financeiros, consolidação, combinação de negócios)", discs:["contab","cavan"], st:"parcial", nota:"Cobertos: estrutura conceitual, DRE, DFC, DVA, DMPL, imobilizado e depreciação, arrendamento, subvenção, AVP, valor justo, provisões, impairment, combinação, MEP, instrumentos financeiros e consolidação. Faltam câmbio (CPC 02), partes relacionadas, imposto de renda diferido (CPC 32), custos de empréstimos, operações descontinuadas, benefícios a empregados, joint ventures, efeitos inflacionários e aspectos ambientais."},
+      {it:"B1.2", tema:"Legislação societária: Lei 6.404/76 e Leis 11.638/07 e 12.973/14", discs:["demp","contab"], st:"parcial", nota:"S.A. em Direito Empresarial (constituição, ações, administração, assembleia, controlador) e PL e reservas em Contabilidade. Falta o texto da Lei 6.404 artigo por artigo e as alterações das Leis 11.638 e 12.973."},
+      {it:"B1.3", tema:"Auditoria (testes, amostragem, evidência, risco, papéis de trabalho, pareceres)", discs:[], st:"falta", nota:"Sem módulos de Auditoria."},
+      {it:"B1.4", tema:"Governança, riscos e compliance (Lei Anticorrupção, FCPA, UK Bribery Act, SOX, COSO)", discs:[], st:"falta", nota:"Sem conteúdo. A improbidade e o controle da Administração do Direito Administrativo ajudam só de longe."},
+      {it:"B2.1", tema:"Tributos (IRPJ, CSLL, IRRF, ICMS, ISS, PIS/COFINS, CIDE, participações governamentais, contribuição previdenciária)", discs:["reforma","dtrib"], st:"falta", nota:"O app tem o CTN e a Reforma (IBS e CBS), mas não tem IRPJ, CSLL, IRRF, PIS/COFINS cumulativo e não cumulativo, ICMS, CIDE nem contribuição previdenciária."},
+      {it:"B2.2", tema:"SPED Contábil e Fiscal (ECD, Plano de Contas Referencial)", discs:["ti"], st:"parcial", nota:"O módulo de TI traz documentos fiscais eletrônicos e o SPED em linhas gerais. Faltam a ECD e o plano referencial."},
+      {it:"B2.3", tema:"Noções de orçamento empresarial", discs:[], st:"falta", nota:"Sem conteúdo (orçamento operacional, financeiro, de investimento, base zero)."},
+      {it:"B2.4", tema:"Administração de produção e compras (MRP, lote econômico, just in time)", discs:[], st:"falta", nota:"Sem conteúdo. Administração Geral não cobre estoques e suprimentos."},
+      {it:"B3.1", tema:"Contabilidade de custos e gerencial", discs:["contab"], st:"parcial", nota:"Custos I a III: classificação, absorção, departamentalização, ordem e processo, margem de contribuição, ponto de equilíbrio, ABC, RKW e custo padrão. Faltam produção conjunta, preço de transferência, EVA e ROI e relatório por segmento."},
+      {it:"B3.2", tema:"Administração financeira (VPL, TIR, WACC, CAPM, estrutura de capital, avaliação de empresas)", discs:["matfin"], st:"parcial", nota:"Matemática Financeira cobre juros, desconto, VPL e TIR, anuidades e amortização. Faltam custo e estrutura de capital, CAPM, alavancagem, capital de giro e avaliação de empresas."},
+      {it:"B3.3", tema:"Gestão e avaliação de projetos (ciclo de vida, EAP, viabilidade)", discs:[], st:"falta", nota:"Sem conteúdo."},
+      {it:"BAS", tema:"Conhecimentos básicos (Língua Portuguesa, Língua Inglesa e Matemática)", discs:["port","ingles","matfin"], st:"ok", nota:"A disciplina de Português tem 10 módulos, Inglês tem 17 e Matemática Financeira 4. O texto do edital de 2017 que li não lista os conhecimentos básicos, então confirme no edital novo."}
+    ],
+    lacunas:"Os temas sem conteúdo (Auditoria, compliance, tributos federais, orçamento empresarial, produção e compras, projetos) podem ser criados a partir do programa, sem PDF. Isso fica para quando o edital sair, porque o programa pode mudar. Confira sempre o edital oficial.",
+    nota:"PROVISÓRIO. A Petrobras ainda não publicou o edital. Este quadro usa o programa de Contador(a) Júnior do edital de 2017, o último com programa que consegui ler, e serve só para você se orientar."
+  },
   detranpr: {
     id:"detranpr", nome:"DETRAN-PR", curto:"DETRAN", cor:"u3", prioridade:5, fator:0.03,
     nomeLongo:"Contador do DETRAN-PR",
@@ -895,7 +922,7 @@ window.CONCURSOS = {
    banca. Os quadros dos editais continuam guardados aqui embaixo; para voltar
    a ver as provas no painel, basta pôr os ids nesta lista.                   */
 window.CONC_ORDER = [];
-window.CONC_GUARDADOS = ["isscwb","atrfb","tjpr","creapr","crqpr","detranpr","afrfb"];
+window.CONC_GUARDADOS = ["isscwb","atrfb","tjpr","creapr","crqpr","petrobras","detranpr","afrfb"];
 window.ALVO_NOTA = "Nove matérias, uma trilha só, sem perseguir edital. A ordem é de aprendizado: Contabilidade Geral primeiro, porque é a gramática de tudo o que vem depois; Contabilidade Avançada em seguida, que é essa mesma gramática dentro dos pronunciamentos do CPC; Contabilidade Pública, que a aplica ao Estado; AFO e LRF, que são o orçamento e a lei que o disciplina; Direito Tributário, de onde sai a receita; Direito Administrativo, que é o regime a que o Estado se submete; Legislação Aduaneira, que é a receita na fronteira; e Fluência em Dados, que é a ferramenta de quem lê números. A trilha intercala as nove, de modo que nenhuma fica semanas parada e o que você viu na semana passada volta antes de sumir da memória.";
 
 window.NUCLEO_NOTA = "";
