@@ -67,10 +67,27 @@ var G = {
   trib:{t:"Regime favorecido e opção pelo regime regular de IBS e CBS (regime híbrido). Revise o Simples Nacional.", m:["simples01","simples02"]},
   const:{t:"Tratamento favorecido às micro e pequenas empresas (CF, arts. 146, III, d, e 179).", m:["dconst18"]}}}
 };
+var D = {
+ inst:["Os documentos fiscais eletrônicos geram dados estruturados. Revise formatos (XML, JSON, CSV), dados abertos e a base da TI aplicada à fiscalização.",["fdados02","ti17"]],
+ base:["Base de cálculo e alíquota por item tendem a exigir cadastro e classificação de produtos corretos. Revise qualidade e governança de dados.",["fdados22","fdados02"]],
+ suj:["Cadastros de contribuintes dependem de qualidade de dados, chaves únicas e pareamento de registros (record linkage).",["fdados10","ti02"]],
+ split:["Conciliar pagamentos com documentos fiscais é um problema de integração de dados. Revise pipeline, ETL, lote e fluxo contínuo (batch x streaming).",["fdados04","ti20"]],
+ nc:["A apuração de débitos e créditos é um cruzamento de documentos fiscais. Revise SQL, junções e consistência dos dados.",["ti05","fdados04"]],
+ imp:["Os dados de importação e exportação alimentam análise de risco e cruzamentos. Revise mineração de dados e detecção de anomalias.",["fdados09","ti25"]],
+ reg:["Controlar regimes com suspensão exige rastreabilidade (saldo, prazo e baixa). Revise modelagem e bancos de dados.",["ti01","ti05"]],
+ dif:["Listas por produto e o cashback por pessoa física dependem de classificação de dados e da proteção de dados pessoais (LGPD).",["lgpd01","fdados22"]],
+ fin:["Serviços financeiros movimentam grandes volumes de dados transacionais. Revise Big Data e pipeline de dados.",["fdados03","fdados04"]],
+ cont:["Fiscalização por cruzamento de dados e presunções usa mineração, detecção de anomalias e análise de risco. Revise o sigilo fiscal e a LGPD.",["fdados09","ti25","lgpd02"]],
+ trans:["Conviver com sistemas antigos e novos exige migração e integração de dados. Revise ETL e pipelines.",["fdados04","ti20"]],
+ zfm:["Os dados de entradas e saídas das áreas especiais sustentam a conformidade. Revise documentos fiscais eletrônicos e SPED.",["ti17"]],
+ gov:["Governança de dados, transparência e dados abertos, e o compartilhamento entre entes com sigilo fiscal (LGPD).",["fdados22","lgpd02","fdados02"]],
+ sn:["Apuração e opção híbrida exigem integração de dados entre sistemas. Revise SPED e documentos eletrônicos.",["ti17"]]
+};
+Object.keys(D).forEach(function(k){ G[k].a.dados={t:D[k][0],m:D[k][1]}; });
 var M={};
 function put(g,a,b){ for(var i=a;i<=b;i++) M["rf"+i]=g; }
 put("inst",63,64); put("base",65,65); put("suj",66,66); put("split",67,67); put("nc",68,68); put("imp",69,69); put("reg",70,70);
 put("dif",71,75); put("fin",76,80); put("cont",81,82); put("trans",83,85); put("is",86,86); put("zfm",87,88);
 put("gov",89,90); put("alt",91,91); put("sn",92,92); put("dif",93,94);
-return {G:G,M:M,AREAS:[["const","Direito Constitucional"],["adm","Direito Administrativo"],["trib","Direito Tributário"],["adu","Legislação Aduaneira"],["ci","Comércio Internacional"]]};
+return {G:G,M:M,AREAS:[["const","Direito Constitucional"],["adm","Direito Administrativo"],["trib","Direito Tributário"],["adu","Legislação Aduaneira"],["ci","Comércio Internacional"],["dados","Dados e TI"]]};
 })();
