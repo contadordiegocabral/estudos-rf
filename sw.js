@@ -2,7 +2,7 @@
    Estratégia: cache-first para os arquivos do app (eles só mudam quando eu
    republico, e aí o CACHE muda de nome e tudo é rebaixado de uma vez).      */
 
-var CACHE = "estudo-fiscal-v98";
+var CACHE = "estudo-fiscal-v99";
 
 var ARQUIVOS = [
   "./",
@@ -14,7 +14,7 @@ var ARQUIVOS = [
   "./dados.js",
   "./disciplinas.js",
   "./teclinks.js",
-  "./guia.js",
+  "./guia.js","./flows214.js",
   "./app.js",
   "./cpub01.js","./cpub02.js","./cpub03.js","./cpub04.js","./cpub05.js",
   "./cpub06.js","./cpub07.js","./cpub08.js","./cpub09.js","./cpub10.js",

@@ -3461,7 +3461,7 @@ function rfHub(){
   on("rfQobj",function(){ var e=rfEstado(obj); sprint(e.due.concat(e.novo).length>=15?e.due.concat(e.novo):obj,15,"Objetivas · Reforma"); });
   on("rfQerr",function(){ sprint(eq.erro,15,"Questões que errei · Reforma"); });
   on("rfQmix",function(){ sprint(ce.concat(obj),25,"Simulado misto · Reforma"); });
-  on("rfMapaG",function(){ rfMapaGeral(); });
+  on("rfMapaG",function(){ rfMapaGeral("lc214"); });
   on("rfTrap",function(){ rfTraps(); });
   on("rfRec",function(){ rfRecall(); });
   on("rfTec",function(){ rfGuia(); });
@@ -3485,7 +3485,7 @@ function rfUnidadeCards(k,u){
   (u.lessons||[]).forEach(function(l){ if(l.type==="flash") (l.data||[]).forEach(function(i){ if(m.CARDS[i]) out.push(m.CARDS[i]); }); });
   return out;
 }
-function rfMapaTitulo(k){ return String(REG[k].nome).replace(/^LC 214\/2025( e LC 227\/2026)?,?\s*/,""); }
+function rfMapaTitulo(k){ return String(REG[k].nome).replace(/^LC 214\/2025( e LC 227\/2026)?,?\s*/,"").replace(/\s*\(modo direto\)\s*$/,""); }
 function rfMapa(k,completo){
   rfOpen();
   var m=REG[k], n=0;
@@ -3494,28 +3494,31 @@ function rfMapa(k,completo){
     var pick=cs;
     if(!completo&&cs.length>6){ pick=[]; for(var j=0;j<6;j++) pick.push(cs[Math.floor(j*cs.length/6)]); }
     n+=pick.length;
-    return '<div class="mm2-br" style="--c:var(--u'+((ui%4)+1)+')"><div class="mm2-bt">'+u.title+'</div>'+
+    return '<div class="mm2-br" style="--c:var(--u'+((ui%4)+1)+')"><button type="button" class="mm2-bt mm2-bf" data-u="'+ui+'" title="Ver o fluxo deste ramo">'+u.title+' <span aria-hidden="true">▸ fluxo</span></button>'+
       pick.map(function(c){
         var q=rfStrip(c[0]).replace(/\?$/,""), a=rfStrip(c[1]);
-        return '<button type="button" class="mm2-lf" aria-expanded="false"><span class="mm2-q">'+q+'</span><span class="mm2-a">'+rfCurto(a,110).replace(/</g,"&lt;")+'</span><span class="mm2-full" hidden>'+c[1]+'</span></button>';
+        return '<button type="button" class="mm2-lf" aria-expanded="false"><span class="mm2-q">'+q+'</span><span class="mm2-a">'+rfCurto(a,110).replace(/</g,"&lt;")+'</span><span class="mm2-full" hidden>'+c[1]+'<span class="mm2-go" data-u="'+ui+'">Ver fluxo deste ramo ▸</span></span></button>';
       }).join("")+'</div>';
   }).join("");
   ovInner.innerHTML='<span class="q-kicker">Mapa mental · LC 214/2025</span>'+
     '<div class="mm2-root">'+rfMapaTitulo(k)+'</div>'+ramos+
     '<p class="tec-n">Toque em um item para ver o texto completo. '+(completo?"Mostrando todos os cartões.":"Mostrando os pontos principais de cada ramo.")+'</p>';
   setFoot("",rfVoltar()+'<button class="ghost" id="rfMm" style="flex:1">'+(completo?"Resumir":"Mostrar tudo")+'</button><button class="big" id="rfMmC">Treinar</button>');
-  document.getElementById("rfBack").onclick=rfMapaLista;
+  document.getElementById("rfBack").onclick=function(){ rfMapaGeral(); };
   document.getElementById("rfMm").onclick=function(){ rfMapa(k,!completo); };
   document.getElementById("rfMmC").onclick=function(){
     var ids=[]; (m.CARDS||[]).forEach(function(_,i){ ids.push(qjoin(k,"c"+i)); });
     L.finished=true; closeOv(); startSprint(Math.min(15,ids.length),rfPick(ids,15),"Cartões · "+rfMapaTitulo(k).slice(0,40));
   };
   [].slice.call(ovInner.querySelectorAll(".mm2-lf")).forEach(function(b){
-    b.onclick=function(){
+    b.onclick=function(e){
+      var go=e.target&&e.target.closest?e.target.closest(".mm2-go"):null;
+      if(go){ e.stopPropagation(); rfFlow(k,parseInt(go.getAttribute("data-u"),10),completo); return; }
       var f=b.querySelector(".mm2-full"), a=b.querySelector(".mm2-a"), on=f.hidden;
       f.hidden=!on; a.hidden=on; b.setAttribute("aria-expanded",on?"true":"false");
     };
   });
+  [].slice.call(ovInner.querySelectorAll(".mm2-bf")).forEach(function(b){ b.onclick=function(){ rfFlow(k,parseInt(b.getAttribute("data-u"),10),completo); }; });
   scrollTop();
 }
 var RF_GRUPOS=[
@@ -3531,20 +3534,122 @@ var RF_GRUPOS=[
   ["Zonas especiais e disposições finais",["rf87","rf88","rf89","rf90","rf91"]],
   ["Simples e anexos",["rf92","rf93","rf94"]]
 ];
-function rfMapaGeral(){
+var MAPA_COL={
+  lc214:{nome:"LC 214/2025: IBS e CBS",grupos:RF_GRUPOS,volta:"rfHub"},
+  cf:{nome:"Constituição Federal",volta:"mapasHub",grupos:[
+    ["Teoria, princípios e poder constituinte",["dconst19","dconst01","dconst02","dconst03"]],
+    ["Direitos e garantias fundamentais",["dconst04","dconst05","dconst06"]],
+    ["Organização do Estado",["dconst07","dconst08"]],
+    ["Poderes: Executivo, Legislativo e processo legislativo",["dconst09","dconst10","dconst11"]],
+    ["Poder Judiciário e funções essenciais à Justiça",["dconst12","dconst13","dconst14"]],
+    ["Defesa do Estado e controle de constitucionalidade",["dconst15","dconst16"]],
+    ["Administração Pública, ordem econômica e social",["dconst17","dconst18"]],
+    ["Sistema Tributário Nacional na CF",["dtrib01","dtrib02","dtrib03","dtrib04","dtrib15","dtrib16","dtrib17","dtrib18"]]
+  ]},
+  ctn:{nome:"Código Tributário Nacional",volta:"mapasHub",grupos:[
+    ["Legislação tributária",["dtrib05"]],
+    ["Obrigação tributária",["dtrib06","dtrib07"]],
+    ["Crédito tributário",["dtrib08","dtrib09","dtrib10","dtrib11","dtrib12"]],
+    ["Administração tributária",["dtrib13","dtrib14"]]
+  ]}
+};
+var RF_COL_ATUAL="lc214";
+function mapaColDisc(d){
+  return {nome:DISC[d].nomeLongo||DISC[d].nome,volta:"mapasOutras",grupos:[["Módulos",DISC[d].mods.filter(function(k){return REG[k];})]]};
+}
+function mapaColecao(id){ if(MAPA_COL[id]) return MAPA_COL[id]; if(id.indexOf("disc:")===0&&DISC[id.slice(5)]) return mapaColDisc(id.slice(5)); return MAPA_COL.lc214; }
+function rfMapaGeral(id){
+  if(id) RF_COL_ATUAL=id;
+  var col=mapaColecao(RF_COL_ATUAL);
   rfOpen();
-  var ramos=RF_GRUPOS.map(function(g,gi){
+  var ramos=col.grupos.map(function(g,gi){
     var ks=g[1].filter(function(k){return REG[k];}); if(!ks.length) return "";
     return '<div class="mm2-br" style="--c:var(--u'+((gi%4)+1)+')"><div class="mm2-bt">'+g[0]+'</div>'+
       ks.map(function(k){ return '<button type="button" class="mm2-lf" data-k="'+k+'"><span class="mm2-q">'+REG[k].n+'</span><span class="mm2-a">'+rfMapaTitulo(k).replace(/</g,"&lt;")+'</span></button>'; }).join("")+'</div>';
   }).join("");
-  ovInner.innerHTML='<span class="q-kicker">Mapa geral</span><div class="mm2-root">LC 214/2025: IBS e CBS</div>'+ramos+
-    '<p class="tec-n">Toque em um tema para abrir o mapa daquele trecho da lei.</p>';
-  setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=rfHub;
+  ovInner.innerHTML='<span class="q-kicker">Mapa geral</span><div class="mm2-root">'+col.nome+'</div>'+ramos+
+    '<p class="tec-n">Toque em um tema para abrir o mapa daquele trecho.</p>';
+  setFoot("",rfVoltar());
+  document.getElementById("rfBack").onclick=function(){ if(col.volta==="rfHub") rfHub(); else if(col.volta==="mapasOutras") mapasOutras(); else mapasHub(); };
   [].slice.call(ovInner.querySelectorAll(".mm2-lf")).forEach(function(b){ b.onclick=function(){ rfMapa(b.getAttribute("data-k")); }; });
   scrollTop();
 }
 function rfMapaLista(){ rfMapaGeral(); }
+function mapasHub(){
+  rfOpen();
+  var n214=rfMapaMods().length;
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Mapas de estudo</span><h2>Mapas mentais e fluxos</h2><p>Cada mapa organiza um trecho da matéria em ramos. Toque no título de um ramo para ver o fluxo visual.</p></div>'+
+    '<div class="rf-sec">'+
+      rfBtn("mpLc","LC 214/2025: IBS e CBS","Do art. 1º aos anexos",n214+" mapas")+
+      rfBtn("mpCf","Constituição Federal","Princípios, direitos, Poderes, controle e tributação",MAPA_COL.cf.grupos.reduce(function(a,g){return a+g[1].filter(function(k){return REG[k];}).length;},0)+" mapas")+
+      rfBtn("mpCtn","Código Tributário Nacional","Legislação, obrigação, crédito e administração tributária",MAPA_COL.ctn.grupos.reduce(function(a,g){return a+g[1].filter(function(k){return REG[k];}).length;},0)+" mapas")+
+      rfBtn("mpOut","Outras matérias","Todas as disciplinas da trilha","Ver")+
+    '</div>';
+  setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  document.getElementById("mpLc").onclick=function(){ rfMapaGeral("lc214"); };
+  document.getElementById("mpCf").onclick=function(){ rfMapaGeral("cf"); };
+  document.getElementById("mpCtn").onclick=function(){ rfMapaGeral("ctn"); };
+  document.getElementById("mpOut").onclick=function(){ mapasOutras(); };
+}
+function mapasOutras(){
+  rfOpen();
+  var ds=DISC_ORDER.filter(function(d){ return DISC[d]&&DISC[d].mods.some(function(m){return REG[m];}); });
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Mapas de estudo</span><h2>Outras matérias</h2></div><div class="rf-sec">'+
+    ds.map(function(d){ var n=DISC[d].mods.filter(function(m){return REG[m];}).length; return rfBtn("mo_"+d,DISC[d].nomeLongo||DISC[d].nome,n+" módulos",n+" mapas"); }).join("")+'</div>';
+  setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=mapasHub;
+  ds.forEach(function(d){ document.getElementById("mo_"+d).onclick=function(){ rfMapaGeral("disc:"+d); }; });
+}
+window.__mapasHub=mapasHub;
+
+/* ---------- fluxos visuais: curados (flows214.js) ou montados com a teoria da unidade ---------- */
+function rfFlowAuto(k,ui){
+  var m=REG[k], u=(m.UNITS||[])[ui]; if(!u) return null;
+  var tl=null; (u.lessons||[]).forEach(function(l){ if(!tl&&l.type==="teoria") tl=l; });
+  var slides=tl&&m.TEORIA?(m.TEORIA[tl.data]||[]):[]; if(!slides.length) return null;
+  var chain=[{k:"ini",t:u.title}], prev=chain[0];
+  slides.forEach(function(s){
+    var doc=new DOMParser().parseFromString("<div>"+(s.b||"")+"</div>","text/html"), p=doc.querySelector(".box p");
+    var d=p?rfCurto(rfStrip(p.innerHTML),170):"";
+    var nd={k:"p",t:s.h||"",d:d}; prev.nx=nd; prev=nd;
+  });
+  return {t:u.title,n:chain[0],auto:true};
+}
+function rfFlowNode(n){
+  if(!n) return "";
+  var cls={ini:"fl-ini",p:"fl-p",q:"fl-q",f:"fl-f",a:"fl-a",o:"fl-o"}[n.k]||"fl-p";
+  var esc=function(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
+  var h='<div class="fl-n '+cls+'"><b>'+esc(n.t)+'</b>'+(n.d?'<small>'+esc(n.d)+'</small>':'')+'</div>';
+  if(n.k==="q"){
+    h+='<div class="fl-arrow" aria-hidden="true"></div><div class="fl-yn"><div class="fl-col"><span class="fl-tag sim">Sim</span>'+rfFlowNode(n.y)+'</div><div class="fl-col"><span class="fl-tag nao">Não</span>'+rfFlowNode(n.n)+'</div></div>';
+    return h;
+  }
+  if(n.k==="o"){
+    h+='<div class="fl-arrow" aria-hidden="true"></div><div class="fl-opts">'+n.o.map(function(x){ return '<div class="fl-opt"><span class="fl-tag">'+esc(x.l)+'</span>'+rfFlowNode(x.n)+'</div>'; }).join("")+'</div>';
+  }
+  if(n.nx) h+='<div class="fl-arrow" aria-hidden="true"></div>'+rfFlowNode(n.nx);
+  return h;
+}
+function rfFlow(k,ui,completo){
+  rfOpen();
+  var fl=(window.RF_FLOWS&&window.RF_FLOWS[k+":"+ui])||rfFlowAuto(k,ui), m=REG[k], u=(m.UNITS||[])[ui];
+  if(!fl){
+    ovInner.innerHTML='<div class="cele"><h2>Sem fluxo para este ramo</h2><p>Este ramo é só de revisão.</p></div>';
+  }else{
+    var extra=(fl.extra||[]).map(function(n){ return '<div class="fl-arrow" aria-hidden="true"></div>'+rfFlowNode(n); }).join("");
+    ovInner.innerHTML='<span class="q-kicker">Fluxo visual'+(fl.auto?" · passo a passo do trecho":"")+'</span>'+
+      '<h3 style="font-size:1.12rem;margin-bottom:10px">'+fl.t.replace(/</g,"&lt;")+'</h3>'+
+      '<div class="fl">'+rfFlowNode(fl.n)+extra+'</div>'+
+      '<p class="tec-n">'+(fl.auto?"Passos montados com os pontos da teoria deste ramo, na ordem da lei.":"Fluxo montado a partir dos cartões do módulo. Confira a redação vigente da lei.")+' Este fluxo vale para o ramo "'+(u?u.title.replace(/</g,"&lt;"):"")+'".</p>';
+  }
+  setFoot("",rfVoltar()+'<button class="big" id="rfFlC">Treinar o ramo</button>');
+  document.getElementById("rfBack").onclick=function(){ rfMapa(k,completo); };
+  document.getElementById("rfFlC").onclick=function(){
+    var ids=[]; rfUnidadeCards(k,u||{lessons:[]}).forEach(function(c){ var ix=m.CARDS.indexOf(c); if(ix>=0) ids.push(qjoin(k,"c"+ix)); });
+    if(!ids.length) return; L.finished=true; closeOv(); startSprint(Math.min(12,ids.length),rfPick(ids,12),"Cartões · "+(u?u.title.slice(0,40):""));
+  };
+  scrollTop();
+}
 function rfCaixas(){
   var out=[];
   rfMods().forEach(function(k){
@@ -3660,7 +3765,7 @@ function hojeCard(){
     '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
       .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
     '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
-    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button><button type="button" class="ghost" id="hjRf">Reforma Tributária</button></div>';
+    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button><button type="button" class="ghost" id="hjRf">Reforma Tributária</button><button type="button" class="ghost" id="hjMp">Mapas de estudo</button></div>';
   c.appendChild(pvb);
   pvb.querySelector("#hjAlvo").onclick=function(){
     if(focoEhAlvos()){ focoAplicar({}); }
@@ -3671,6 +3776,7 @@ function hojeCard(){
   pvb.querySelector("#hjSem").onclick=function(){ resumoSemana(); };
   pvb.querySelector("#hjEdt").onclick=function(){ pvEditalScreen("isscwb"); };
   pvb.querySelector("#hjRf").onclick=function(){ rfHub(); };
+  pvb.querySelector("#hjMp").onclick=function(){ mapasHub(); };
 
   /* ritmo */
   var rt=ritmo();

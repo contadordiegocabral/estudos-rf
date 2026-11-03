@@ -578,6 +578,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 .tecdet{margin:14px 0 4px;text-align:left;border:1px solid var(--line,#d9d9d4);border-radius:12px;padding:10px 12px;background:var(--card,transparent)}
 .tecdet summary{cursor:pointer;font-weight:700;font-size:.95rem}
 .tecdet .tec-h{margin:12px 0 6px;font-size:.85rem;font-weight:700;color:var(--ink-2)}
+.tec-n{font-size:.82rem;color:var(--ink-2)}
 .tecdet .tec-n{margin:10px 0 0;font-size:.8rem;color:var(--ink-2)}
 .tecd{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);display:grid;gap:10px}
 .tecd-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
@@ -607,6 +608,24 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 .mm2-q{font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--ink-3);font-weight:600}
 .mm2-a,.mm2-full{font-size:.9rem;font-weight:600;line-height:1.4}
 .mm2-full{color:var(--ink)}
+.mm2-bf{border:0;cursor:pointer;font:inherit;text-align:left}.mm2-bf span{opacity:.85;font-weight:700;font-size:.78rem;white-space:nowrap}
+.mm2-go{display:block;margin-top:6px;color:var(--brand-ink);font-weight:800;font-size:.86rem;text-decoration:underline}
+.fl{display:flex;flex-direction:column;align-items:stretch;gap:0}
+.fl-n{padding:11px 13px;border-radius:12px;border:2px solid var(--line-strong);background:var(--surface);display:grid;gap:3px;font-weight:700;line-height:1.35}
+.fl-n b{font-weight:800}.fl-n small{font-weight:600;color:var(--ink-2);font-size:.84rem}
+.fl-ini{background:linear-gradient(135deg,var(--brand-d),var(--brand));border-color:transparent;color:#fff}.fl-ini small{color:#DBEAFE}
+.fl-q{border-color:var(--gold);background:color-mix(in srgb,var(--gold) 10%,var(--surface))}
+.fl-f{border-color:var(--certo-line);background:var(--certo-soft)}
+.fl-a{border-color:var(--errado-line);background:var(--errado-soft)}
+.fl-o{border-style:dashed}
+.fl-arrow{align-self:center;width:2px;height:16px;background:var(--line-strong);position:relative}
+.fl-arrow::after{content:"";position:absolute;bottom:-4px;left:-4px;border:5px solid transparent;border-top:7px solid var(--line-strong);border-bottom:0}
+.fl-yn{display:grid;gap:10px;padding-left:10px;border-left:3px solid var(--line-strong)}
+.fl-col,.fl-opt{display:flex;flex-direction:column;min-width:0}
+.fl-opts{display:grid;gap:10px;padding-left:10px;border-left:3px solid var(--line-strong)}
+.fl-tag{align-self:flex-start;margin:0 0 4px;padding:3px 9px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line-strong);font-size:.74rem;font-weight:800;color:var(--ink-2);line-height:1.3}
+.fl-tag.sim{background:var(--certo-soft);border-color:var(--certo-line);color:var(--certo)}
+.fl-tag.nao{background:var(--errado-soft);border-color:var(--errado-line);color:var(--errado)}
 .teclist{display:grid;gap:10px}
 .teclist.mini{gap:6px;grid-template-columns:repeat(auto-fill,minmax(10.5rem,1fr))}
 .teclist.mini a{padding:8px 11px;border-radius:10px}
@@ -1568,6 +1587,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
   <script src="rf92.js"></script>
   <script src="rf93.js"></script>
   <script src="rf94.js"></script>
+  <script src="flows214.js"></script>
   <script src="guia.js"></script>
   <script src="teclinks.js"></script>
 <script src="m02.js"></script>
