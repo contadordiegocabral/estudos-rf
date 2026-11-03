@@ -3857,6 +3857,23 @@ function hojeCard(){
   c.appendChild(el("div","hj-h",
     '<div class="hj-t">Plano de hoje</div><div class="hj-m"><span class="sem-dot lg '+(bateu===3?"ok":semCls(pg))+'" aria-hidden="true"></span>'+bateu+' de 3 metas</div>'));
   c.appendChild(el("div","hj-semwrap",semaforosHtml()));
+  /* tela simples: poucos botões grandes; o resto fica em "Mais opções" */
+  var root=c, tiles=el("div","hj-tiles"), more=el("details","hj-more",'<summary>Mais opções</summary>');
+  (function(){
+    var sst0=srsStats(), pend0=sst0.due+Math.min(srsFresh().length,dailyTarget());
+    var T=[
+      ["i-repeat","Revisão do dia",pend0?(pend0+" para hoje"):"em dia",function(){ openDaily(); }],
+      ["i-target","TEC do dia","registrar as questões",function(){ more.open=true; var t=more.querySelector(".tecd"); if(t&&t.scrollIntoView) t.scrollIntoView({block:"start"}); }],
+      ["i-trophy","Ciclo guiado","o que treinar agora",function(){ cicloGuiado(); }],
+      ["i-list","Sprint",sprintN()+" itens, sem teoria",function(){ startSprint(sprintN()); }],
+      ["i-book","Mapas mentais","CF, CTN e LC 214",function(){ mapasHub(); }],
+      ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }]
+    ];
+    T.forEach(function(x){
+      var b=el("button","hj-tile",'<span class="ti-i">'+svg(x[0])+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small>'); b.type="button"; b.onclick=x[3]; tiles.appendChild(b);
+    });
+  })();
+  root.appendChild(tiles); root.appendChild(more); c=more;
   (function(){
     var ds=DISC_ORDER.filter(function(d){return focoOk(d)&&DISC[d].mods.some(function(m){return REG[m];});}); if(!ds.length) return;
     var p=pctPlano(ds,S.focoPct||0), h=S.plano&&S.plano.hpd>0?S.plano.hpd:2;
@@ -3869,7 +3886,7 @@ function hojeCard(){
     '<div class="hj-testes"><span class="hj-tl">Provas-teste</span>'+["tjpr","creapr","crqpr"].filter(function(c){return CONC[c]&&pvDias(c)!=null&&pvDias(c)>=0;})
       .sort(function(x,y){return pvDias(x)-pvDias(y);}).map(function(c){return provaRow(c,false);}).join("")+'</div>'+
     '<div class="hj-pvb"><button type="button" class="ghost" id="hjAlvo" aria-pressed="'+focoEhAlvos()+'">'+(focoEhAlvos()?"Foco nas 2 provas: ligado":"Focar só nas matérias de ISS + ATRFB")+'</button>'+
-    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button><button type="button" class="ghost" id="hjRf">Reforma Tributária</button><button type="button" class="ghost" id="hjMp">Mapas de estudo</button><button type="button" class="ghost" id="hjCg">Ciclo guiado</button></div>';
+    '<button type="button" class="ghost" id="hjSimIss">Simulado ISS</button><button type="button" class="ghost" id="hjPlano">Plano</button><button type="button" class="ghost" id="hjSem">Semana</button><button type="button" class="ghost" id="hjEdt">Edital × app</button></div>';
   c.appendChild(pvb);
   pvb.querySelector("#hjAlvo").onclick=function(){
     if(focoEhAlvos()){ focoAplicar({}); }
@@ -3879,9 +3896,6 @@ function hojeCard(){
   pvb.querySelector("#hjPlano").onclick=function(){ pvE(); S.plano.conc="isscwb"; pvPlanScreen(); };
   pvb.querySelector("#hjSem").onclick=function(){ resumoSemana(); };
   pvb.querySelector("#hjEdt").onclick=function(){ pvEditalScreen("isscwb"); };
-  pvb.querySelector("#hjRf").onclick=function(){ rfHub(); };
-  pvb.querySelector("#hjMp").onclick=function(){ mapasHub(); };
-  pvb.querySelector("#hjCg").onclick=function(){ cicloGuiado(); };
 
   /* ritmo */
   var rt=ritmo();
@@ -3956,7 +3970,7 @@ function hojeCard(){
     d3.appendChild(sg); c.appendChild(d3);
     sg.querySelectorAll("button").forEach(function(b){ b.onclick=function(){ S.sprintN=parseInt(b.dataset.n,10); persist(); renderTrail(); }; });
   }
-  return c;
+  return root;
 }
 function contCard(){
   var c=S.last; if(!c||!REG[c.mod]||!DISC[c.disc]) return document.createElement("span");
