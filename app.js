@@ -3755,6 +3755,43 @@ function monTela(){
   document.getElementById("monCg").onclick=function(){ cicloGuiado(); };
 }
 
+
+function monQids(d){
+  var ids=[], sr=srs();
+  DISC[d].mods.forEach(function(k){ var m=REG[k]; if(!m||!m.EX) return; for(var e in m.EX){ if(m.EX[e]&&m.EX[e].t!=="match") ids.push(qjoin(k,e)); } });
+  var com=ids.filter(function(f){ var st=sr[f]; return st&&(st.lap||0)>0; });
+  var resto=shuffle(ids.filter(function(f){ return com.indexOf(f)<0; }));
+  return shuffle(com).concat(resto);
+}
+function monAlerta(){
+  var melhor=null, ruim=null, baixa=null;
+  DISC_ORDER.forEach(function(d){
+    var j1=monJan(-6,0,d), j0=monJan(-13,-7,d), sa=monSeta(j1,j0,8);
+    if(sa.d!=null&&sa.d<=-5&&(!ruim||sa.d<ruim.d)) ruim={d:d,dd:sa.d,acc:j1.acc,n:j1.n};
+    var l1=monJan(-13,0,d);
+    if(l1.n>=10&&l1.acc<0.7&&(!baixa||l1.acc<baixa.acc)) baixa={d:d,acc:l1.acc,n:l1.n};
+  });
+  if(ruim) return {d:ruim.d,txt:DISC[ruim.d].nome+" piorou "+Math.abs(ruim.dd)+" pontos esta semana (agora "+monPct(ruim.acc)+").",sev:"dn"};
+  var g7=monJan(-6,0), g0=monJan(-13,-7), sg=monSeta(g7,g0,15);
+  if(sg.d!=null&&sg.d<=-5) return {d:null,txt:"Seu acerto geral caiu "+Math.abs(sg.d)+" pontos esta semana (agora "+monPct(g7.acc)+").",sev:"dn"};
+  if(baixa) return {d:baixa.d,txt:DISC[baixa.d].nome+" está em "+monPct(baixa.acc)+" nos últimos 14 dias. Vale reforçar.",sev:"dn"};
+  var t=monJan(0,0), h=new Date().getHours();
+  if(t.n===0&&h>=17) return {d:null,txt:"Você ainda não resolveu questões hoje.",sev:"eq"};
+  if(sg.d!=null&&sg.d>=5) return {d:null,txt:"Seu acerto subiu "+sg.d+" pontos esta semana. Continue neste ritmo.",sev:"up"};
+  return null;
+}
+function monAlertaEl(){
+  var a; try{ a=monAlerta(); }catch(e){ return null; } if(!a) return null;
+  var b=el("div","mon-alert mon-"+a.sev,'<b>'+esc(a.txt)+'</b>');
+  var row=el("div","mon-alrow","");
+  if(a.d){
+    var ids=monQids(a.d);
+    if(ids.length){ var bt=el("button","big","Treinar 15 questões de "+esc(DISC[a.d].nome)); bt.type="button"; bt.onclick=function(){ startSprint(Math.min(15,ids.length),ids.slice(0,15),"Reforço · "+DISC[a.d].nome); }; row.appendChild(bt); }
+  }
+  var vd=el("button","ghost","Ver desempenho"); vd.type="button"; vd.onclick=function(){ monTela(); }; row.appendChild(vd);
+  b.appendChild(row); return b;
+}
+
 /* ---------- REFORMA DO DIA: um artigo por dia, com correlações ---------- */
 function rdS(){ if(!S.rd) S.rd={done:{}}; if(!S.rd.done) S.rd.done={}; return S.rd; }
 function rdKeys(){ var ix=rfArtIdx(); return Object.keys(ix.byArt).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);}); }
@@ -4339,6 +4376,7 @@ function hojeCard(){
       var b=el("button","hj-tile",'<span class="ti-i">'+svg(x[0])+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small>'); b.type="button"; b.onclick=x[3]; tiles.appendChild(b);
     });
   })();
+  var alEl=monAlertaEl(); if(alEl) root.appendChild(alEl);
   root.appendChild(tiles); root.appendChild(more); c=more;
   (function(){
     var ds=DISC_ORDER.filter(function(d){return focoOk(d)&&DISC[d].mods.some(function(m){return REG[m];});}); if(!ds.length) return;
