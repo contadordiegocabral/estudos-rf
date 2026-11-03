@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3670,6 +3670,77 @@ function rfArtTela(key,volta){
 
 
 
+
+/* ---------- ROTEIRO DE HOJE: a divisão do dia, pronta para seguir ---------- */
+var HJ_TEC=null;
+function rtS(){ if(!S.rot||S.rot.d!==today()) S.rot={d:today(),b:{}}; return S.rot; }
+function rtAlvo(){
+  var t=today(), lista=Object.keys(CONCURSOS).map(function(k){return CONCURSOS[k];}).filter(function(c){ return c.alvo&&c.data&&c.data>=t; });
+  lista.sort(function(a,b){ return a.data<b.data?-1:a.data>b.data?1:0; });
+  return lista[0]||CONCURSOS.isscwb||null;
+}
+function rtDiscs(c){
+  var out=[]; ((c&&c.mapa)||[]).forEach(function(m){ (m.discs||[]).forEach(function(d){ if(out.indexOf(d)<0&&DISC[d]&&DISC[d].mods.some(function(k){return REG[k];})) out.push(d); }); });
+  return out;
+}
+function rtUltTec(d){ var u=""; DISC[d].mods.forEach(function(k){ var v=S.tecMod&&S.tecMod[k]; if(v&&v>u) u=v; }); return u; }
+function rtTecDisc(c){
+  var ds=rtDiscs(c); if(!ds.length) return null;
+  var fraca=null;
+  ds.forEach(function(d){ var j=monJan(-13,0,d); if(j.n>=10&&j.acc<0.75&&(!fraca||j.acc<fraca.acc)) fraca={d:d,acc:j.acc,n:j.n}; });
+  if(fraca) return {d:fraca.d,motivo:"acerto de "+monPct(fraca.acc)+" nos últimos 14 dias"};
+  var ord=ds.slice().sort(function(a,b){ var x=rtUltTec(a), y=rtUltTec(b); return x<y?-1:x>y?1:0; });
+  var u=rtUltTec(ord[0]);
+  return {d:ord[0],motivo:u?("a que você treinou há mais tempo (último TEC: "+u.split("-").reverse().slice(0,2).join("/")+")"):"ainda sem treino no TEC"};
+}
+function rtBlocos(){
+  var c=rtAlvo(), td=rtTecDisc(c), s=rtS().b, out=[];
+  var tecQ=tecHojeQ(), meta=metaTec();
+  var sst=srsStats(), pend=sst.due, fe=dailyDoneToday(), alvoRev=Math.max(1,Math.min(dailyTarget(),pend+Math.min(srsFresh().length,dailyTarget())));
+  var rk=rdHoje(), rdFeito=!!(S.rd&&S.rd.done&&rk&&Object.keys(S.rd.done).some(function(k){return S.rd.done[k]===today();}));
+  out.push({id:"tec",min:45,tit:"Questões no TEC",sub:td?("Hoje: "+DISC[td.d].nome+" · banca "+((c&&c.banca)||"da prova")+". Motivo: "+td.motivo+"."):"Escolha a matéria mais fraca.",
+    prog:tecQ+" de "+meta+" questões registradas",ok:tecQ>=meta||!!s.tec,disc:td?td.d:null,btn:"Registrar questões do TEC"});
+  out.push({id:"rev",min:30,tit:"Revisão do dia",sub:"Flashcards e questões que voltam hoje pela revisão espaçada.",prog:fe+" feitas · "+pend+" vencidas",ok:(pend===0&&fe>0)||fe>=alvoRev||!!s.rev,btn:"Fazer a revisão"});
+  out.push({id:"teo",min:30,tit:"Teoria nova",sub:"A próxima lição da sua trilha. Depois dela, resolva as questões do tópico.",prog:(function(){ var p=cursoProxima(); return p?("Próxima: "+REG[p.mod].nome.slice(0,60)):"Trilha concluída"; })(),ok:!!s.teo,btn:"Continuar a trilha",manual:true});
+  out.push({id:"ref",min:15,tit:"Reforma do dia",sub:rk?("LC 214/2025, art. "+rk+", com as correlações."):"Artigo por artigo.",prog:rdFeito?"artigo concluído hoje":"1 artigo",ok:rdFeito||!!s.ref,btn:"Abrir o artigo"});
+  return {blocos:out,alvo:c};
+}
+function rtAbre(b){
+  if(b.id==="tec"){ L.finished=true; closeOv(); if(HJ_TEC) HJ_TEC(); }
+  else if(b.id==="rev"){ L.finished=true; closeOv(); openDaily(); }
+  else if(b.id==="teo"){ L.finished=true; closeOv(); irParaCurso(); }
+  else if(b.id==="ref"){ var k=rdHoje(); if(k) rdTela(k); }
+}
+function rtTela(){
+  rfOpen();
+  var R=rtBlocos(), c=R.alvo, bl=R.blocos, feitos=bl.filter(function(b){return b.ok;}).length;
+  var dias=c&&c.data?Math.max(0,daysBetween(today(),c.data)):null;
+  var h='<div class="rf-h"><span class="q-kicker">Roteiro de hoje</span><h2>'+feitos+' de '+bl.length+' blocos</h2><p>'+(c?((dias!=null?("Faltam "+dias+" dias para "+c.nome+". "):"")+"O dia segue a prova mais próxima."):"")+' Tempo estudado hoje: '+Math.round(tempoHoje()/60)+' de '+metaMin()+' min.</p></div>';
+  bl.forEach(function(b,i){
+    h+='<div class="rt-b'+(b.ok?" ok":"")+'"><div class="rt-h"><span class="rt-n">'+(b.ok?"✓":(i+1))+'</span><b>'+esc(b.tit)+'</b><span class="rt-m">'+b.min+' min</span></div><p>'+esc(b.sub)+'</p><small>'+esc(b.prog)+'</small><div class="rt-a">'+
+      '<button type="button" class="ghost rt-go" data-i="'+i+'">'+esc(b.btn)+'</button>'+
+      (b.id==="tec"&&b.disc?'<button type="button" class="ghost rt-tec">Abrir o TEC</button>':'')+
+      (b.manual||b.id==="tec"||b.id==="rev"||b.id==="ref"?'<button type="button" class="ghost rt-ck" data-i="'+i+'">'+(rtS().b[b.id]?"Desmarcar":"Marcar como feito")+'</button>':'')+
+    '</div></div>';
+  });
+  h+='<p class="ra-nota">Divisão para 2 horas: 45 min de questões do TEC, 30 min de revisão, 30 min de teoria nova e 15 min da Reforma. Blocos de TEC, revisão e Reforma se marcam sozinhos quando você cumpre a meta.</p>';
+  var dsAlvo=rtDiscs(c), focoIgual=false;
+  if(dsAlvo.length&&S.foco&&S.foco.length===dsAlvo.length) focoIgual=dsAlvo.every(function(d){return S.foco.indexOf(d)>=0;});
+  if(dsAlvo.length) h+='<div class="rf-sec">'+rfBtn("rtFoco",focoIgual?"Trilha filtrada na prova ✓":"Trilha só com as matérias de "+esc(c.curto||c.nome),focoIgual?"Toque para voltar a todas as matérias":dsAlvo.length+" matérias do edital; as outras ficam guardadas",focoIgual?"Desfazer":"Aplicar")+'</div>';
+  ovInner.innerHTML=h;
+  var fb=document.getElementById("rtFoco"); if(fb) fb.onclick=function(){ var sel={}; if(!focoIgual) dsAlvo.forEach(function(d){ sel[d]=true; }); L.finished=true; closeOv(); focoAplicar(sel); };
+  var prox=null; for(var i=0;i<bl.length;i++){ if(!bl[i].ok){ prox=bl[i]; break; } }
+  setFoot("",'<button class="ghost" id="rfFecha" style="flex:0 0 auto">Fechar</button>'+(prox?'<button class="big" id="rtProx" style="flex:1">Começar: '+esc(prox.tit)+'</button>':'<button class="big" id="rtProx" style="flex:1" disabled>Dia completo</button>'));
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  var pb=document.getElementById("rtProx"); if(prox) pb.onclick=function(){ rtAbre(prox); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".rt-go"),function(b){ b.onclick=function(){ rtAbre(bl[+b.getAttribute("data-i")]); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".rt-ck"),function(b){ b.onclick=function(){ var id=bl[+b.getAttribute("data-i")].id, r=rtS(); if(r.b[id]) delete r.b[id]; else r.b[id]=1; persist(); rtTela(); }; });
+  var bt=ovInner.querySelector(".rt-tec"); if(bt){ bt.onclick=function(){
+    var d=bl[0].disc, mods=DISC[d].mods.filter(function(k){return REG[k];}).sort(function(a,b){ var x=(S.tecMod&&S.tecMod[a])||"", y=(S.tecMod&&S.tecMod[b])||""; return x<y?-1:x>y?1:0; });
+    var lk=mods.length?tecLinksDe(mods[0]):[]; if(lk.length){ try{ window.open(lk[0].u,"_blank","noopener"); }catch(e){} } else { try{ window.open("https://www.tecconcursos.com.br/","_blank","noopener"); }catch(e){} }
+  }; }
+}
+
 /* ---------- MONITOR DE DESEMPENHO: acertos, erros, melhora e piora ---------- */
 function monS(){ if(!S.mon) S.mon={}; return S.mon; }
 function monBump(mod,ok){
@@ -4361,6 +4432,7 @@ function hojeCard(){
   (function(){
     var sst0=srsStats(), pend0=sst0.due+Math.min(srsFresh().length,dailyTarget());
     var T=[
+      ["i-target","Roteiro de hoje",(function(){ try{ var R=rtBlocos(); return R.blocos.filter(function(b){return b.ok;}).length+" de "+R.blocos.length+" blocos feitos"; }catch(e){ return "o dia pronto para seguir"; } })(),function(){ rtTela(); }],
       ["i-repeat","Revisão do dia",pend0?(pend0+" para hoje"):"em dia",function(){ openDaily(); }],
       ["i-target","TEC do dia","registrar as questões",function(){ more.open=true; var t=more.querySelector(".tecd"); if(t&&t.scrollIntoView) t.scrollIntoView({block:"start"}); }],
       ["i-trophy","Ciclo guiado","o que treinar agora",function(){ cicloGuiado(); }],
@@ -4372,6 +4444,7 @@ function hojeCard(){
       ["i-trophy","Desempenho",(function(){ try{ var a=monJan(-6,0),b=monJan(-13,-7),g=monSeta(a,b,15); return a.n?(monPct(a.acc)+" em 7 dias · "+g.t.split(" (")[0].replace(/^[▲▼▬] /,"")):"acertos, erros e tendência"; }catch(e){ return "acertos, erros e tendência"; } })(),function(){ monTela(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
+    HJ_TEC=T[2][3];
     T.forEach(function(x){
       var b=el("button","hj-tile",'<span class="ti-i">'+svg(x[0])+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small>'); b.type="button"; b.onclick=x[3]; tiles.appendChild(b);
     });
@@ -5309,7 +5382,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
