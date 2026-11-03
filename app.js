@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3481,6 +3481,7 @@ function rfHub(){
     '</div>'+
     '<div class="rf-sec"><h3>Artigo por artigo</h3>'+
       rfBtn("rfArt","Artigo por artigo e posts para o LinkedIn","Busque o artigo, estude as cartas e gere o texto do post","Abrir")+
+      rfBtn("rfDia","Reforma do dia (um artigo por dia)","Artigo, cartas e correlações com Constitucional, Administrativo, Tributário, Aduaneira e Comércio Internacional","Abrir")+
       rfBtn("rfLi","Post do dia e plano da semana","Tema sugerido pelo que você mais erra","Abrir")+
     '</div>'+
     '<div class="rf-sec"><h3>Mapas mentais da LC 214</h3>'+
@@ -3512,6 +3513,7 @@ function rfHub(){
   on("rfQmix",function(){ sprint(ce.concat(obj),25,"Simulado misto · Reforma"); });
   on("rfArt",function(){ rfArtigos(); });
   on("rfLi",function(){ liHub(); });
+  on("rfDia",function(){ var k=rdHoje(); if(k) rdTela(k); });
   on("rfMapaG",function(){ rfMapaGeral("lc214"); });
   on("rfTrap",function(){ rfTraps(); });
   on("rfRec",function(){ rfRecall(); });
@@ -3649,6 +3651,49 @@ function rfArtTela(key,volta){
   if(prox) document.getElementById("raProx").onclick=function(){ rfArtTela(prox,volta); };
 }
 
+
+
+/* ---------- REFORMA DO DIA: um artigo por dia, com correlações ---------- */
+function rdS(){ if(!S.rd) S.rd={done:{}}; if(!S.rd.done) S.rd.done={}; return S.rd; }
+function rdKeys(){ var ix=rfArtIdx(); return Object.keys(ix.byArt).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);}); }
+function rdHoje(){ var d=rdS().done, ks=rdKeys(); for(var i=0;i<ks.length;i++) if(!d[ks[i]]) return ks[i]; return ks[0]||null; }
+function rdAbreMod(k){ if(!REG[k]) return; L.finished=true; closeOv(); loadModule(k); persist(); renderTrail(); buildPanel(); setNav("trilha"); try{ window.scrollTo(0,0); }catch(e){} }
+function rdGrupo(cards){
+  var cnt={}, best=null; cards.forEach(function(c){ cnt[c.m]=(cnt[c.m]||0)+1; if(!best||cnt[c.m]>cnt[best]) best=c.m; });
+  var g=window.RF_CORR&&window.RF_CORR.M[best]; return g?{id:g,g:window.RF_CORR.G[g]}:null;
+}
+function rdCorrelacoes(cards){
+  var gr=rdGrupo(cards); if(!gr||!window.RF_CORR) return "";
+  var h='<div class="rf-sec"><h3>Correlações com outras matérias</h3><p class="ra-nota" style="margin:0 0 6px">Trecho: '+esc(gr.g.nome)+'. É um ponto de partida de estudo por trecho da lei: leia o artigo e confira os dispositivos citados.</p>';
+  window.RF_CORR.AREAS.forEach(function(ar){
+    var x=gr.g.a[ar[0]]; if(!x) return;
+    h+='<details class="rd-det" open><summary>'+esc(ar[1])+'</summary><p>'+esc(x.t)+'</p><div class="rd-links">';
+    x.m.forEach(function(k){ if(REG[k]) h+='<button type="button" class="rd-lk" data-mod="'+k+'">Estudar: '+esc(REG[k].nome.length>70?REG[k].nome.slice(0,69)+"…":REG[k].nome)+'</button>'; });
+    h+='</div></details>';
+  });
+  return h+'</div>';
+}
+function rdTela(key){
+  rfOpen();
+  var ix=rfArtIdx(), cards=ix.byArt[key]||[], ks=rdKeys(), pos=ks.indexOf(key), done=rdS().done, feitos=Object.keys(done).length;
+  var h='<div class="rf-h"><span class="q-kicker">Reforma do dia · '+(pos+1)+' de '+ks.length+(done[key]?' · concluído ✓':'')+'</span><h2>LC 214/2025, art. '+esc(key)+'</h2><p>'+cards.length+' cartas. Leia, relacione com as outras matérias e depois treine. Você concluiu '+feitos+' artigos.</p></div><div class="ra-cards">';
+  cards.forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div><small>'+esc(REG[c.m].nome||c.m)+'</small></div>'; });
+  h+='</div>'+rdCorrelacoes(cards)+
+    '<div class="rf-sec">'+rfBtn("rdTreina","Treinar as cartas deste artigo","Flashcards com revisão espaçada",cards.length)+
+    rfBtn("rdPost","Gerar texto para o LinkedIn","Post e carrossel com as reflexões de contador e de auditor","Abrir")+
+    rfBtn("rdOutro","Escolher outro artigo","Busca por número ou por trecho da lei","Abrir")+'</div>';
+  ovInner.innerHTML=h;
+  var ant=pos>0?ks[pos-1]:null, prox=pos<ks.length-1?ks[pos+1]:null;
+  setFoot("",'<button class="ghost" id="rdFecha" style="flex:0 0 auto">Fechar</button>'+(ant?'<button class="ghost" id="rdAnt" style="flex:0 0 auto">‹</button>':'')+'<button class="big" id="rdOk" style="flex:1">'+(done[key]?"Desmarcar":"Concluí este artigo")+'</button>'+(prox?'<button class="ghost" id="rdProx" style="flex:0 0 auto">›</button>':''));
+  document.getElementById("rdFecha").onclick=function(){ closeOv(); };
+  if(ant) document.getElementById("rdAnt").onclick=function(){ rdTela(ant); };
+  if(prox) document.getElementById("rdProx").onclick=function(){ rdTela(prox); };
+  document.getElementById("rdOk").onclick=function(){ var d=rdS().done; if(d[key]){ delete d[key]; persist(); rdTela(key); } else { d[key]=today(); addXp(5); persist(); var n=rdHoje(); rdTela(n&&n!==key?n:key); } };
+  document.getElementById("rdTreina").onclick=function(){ var ids=cards.map(function(c){return qjoin(c.m,"c"+c.i);}); L.finished=true; closeOv(); startSprint(Math.min(20,ids.length),ids,"Art. "+key+" · LC 214"); };
+  document.getElementById("rdPost").onclick=function(){ liEdita({id:"rf:"+key,kind:"art",key:key,cards:cards,tit:"LC 214/2025, art. "+key},LI_P[0]); };
+  document.getElementById("rdOutro").onclick=function(){ rfArtigos(); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".rd-lk"),function(b){ b.onclick=function(){ rdAbreMod(b.getAttribute("data-mod")); }; });
+}
 
 /* ---------- LINKEDIN: post do dia e plano da semana (Reforma, Contabilidade, Tributário, Aduaneira) ---------- */
 var LI_P=[
@@ -4186,6 +4231,7 @@ function hojeCard(){
       ["i-trophy","Ciclo guiado","o que treinar agora",function(){ cicloGuiado(); }],
       ["i-list","Método SPQ","fases com 80% de acerto",function(){ spqHub(); }],
       ["i-book","Mapas mentais","CF, CTN e LC 214",function(){ mapasHub(); }],
+      ["i-book","Reforma do dia",(function(){ try{ var k=rdHoje(); return k?("art. "+k+" e correlações"):"artigo por artigo"; }catch(e){ return "artigo por artigo"; } })(),function(){ var k=rdHoje(); if(k) rdTela(k); else rfHub(); }],
       ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }],
       ["i-list","Post LinkedIn","tema do dia e da semana",function(){ liHub(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
@@ -4938,7 +4984,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,cron:1,li:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -5126,7 +5172,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
