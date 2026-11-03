@@ -651,6 +651,7 @@ function renderTrail(){
       '<span class="mn2">Módulo '+p.mod+(mod?" · "+feitas+"/"+total:" · em breve")+'</span><span>'+nome+'</span>'+
       (mod?cobDoMod(key,true):''));
     b.type="button";
+    if(mod&&modDesc(key)) b.title=modDesc(key);
     if(mod){
       b.setAttribute("aria-current", key===S.cur?"true":"false");
       b.onclick=function(){ if(key===S.cur)return; loadModule(key); persist(); renderTrail(); buildPanel(); window.scrollTo({top:0,behavior:"smooth"}); };
@@ -661,6 +662,7 @@ function renderTrail(){
   var act=mb.querySelector('[aria-current="true"]');
   if(act) mb.scrollLeft=Math.max(0, act.offsetLeft-mb.clientWidth/2+act.offsetWidth/2);
 
+  if(modDesc(S.cur)) root.appendChild(el("div","mod-desc",'<b>'+REG[S.cur].nome+'</b><span>'+modDesc(S.cur)+'</span>'));
   var bqMod=spqBloqueioDe(S.cur);
   if(bqMod){
     var bb=spqStat(bqMod), bn=el("div","hojecard",'<div class="hj-h"><div class="hj-t">Módulo bloqueado pelo SPQ</div></div><p class="tec-n">Para abrir este módulo, bata 80% de acerto em <b>'+REG[bqMod].nome+'</b> ('+(bb.n?Math.round(bb.acc*100)+"% agora":"sem respostas")+').</p><button type="button" class="big" id="bqGo">Treinar o tópico</button>');
@@ -3993,6 +3995,15 @@ function hojeCard(){
   }
   return root;
 }
+/* descrição de cada tópico: os assuntos das unidades do módulo */
+function modDesc(k){
+  var m=REG[k]; if(!m||!m.UNITS) return "";
+  var ts=m.UNITS.map(function(u){ return String(u.title||"").trim(); })
+    .filter(function(t){ return t&&!/^(fixa[cç][aã]o|prova|miss[aã]o|revis[aã]o|aplica[cç][aã]o e prova)/i.test(t); });
+  if(!ts.length) return "";
+  var s=ts.join(" · ");
+  return s.length>170?s.slice(0,167).replace(/\s+\S*$/,"")+"…":s;
+}
 /* ---------- MÉTODO SPQ: pouca teoria, muita questão; só passa de fase com 80% ---------- */
 var SPQ_MIN=10, SPQ_ALVO=0.8, SPQ_JAN=20;
 function spqS(){ if(!S.spq) S.spq={}; if(!S.spq.h) S.spq.h={}; if(!S.spq.ok) S.spq.ok={}; return S.spq; }
@@ -4080,7 +4091,7 @@ function spqDisc(d){
   top.forEach(function(k,i){
     var st=spqStat(k), lib=spqLiberado(top,i), pc=st.n?spqPct(st)+"% · "+st.n+" resp.":"sem questões ainda";
     var tag=st.ok?"✔ "+(st.n?spqPct(st)+"%":"ok"):(lib?"Abrir":"🔒");
-    h+=rfBtn("spqF"+i,"Fase "+(i+1)+" · "+REG[k].nome,(st.ok?"Concluída · ":lib?"Em andamento · ":"Bloqueada: conclua a fase "+i+" · ")+pc,tag,!lib);
+    h+=rfBtn("spqF"+i,"Fase "+(i+1)+" · "+REG[k].nome,(modDesc(k)?modDesc(k)+"<br>":"")+(st.ok?"Concluída · ":lib?"Em andamento · ":"Bloqueada: conclua a fase "+i+" · ")+pc,tag,!lib);
   });
   h+='</div>';
   ovInner.innerHTML=h;
@@ -4091,7 +4102,7 @@ function spqDisc(d){
 function spqFase(d,k){
   rfOpen();
   var m=REG[k], st=spqStat(k), pct=spqPct(st), top=spqTopicos(d), idx=top.indexOf(k), prox=top[idx+1];
-  var h='<div class="rf-h"><span class="q-kicker">Fase '+(idx+1)+' de '+top.length+' · '+DISC[d].nome+'</span><h2>'+m.nome+'</h2></div>';
+  var h='<div class="rf-h"><span class="q-kicker">Fase '+(idx+1)+' de '+top.length+' · '+DISC[d].nome+'</span><h2>'+m.nome+'</h2>'+(modDesc(k)?'<p>O que entra neste tópico: '+modDesc(k)+'.</p>':'')+'</div>';
   h+='<div class="cg-l"><div class="cg-t"><b>Acerto nas últimas '+SPQ_JAN+'</b><span>'+(st.n?pct+'% · '+st.r+'/'+st.n:'sem respostas')+' · alvo 80%</span></div><div class="cg-bar"><i style="width:'+pct+'%" class="'+(pct>=80?"ok":pct>=60?"md":"ru")+'"></i></div></div>';
   if(st.ok){ h+='<div class="box"><span class="bl">Fase concluída</span><p>Você bateu 80% neste tópico.'+(prox?' A próxima fase está liberada.':' Era a última fase desta matéria.')+'</p></div>'; }
   else if(st.n<SPQ_MIN){ h+='<p class="tec-n">Responda pelo menos '+SPQ_MIN+' questões ('+(SPQ_MIN-st.n)+' faltando) para o app medir o seu acerto.</p>'; }
