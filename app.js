@@ -3479,6 +3479,9 @@ function rfHub(){
       rfBtn("rfQerr","Só as que errei","Questões da Reforma em que você já errou",eq.erro.length,!eq.erro.length)+
       rfBtn("rfQmix","Simulado misto","25 questões sorteadas, sem aviso de tema",Math.min(25,ce.length+obj.length),!(ce.length+obj.length))+
     '</div>'+
+    '<div class="rf-sec"><h3>Artigo por artigo</h3>'+
+      rfBtn("rfArt","Artigo por artigo e posts para o LinkedIn","Busque o artigo, estude as cartas e gere o texto do post","Abrir")+
+    '</div>'+
     '<div class="rf-sec"><h3>Mapas mentais da LC 214</h3>'+
       rfBtn("rfMapaG","Mapa geral e mapas por trecho","Do art. 1º aos anexos, ramo por ramo, com treino de cartões",rfMapaMods().length+" mapas")+
     '</div>'+
@@ -3506,11 +3509,127 @@ function rfHub(){
   on("rfQobj",function(){ var e=rfEstado(obj); sprint(e.due.concat(e.novo).length>=15?e.due.concat(e.novo):obj,15,"Objetivas · Reforma"); });
   on("rfQerr",function(){ sprint(eq.erro,15,"Questões que errei · Reforma"); });
   on("rfQmix",function(){ sprint(ce.concat(obj),25,"Simulado misto · Reforma"); });
+  on("rfArt",function(){ rfArtigos(); });
   on("rfMapaG",function(){ rfMapaGeral("lc214"); });
   on("rfTrap",function(){ rfTraps(); });
   on("rfRec",function(){ rfRecall(); });
   on("rfTec",function(){ rfGuia(); });
   on("rfTrilha",function(){ L.finished=true; closeOv(); var sel={}; sel.reforma=true; focoAplicar(sel); });
+}
+
+
+/* ---------- REFORMA: artigo por artigo + textos para o LinkedIn ---------- */
+var RFART=null;
+function rfArtKey(txt){
+  var re=/\b[Aa]rts?\.?\s*(\d+)(?:\s*-\s*([A-Z]))?([^.;:?]{0,40})/g, m;
+  txt=txt||"";
+  while((m=re.exec(txt))){
+    var resto=m[3]||"";
+    /* ignora citações de outras normas: "art. 31 da LC 123", "do CTN", "da CF", "da Lei 8.666"... */
+    if(/^[^,]*?\b(d[ao]s?|na|no)\s+(LC|Lei|Lei Complementar|CTN|CF|Constitui|Decreto|Resolu|RICMS|Código|Emenda|EC|ADCT|Conv)/i.test(resto) && !/LC\s*214|Lei Complementar\s*214/i.test(resto)) continue;
+    return m[1]+(m[2]?"-"+m[2]:"");
+  }
+  return null;
+}
+function rfArtNum(k){ var p=String(k).split("-"); return parseInt(p[0],10)*100+(p[1]?p[1].charCodeAt(0)-64:0); }
+function rfArtIdx(){
+  if(RFART) return RFART;
+  var byArt={}, byMod={}, sem={};
+  rfMods().filter(function(k){return /^rf\d+$/.test(k);}).forEach(function(k){
+    var mod=REG[k]; if(!mod||!mod.CARDS) return;
+    mod.CARDS.forEach(function(c,i){
+      var key=rfArtKey(c[0]); if(!key){ sem[k]=(sem[k]||0)+1; return; }
+      (byArt[key]=byArt[key]||[]).push({m:k,i:i,q:c[0],a:c[1],d:/^Art/i.test(c[0])?0:1});
+      (byMod[k]=byMod[k]||{})[key]=1;
+    });
+  });
+  Object.keys(byArt).forEach(function(a){ byArt[a].sort(function(x,y){ return (x.d-y.d)||(x.m<y.m?-1:x.m>y.m?1:0)||(x.i-y.i); }); });
+  RFART={byArt:byArt,byMod:byMod,sem:sem};
+  return RFART;
+}
+function rfTxt(h){ return String(h||"").replace(/<br\s*\/?>/gi," ").replace(/<\/p>\s*<p>/gi," ").replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/\s+/g," ").trim(); }
+function rfCorta(t,n){ t=rfTxt(t); return t.length>n?t.slice(0,n-1).replace(/\s+\S*$/,"")+"…":t; }
+var RF_TAGS="#ReformaTributária #IBS #CBS #LC214 #DireitoTributário #Contabilidade #ConcursosPúblicos";
+function rfLn(key,cards,modo){
+  var rot="LC 214/2025, art. "+key.replace("-","-");
+  var uso=cards.slice(0,modo==="carrossel"?10:4);
+  if(modo==="carrossel"){
+    var out=["SLIDE 1 · Reforma Tributária, artigo por artigo\n"+rot+"\nDeslize para entender em "+uso.length+" passos."];
+    uso.forEach(function(c,i){ out.push("SLIDE "+(i+2)+" · "+rfTxt(c.q).replace(/\?$/,"")+"\n\n"+rfCorta(c.a,260)); });
+    out.push("SLIDE "+(uso.length+2)+" · Conferiu? Salve para revisar e compartilhe com quem estuda a Reforma.\nConfira sempre a redação vigente (LC 214/2025, com as alterações da LC 227/2026).\n\n"+RF_TAGS);
+    return out.join("\n\n---\n\n");
+  }
+  var t="📌 Reforma Tributária, artigo por artigo\n"+rot+"\n\n";
+  uso.forEach(function(c){ t+="🔹 "+rfTxt(c.q)+"\n"+rfCorta(c.a,240)+"\n\n"; });
+  t+="⚠️ Confira sempre a redação vigente: LC 214/2025, com as alterações da LC 227/2026.\n\n💬 Qual ponto deste artigo mais gera dúvida na sua rotina? Comente.\n\n"+RF_TAGS;
+  return t;
+}
+function rfCopia(txt,btn){
+  function ok(){ if(btn){ var o=btn.textContent; btn.textContent="Copiado ✓"; setTimeout(function(){btn.textContent=o;},1600);} }
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(txt).then(ok,fb); return; } }catch(e){}
+  fb();
+  function fb(){ try{ var ta=document.getElementById("raTa"); if(ta){ ta.focus(); ta.select(); document.execCommand("copy"); ok(); } }catch(e){} }
+}
+function rfArtigos(){
+  rfOpen();
+  var ix=rfArtIdx(), keys=Object.keys(ix.byArt).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);});
+  var mods=rfMods().filter(function(k){return ix.byMod[k];});
+  var sb='<div class="rf-h"><span class="q-kicker">Reforma Tributária</span><h2>Artigo por artigo</h2>'+
+    '<p>'+keys.length+' artigos com cartas de estudo. Digite o número do artigo ou escolha o trecho. Cada artigo gera um texto pronto para o LinkedIn.</p></div>'+
+    '<div class="ra-bar"><input id="raN" class="ra-in" inputmode="numeric" placeholder="Nº do artigo (ex.: 31)" aria-label="Número do artigo"><button class="big" id="raGo" style="flex:0 0 auto;padding:0 18px">Abrir</button></div><div id="raMsg" class="ra-msg"></div>'+
+    '<div class="rf-sec"><h3>Por trecho da lei</h3>';
+  mods.forEach(function(k){
+    var n=Object.keys(ix.byMod[k]).length;
+    sb+=rfBtn("raM_"+k,esc(REG[k].nome||k),n+" artigos com cartas",n);
+  });
+  sb+='</div>';
+  ovInner.innerHTML=sb;
+  setFoot("",rfVoltar());
+  document.getElementById("rfBack").onclick=rfHub;
+  function go(){
+    var v=(document.getElementById("raN").value||"").trim().toUpperCase().replace(/\s+/g,"").replace(/^ART\.?/,"");
+    var m=/^(\d+)(?:-?([A-Z]))?$/.exec(v), msg=document.getElementById("raMsg");
+    if(!m){ msg.textContent="Digite só o número, como 31 ou 323-M."; return; }
+    var key=m[1]+(m[2]?"-"+m[2]:"");
+    if(!ix.byArt[key]){ msg.textContent="Não há cartas citando o art. "+key+". Veja o trecho abaixo ou use a trilha."; return; }
+    rfArtTela(key);
+  }
+  document.getElementById("raGo").onclick=go;
+  document.getElementById("raN").onkeydown=function(e){ if(e.key==="Enter") go(); };
+  mods.forEach(function(k){ var b=document.getElementById("raM_"+k); if(b) b.onclick=function(){ rfArtLista(k); }; });
+}
+function rfArtLista(k){
+  rfOpen();
+  var ix=rfArtIdx(), keys=Object.keys(ix.byMod[k]||{}).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);});
+  var h='<div class="rf-h"><span class="q-kicker">Artigo por artigo</span><h2>'+esc(REG[k].nome||k)+'</h2><p>Toque no artigo para estudar e gerar o texto do LinkedIn.</p></div><div class="ra-grid">';
+  keys.forEach(function(a){ h+='<button type="button" class="ra-chip" data-a="'+a+'"><b>Art. '+a+'</b><small>'+ix.byArt[a].length+' cartas</small></button>'; });
+  ovInner.innerHTML=h+'</div>';
+  setFoot("",rfVoltar());
+  document.getElementById("rfBack").onclick=rfArtigos;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ra-chip"),function(b){ b.onclick=function(){ rfArtTela(b.getAttribute("data-a"),k); }; });
+}
+function rfArtTela(key,volta){
+  rfOpen();
+  var ix=rfArtIdx(), cards=ix.byArt[key]||[], modo="post";
+  var keys=Object.keys(ix.byArt).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);}), pos=keys.indexOf(key);
+  var h='<div class="rf-h"><span class="q-kicker">LC 214/2025</span><h2>Art. '+esc(key)+'</h2><p>'+cards.length+' cartas citam este artigo. Leia, treine e depois gere o texto.</p></div><div class="ra-cards">';
+  cards.forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div><small>'+esc(REG[c.m].nome||c.m)+'</small></div>'; });
+  h+='</div><div class="rf-sec"><h3>Texto para o LinkedIn</h3><div class="ra-tabs"><button type="button" class="ra-tab on" id="raPost">Post</button><button type="button" class="ra-tab" id="raCar">Carrossel (texto dos slides)</button></div>'+
+     '<textarea id="raTa" class="ra-ta" rows="12" aria-label="Texto do post, editável"></textarea>'+
+     '<div class="ra-bar"><button class="big" id="raCopia" style="flex:1">Copiar texto</button><a class="ghost ra-ln" id="raLn" href="https://www.linkedin.com/feed/?shareActive=true" target="_blank" rel="noopener">Abrir LinkedIn</a></div>'+
+     '<p class="ra-nota">O texto sai das cartas de estudo, que eu escrevi a partir da lei. Revise antes de publicar e confirme a redação vigente.</p></div>';
+  ovInner.innerHTML=h;
+  var ta=document.getElementById("raTa");
+  function pinta(){ ta.value=rfLn(key,cards,modo); document.getElementById("raPost").classList.toggle("on",modo==="post"); document.getElementById("raCar").classList.toggle("on",modo!=="post"); }
+  pinta();
+  document.getElementById("raPost").onclick=function(){ modo="post"; pinta(); };
+  document.getElementById("raCar").onclick=function(){ modo="carrossel"; pinta(); };
+  document.getElementById("raCopia").onclick=function(){ rfCopia(ta.value,this); };
+  var ant=pos>0?keys[pos-1]:null, prox=pos<keys.length-1?keys[pos+1]:null;
+  setFoot("",rfVoltar()+(ant?'<button class="ghost" id="raAnt" style="flex:0 0 auto">‹ '+esc(ant)+'</button>':'')+(prox?'<button class="big" id="raProx" style="flex:1">Art. '+esc(prox)+' ›</button>':''));
+  document.getElementById("rfBack").onclick=function(){ volta?rfArtLista(volta):rfArtigos(); };
+  if(ant) document.getElementById("raAnt").onclick=function(){ rfArtTela(ant,volta); };
+  if(prox) document.getElementById("raProx").onclick=function(){ rfArtTela(prox,volta); };
 }
 
 /* ---------- CICLO GUIADO: o que estudar hoje, pelo seu desempenho em questões ---------- */
