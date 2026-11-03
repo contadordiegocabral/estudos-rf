@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -2377,6 +2377,7 @@ function paintTimer(){
 }
 setInterval(function(){
   if(!est.on||document.hidden) return;
+  if(S.cron&&S.cron.run&&!S.cron.run.pausado) return; /* cronômetro manual rodando: ele soma o tempo */
   var lim=ov.classList.contains("on")?300000:120000;
   if(Date.now()-est.last>lim) return;
   var m=tempoMap(), t=today(); m[t]=(m[t]||0)+1;
@@ -3936,7 +3937,8 @@ function hojeCard(){
       ["i-trophy","Ciclo guiado","o que treinar agora",function(){ cicloGuiado(); }],
       ["i-list","Método SPQ","fases com 80% de acerto",function(){ spqHub(); }],
       ["i-book","Mapas mentais","CF, CTN e LC 214",function(){ mapasHub(); }],
-      ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }]
+      ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }],
+      ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
     T.forEach(function(x){
       var b=el("button","hj-tile",'<span class="ti-i">'+svg(x[0])+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small>'); b.type="button"; b.onclick=x[3]; tiles.appendChild(b);
@@ -4050,6 +4052,65 @@ function modDesc(k){
   var s=ts.join(" · ");
   return s.length>170?s.slice(0,167).replace(/\s+\S*$/,"")+"…":s;
 }
+/* ---------- CRONÔMETRO DE ESTUDO (manual, por matéria) ---------- */
+function cronS(){ if(!S.cron) S.cron={run:null,log:{}}; if(!S.cron.log) S.cron.log={}; return S.cron; }
+function cronSeg(){
+  var r=cronS().run; if(!r) return 0;
+  return (r.acc||0)+(r.pausado?0:Math.floor((Date.now()-r.t0)/1000));
+}
+function cronIniciar(disc){
+  var c=cronS(); if(c.run) return;
+  c.run={disc:disc,t0:Date.now(),acc:0,pausado:false,ini:Date.now()}; persist();
+}
+function cronPausar(){
+  var c=cronS(), r=c.run; if(!r) return;
+  if(r.pausado){ r.pausado=false; r.t0=Date.now(); }
+  else { r.acc=cronSeg(); r.pausado=true; }
+  persist();
+}
+function cronFinalizar(){
+  var c=cronS(), r=c.run; if(!r) return 0;
+  var sec=cronSeg(); c.run=null;
+  if(sec>=5){
+    var t=today(), l=c.log[t]||(c.log[t]={});
+    l[r.disc]=(l[r.disc]||0)+sec;
+    var m=tempoMap(); m[t]=(m[t]||0)+sec;
+    var ks=Object.keys(c.log).sort(); while(ks.length>60){ delete c.log[ks.shift()]; }
+    addXp(Math.floor(sec/600));
+  }
+  persist(); renderTrail();
+  return sec;
+}
+function cronTela(){
+  rfOpen();
+  var c=cronS(), ds=DISC_ORDER.filter(function(d){ return focoOk(d)&&DISC[d].mods.some(function(m){return REG[m];}); });
+  var sel=(c.run&&c.run.disc)||c.ult||(ds[0]||DISC_ORDER[0]);
+  function totalDia(k){ var l=c.log[k]||{}, s=0; Object.keys(l).forEach(function(d){ s+=l[d]; }); return s; }
+  function draw(){
+    var r=c.run, hoje=c.log[today()]||{}, sem=0, i;
+    for(i=0;i<7;i++) sem+=totalDia(dayKey(-i));
+    var h='<div class="rf-h"><span class="q-kicker">Cronômetro de estudo</span><h2>Marque o seu tempo</h2><p>Escolha a matéria, comece e finalize quando parar. O tempo entra na meta do dia.</p></div>'+
+      '<div class="cr-big" id="crTime">'+fmt(cronSeg())+'</div>'+
+      '<div class="cr-st" id="crSt">'+(r?(r.pausado?"Pausado":"Rodando · "+DISC[r.disc].nome):"Parado")+'</div>'+
+      '<div class="rf-sec"><h3>Matéria</h3><select id="crDisc" class="cr-sel"'+(r?" disabled":"")+'>'+ds.map(function(d){ return '<option value="'+d+'"'+(d===sel?" selected":"")+'>'+DISC[d].nome+'</option>'; }).join("")+'</select></div>'+
+      '<div class="cr-btns">'+
+        (r?'<button type="button" class="big" id="crPause">'+(r.pausado?"Retomar":"Pausar")+'</button><button type="button" class="ghost" id="crStop">Finalizar</button>'
+          :'<button type="button" class="big green" id="crStart">Iniciar</button>')+
+      '</div>';
+    var ks=Object.keys(hoje).sort(function(x,y){ return hoje[y]-hoje[x]; });
+    h+='<div class="rf-sec"><h3>Hoje por matéria</h3>'+(ks.length?ks.map(function(d){ return '<div class="cg-l"><div class="cg-t"><b>'+(DISC[d]?DISC[d].nome:d)+'</b><span>'+fmtHM(hoje[d])+'</span></div></div>'; }).join(""):'<p class="tec-n">Nada marcado hoje ainda.</p>')+
+      '<p class="tec-n"><b>Total hoje:</b> '+fmtHM(totalDia(today()))+' · <b>7 dias:</b> '+fmtHM(sem)+'</p></div>';
+    ovInner.innerHTML=h;
+    setFoot("",'<button class="ghost" id="crFecha" style="flex:1">Fechar</button>');
+    document.getElementById("crFecha").onclick=function(){ clearInterval(tk); closeOv(); };
+    var st=document.getElementById("crStart"); if(st) st.onclick=function(){ c.ult=document.getElementById("crDisc").value; cronIniciar(c.ult); draw(); };
+    var pa=document.getElementById("crPause"); if(pa) pa.onclick=function(){ cronPausar(); draw(); };
+    var sp=document.getElementById("crStop"); if(sp) sp.onclick=function(){ var s=cronFinalizar(); draw(); };
+  }
+  var tk=setInterval(function(){ var e=document.getElementById("crTime"); if(!e||!document.getElementById("crFecha")){ clearInterval(tk); return; } e.textContent=fmt(cronSeg()); },1000);
+  draw();
+}
+
 /* ---------- MÉTODO SPQ: pouca teoria, muita questão; só passa de fase com 80% ---------- */
 var SPQ_MIN=10, SPQ_ALVO=0.8, SPQ_JAN=20;
 function spqS(){ if(!S.spq) S.spq={}; if(!S.spq.h) S.spq.h={}; if(!S.spq.ok) S.spq.ok={}; return S.spq; }
@@ -4627,7 +4688,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -4815,7 +4876,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
