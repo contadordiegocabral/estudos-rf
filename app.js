@@ -3434,6 +3434,9 @@ function rfHub(){
       rfBtn("rfQerr","Só as que errei","Questões da Reforma em que você já errou",eq.erro.length,!eq.erro.length)+
       rfBtn("rfQmix","Simulado misto","25 questões sorteadas, sem aviso de tema",Math.min(25,ce.length+obj.length),!(ce.length+obj.length))+
     '</div>'+
+    '<div class="rf-sec"><h3>Mapas mentais da LC 214</h3>'+
+      rfBtn("rfMapaG","Mapa geral e mapas por trecho","Do art. 1º aos anexos, ramo por ramo, com treino de cartões",rfMapaMods().length+" mapas")+
+    '</div>'+
     '<div class="rf-sec"><h3>Técnicas de memorização</h3>'+
       rfBtn("rfTrap","Pegadinhas e macetes","Treino com os alertas e atalhos de cada módulo","Treinar")+
       rfBtn("rfRec","Evocação livre","Escreva de memória e depois confira com os cartões","Praticar")+
@@ -3458,11 +3461,90 @@ function rfHub(){
   on("rfQobj",function(){ var e=rfEstado(obj); sprint(e.due.concat(e.novo).length>=15?e.due.concat(e.novo):obj,15,"Objetivas · Reforma"); });
   on("rfQerr",function(){ sprint(eq.erro,15,"Questões que errei · Reforma"); });
   on("rfQmix",function(){ sprint(ce.concat(obj),25,"Simulado misto · Reforma"); });
+  on("rfMapaG",function(){ rfMapaGeral(); });
   on("rfTrap",function(){ rfTraps(); });
   on("rfRec",function(){ rfRecall(); });
   on("rfTec",function(){ rfGuia(); });
   on("rfTrilha",function(){ L.finished=true; closeOv(); var sel={}; sel.reforma=true; focoAplicar(sel); });
 }
+
+/* ---------- mapas mentais da LC 214 (montados a partir dos cartões de cada módulo) ---------- */
+function rfStrip(h){ return String(h).replace(/<br\s*\/?>/g," / ").replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim(); }
+function rfCurto(s,max){
+  if(s.length<=max) return s;
+  var cut=-1, seps=["; ",". ",", "," — ",": "];
+  seps.forEach(function(x){ var i=s.lastIndexOf(x,max); if(i>cut&&i>42) cut=i; });
+  if(cut<0){ cut=s.lastIndexOf(" ",max); if(cut<30) cut=max; }
+  return s.slice(0,cut).replace(/[;,:\s]+$/,"")+"…";
+}
+function rfMapaMods(){
+  return rfMods().filter(function(k){ return /^LC 214/.test(REG[k].nome||""); });
+}
+function rfUnidadeCards(k,u){
+  var m=REG[k], out=[];
+  (u.lessons||[]).forEach(function(l){ if(l.type==="flash") (l.data||[]).forEach(function(i){ if(m.CARDS[i]) out.push(m.CARDS[i]); }); });
+  return out;
+}
+function rfMapaTitulo(k){ return String(REG[k].nome).replace(/^LC 214\/2025( e LC 227\/2026)?,?\s*/,""); }
+function rfMapa(k,completo){
+  rfOpen();
+  var m=REG[k], n=0;
+  var ramos=(m.UNITS||[]).map(function(u,ui){
+    var cs=rfUnidadeCards(k,u); if(!cs.length) return "";
+    var pick=cs;
+    if(!completo&&cs.length>6){ pick=[]; for(var j=0;j<6;j++) pick.push(cs[Math.floor(j*cs.length/6)]); }
+    n+=pick.length;
+    return '<div class="mm2-br" style="--c:var(--u'+((ui%4)+1)+')"><div class="mm2-bt">'+u.title+'</div>'+
+      pick.map(function(c){
+        var q=rfStrip(c[0]).replace(/\?$/,""), a=rfStrip(c[1]);
+        return '<button type="button" class="mm2-lf" aria-expanded="false"><span class="mm2-q">'+q+'</span><span class="mm2-a">'+rfCurto(a,110).replace(/</g,"&lt;")+'</span><span class="mm2-full" hidden>'+c[1]+'</span></button>';
+      }).join("")+'</div>';
+  }).join("");
+  ovInner.innerHTML='<span class="q-kicker">Mapa mental · LC 214/2025</span>'+
+    '<div class="mm2-root">'+rfMapaTitulo(k)+'</div>'+ramos+
+    '<p class="tec-n">Toque em um item para ver o texto completo. '+(completo?"Mostrando todos os cartões.":"Mostrando os pontos principais de cada ramo.")+'</p>';
+  setFoot("",rfVoltar()+'<button class="ghost" id="rfMm" style="flex:1">'+(completo?"Resumir":"Mostrar tudo")+'</button><button class="big" id="rfMmC">Treinar</button>');
+  document.getElementById("rfBack").onclick=rfMapaLista;
+  document.getElementById("rfMm").onclick=function(){ rfMapa(k,!completo); };
+  document.getElementById("rfMmC").onclick=function(){
+    var ids=[]; (m.CARDS||[]).forEach(function(_,i){ ids.push(qjoin(k,"c"+i)); });
+    L.finished=true; closeOv(); startSprint(Math.min(15,ids.length),rfPick(ids,15),"Cartões · "+rfMapaTitulo(k).slice(0,40));
+  };
+  [].slice.call(ovInner.querySelectorAll(".mm2-lf")).forEach(function(b){
+    b.onclick=function(){
+      var f=b.querySelector(".mm2-full"), a=b.querySelector(".mm2-a"), on=f.hidden;
+      f.hidden=!on; a.hidden=on; b.setAttribute("aria-expanded",on?"true":"false");
+    };
+  });
+  scrollTop();
+}
+var RF_GRUPOS=[
+  ["Incidência e conceitos",["rf63","rf64"]],
+  ["Base, alíquotas e sujeitos",["rf65","rf66"]],
+  ["Pagamento e crédito",["rf67","rf68"]],
+  ["Comércio exterior",["rf69","rf70"]],
+  ["Regimes diferenciados",["rf71","rf72","rf73","rf74"]],
+  ["Regimes específicos",["rf75","rf76","rf77","rf78","rf79","rf80"]],
+  ["Administração e contencioso",["rf81","rf82"]],
+  ["Transição",["rf83","rf84","rf85"]],
+  ["Imposto Seletivo",["rf86"]],
+  ["Zonas especiais e disposições finais",["rf87","rf88","rf89","rf90","rf91"]],
+  ["Simples e anexos",["rf92","rf93","rf94"]]
+];
+function rfMapaGeral(){
+  rfOpen();
+  var ramos=RF_GRUPOS.map(function(g,gi){
+    var ks=g[1].filter(function(k){return REG[k];}); if(!ks.length) return "";
+    return '<div class="mm2-br" style="--c:var(--u'+((gi%4)+1)+')"><div class="mm2-bt">'+g[0]+'</div>'+
+      ks.map(function(k){ return '<button type="button" class="mm2-lf" data-k="'+k+'"><span class="mm2-q">'+REG[k].n+'</span><span class="mm2-a">'+rfMapaTitulo(k).replace(/</g,"&lt;")+'</span></button>'; }).join("")+'</div>';
+  }).join("");
+  ovInner.innerHTML='<span class="q-kicker">Mapa geral</span><div class="mm2-root">LC 214/2025: IBS e CBS</div>'+ramos+
+    '<p class="tec-n">Toque em um tema para abrir o mapa daquele trecho da lei.</p>';
+  setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=rfHub;
+  [].slice.call(ovInner.querySelectorAll(".mm2-lf")).forEach(function(b){ b.onclick=function(){ rfMapa(b.getAttribute("data-k")); }; });
+  scrollTop();
+}
+function rfMapaLista(){ rfMapaGeral(); }
 function rfCaixas(){
   var out=[];
   rfMods().forEach(function(k){
