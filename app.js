@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -5354,6 +5354,13 @@ if(modFeito(S.cur)){
   var _pb=cursoProxima();
   if(_pb && _pb.mod!==S.cur){ loadModule(_pb.mod); saveLocal(); }
 }
+/* uma única vez: deixa a trilha só nas matérias da prova mais próxima (desfaz-se no Roteiro de hoje) */
+try{
+  if(!S.rotAuto && (!S.foco||!S.foco.length)){
+    var _rc=rtAlvo(), _rd=rtDiscs(_rc);
+    if(_rd.length){ S.rotAuto=today(); var _sel={}; _rd.forEach(function(d){ _sel[d]=true; }); focoAplicar(_sel); }
+  }
+}catch(e){}
 pvApplyTheme();
 focoPaint();
 paintSettings();
@@ -5382,7 +5389,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
