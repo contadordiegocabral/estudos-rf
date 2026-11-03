@@ -191,6 +191,16 @@ window.DISC.audpriv = {
   pesoNota:"as NBC TA, do planejamento ao relatório do auditor independente. Material de Auditoria Privada do Radegondes — as NBC TA são revisadas com frequência; confira a versão vigente."
 };
 
+window.DISC.gov = {
+  id:"gov", nome:"Governança e compliance", cor:"u3", mat:"audit",
+  nomeLongo:"Governança, riscos e compliance",
+  mods:["gov01"],
+  pesos:[
+    {mod:"01", tema:"Lei Anticorrupção (12.846/2013), integridade, FCPA, UK Bribery Act, COSO, SOX, Três Linhas e Lei das Estatais", q:null}
+  ],
+  pesoNota:"governança corporativa e pública: responsabilização por corrupção, programa de integridade, controles internos e gestão de riscos. Conteúdo inédito escrito a partir das normas — confira a redação vigente."
+};
+
 window.DISC.audfis = {
   id:"audfis", nome:"Aud. Fiscal", cor:"u2", mat:"audit",
   nomeLongo:"Auditoria Fiscal",
@@ -779,7 +789,7 @@ window.DISC.dadm = {
    Nenhuma matéria fica guardada: a trilha intercala todas em partes iguais,
    para que nenhuma passe semanas parada.                                     */
 window.DISC_GUARDADAS = [];
-window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ingles","estat","matfin","econ","ti","infob","lgpd","simples","reforma","consult","fdados"];
+window.DISC_ORDER = ["contab","cavan","cpub","afo","lrf","dtrib","legcwb","dadm","legadu","audpriv","gov","audgov","audfis","cext","adpub","adger","dconst","licit","dciv","demp","dpen","port","rlm","ingles","estat","matfin","econ","ti","infob","lgpd","simples","reforma","consult","fdados"];
 
 /* ---------- as provas, em ordem de prioridade ----------
    fator  = peso da prova na sua prioridade de estudo
@@ -889,7 +899,7 @@ window.CONCURSOS = {
       {it:"B1.1", tema:"Contabilidade societária (CPCs, demonstrações, impairment, instrumentos financeiros, consolidação, combinação de negócios)", discs:["contab","cavan"], st:"parcial", nota:"Cobertos: estrutura conceitual, DRE, DFC, DVA, DMPL, imobilizado e depreciação, arrendamento, subvenção, AVP, valor justo, provisões, impairment, combinação, MEP, instrumentos financeiros e consolidação. Faltam câmbio (CPC 02), partes relacionadas, imposto de renda diferido (CPC 32), custos de empréstimos, operações descontinuadas, benefícios a empregados, joint ventures, efeitos inflacionários e aspectos ambientais."},
       {it:"B1.2", tema:"Legislação societária: Lei 6.404/76 e Leis 11.638/07 e 12.973/14", discs:["demp","contab"], st:"parcial", nota:"S.A. em Direito Empresarial (constituição, ações, administração, assembleia, controlador) e PL e reservas em Contabilidade. Falta o texto da Lei 6.404 artigo por artigo e as alterações das Leis 11.638 e 12.973."},
       {it:"B1.3", tema:"Auditoria (testes, amostragem, evidência, risco, papéis de trabalho, pareceres)", discs:["audpriv","audfis"], st:"ok", nota:"Auditoria privada em 7 módulos (NBC TA 200, 210, 220, 230, 300, 315, 320, 330, 500 e 530) e em Auditoria Fiscal: fraude, papéis de trabalho e relatório do auditor (TA 700, 705 e 706)."},
-      {it:"B1.4", tema:"Governança, riscos e compliance (Lei Anticorrupção, FCPA, UK Bribery Act, SOX, COSO)", discs:["audgov","adpub"], st:"parcial", nota:"Há linhas de defesa e auditoria interna (audgov06) e compliance e accountability (adpub05). Faltam a Lei 12.846/2013 e o Decreto 8.420/2015, FCPA, UK Bribery Act, Lei 12.813/2013, SOX (seção 404) e COSO."},
+      {it:"B1.4", tema:"Governança, riscos e compliance (Lei Anticorrupção, FCPA, UK Bribery Act, SOX, COSO)", discs:["gov","audgov","adpub"], st:"ok", nota:"Módulo Governança e compliance: Lei 12.846/2013 e Decreto 11.129/2022, Lei 12.813/2013, SV 13, FCPA, UK Bribery Act, COSO 2013 e ERM 2017, SOX, Três Linhas, ISO 31000 e Lei 13.303/2016. Reforçado por audgov06 e adpub05."},
       {it:"B2.1", tema:"Tributos (IRPJ, CSLL, IRRF, ICMS, ISS, PIS/COFINS, CIDE, participações governamentais, contribuição previdenciária)", discs:["consult","dtrib","legcwb"], st:"parcial", nota:"Cobertos: IRPJ (lucro real, presumido e arbitrado, estimativa), CSLL, PIS/Cofins (cumulativo e não cumulativo, importação), IPI, CIDE-Combustíveis, ICMS (dtrib16) e ISS (LC 116). Faltam IRRF, participações governamentais (royalties) e contribuição previdenciária patronal."},
       {it:"B2.2", tema:"SPED Contábil e Fiscal (ECD, Plano de Contas Referencial)", discs:["audfis","consult"], st:"ok", nota:"SPED, NF-e, ECD, ECF e EFD em Auditoria Fiscal (módulos 02 e 03) e escrituração, Lalur, e-Lacs e ECD em Consultoria (cons24)."},
       {it:"B2.3", tema:"Noções de orçamento empresarial", discs:[], st:"falta", nota:"Sem conteúdo (orçamento operacional, financeiro, de investimento, base zero). O orçamento do app é o público (AFO)."},
@@ -899,7 +909,7 @@ window.CONCURSOS = {
       {it:"B3.3", tema:"Gestão e avaliação de projetos (ciclo de vida, EAP, viabilidade)", discs:["ti"], st:"parcial", nota:"Gerenciamento de projetos pelo PMBOK 6ª edição no módulo de TI (ti12): conceitos, áreas e grupos de processos. Falta o estudo de viabilidade técnica e econômica."},
       {it:"BAS", tema:"Conhecimentos básicos (Língua Portuguesa, Língua Inglesa e Matemática)", discs:["port","ingles","matfin"], st:"ok", nota:"A disciplina de Português tem 10 módulos, Inglês tem 17 e Matemática Financeira 4. O texto do edital de 2017 que li não lista os conhecimentos básicos, então confirme no edital novo."}
     ],
-    lacunas:"O que ainda falta: Lei Anticorrupção, FCPA, SOX e COSO; orçamento empresarial; administração de produção e compras; IRRF, royalties e contribuição previdenciária; administração financeira avançada. Podem ser criados a partir do programa, sem PDF. Vale esperar o edital novo, porque o programa pode mudar. Confira sempre o edital oficial.",
+    lacunas:"O que ainda falta: orçamento empresarial; administração de produção e compras; IRRF, royalties e contribuição previdenciária; administração financeira avançada. Podem ser criados a partir do programa, sem PDF. Vale esperar o edital novo, porque o programa pode mudar. Confira sempre o edital oficial.",
     nota:"PROVISÓRIO. A Petrobras ainda não publicou o edital. Este quadro usa o programa de Contador(a) Júnior do edital de 2017, o último com programa que consegui ler, e serve só para você se orientar."
   },
   detranpr: {
