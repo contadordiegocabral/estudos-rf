@@ -130,8 +130,8 @@ home = '''<div id="homeScreen">
  ic('<path d="M12 3l9 5-9 5-9-5 9-5z"/><path d="M7 11v5c0 1.2 2.2 3 5 3s5-1.8 5-3v-5"/>'),
  ic('<circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="5.5" r="1.8"/><circle cx="19.5" cy="5.5" r="1.8"/><circle cx="4.5" cy="18.5" r="1.8"/><circle cx="19.5" cy="18.5" r="1.8"/><path d="M10 10.2L6 6.8M14 10.2l4-3.4M10 13.8l-4 3.4M14 13.8l4 3.4"/>'),
  ic('<path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4"/><path d="M9 12h7M9 16h5"/>'))
-k = h.index('<div class="hud"'); h = h[:k] + home + h[k:]
-rep('<div class="brandmark">', '<button type="button" class="hud-home" aria-label="Início" title="Início" onclick="window.__voltarInicio&&window.__voltarInicio()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></button>\n    <div class="brandmark">')
+h = '<script>window.__MAPAS_URL="mapas.html";</script>' + h  # sem tela inicial: abre direto em Hoje
+# (sem botão de início no topo)
 open(OUT + '/index.html', 'w', encoding='utf8').write(h)
 
 # cores de gráficos no app.js

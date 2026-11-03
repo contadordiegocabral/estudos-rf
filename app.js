@@ -3688,6 +3688,7 @@ function mapasHub(){
       rfBtn("mpCf","Constituição Federal","Princípios, direitos, Poderes, controle e tributação",MAPA_COL.cf.grupos.reduce(function(a,g){return a+g[1].filter(function(k){return REG[k];}).length;},0)+" mapas")+
       rfBtn("mpCtn","Código Tributário Nacional","Legislação, obrigação, crédito e administração tributária",MAPA_COL.ctn.grupos.reduce(function(a,g){return a+g[1].filter(function(k){return REG[k];}).length;},0)+" mapas")+
       rfBtn("mpOut","Outras matérias","Todas as disciplinas da trilha","Ver")+
+      (window.__MAPAS_URL?'<a class="rf-b" style="text-decoration:none" href="'+window.__MAPAS_URL+'"><span class="rf-bt"><b>Mapas mentais e slides (original)</b><small>Mapas visuais por matéria, em tela própria</small></span><span class="rf-bn">Abrir</span></a>':"")+
     '</div>';
   setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
   document.getElementById("rfFecha").onclick=function(){ closeOv(); };
