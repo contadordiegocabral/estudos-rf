@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3481,6 +3481,7 @@ function rfHub(){
     '</div>'+
     '<div class="rf-sec"><h3>Artigo por artigo</h3>'+
       rfBtn("rfArt","Artigo por artigo e posts para o LinkedIn","Busque o artigo, estude as cartas e gere o texto do post","Abrir")+
+      rfBtn("rfLi","Post do dia e plano da semana","Tema sugerido pelo que você mais erra","Abrir")+
     '</div>'+
     '<div class="rf-sec"><h3>Mapas mentais da LC 214</h3>'+
       rfBtn("rfMapaG","Mapa geral e mapas por trecho","Do art. 1º aos anexos, ramo por ramo, com treino de cartões",rfMapaMods().length+" mapas")+
@@ -3510,6 +3511,7 @@ function rfHub(){
   on("rfQerr",function(){ sprint(eq.erro,15,"Questões que errei · Reforma"); });
   on("rfQmix",function(){ sprint(ce.concat(obj),25,"Simulado misto · Reforma"); });
   on("rfArt",function(){ rfArtigos(); });
+  on("rfLi",function(){ liHub(); });
   on("rfMapaG",function(){ rfMapaGeral("lc214"); });
   on("rfTrap",function(){ rfTraps(); });
   on("rfRec",function(){ rfRecall(); });
@@ -3549,6 +3551,17 @@ function rfArtIdx(){
 }
 function rfTxt(h){ return String(h||"").replace(/<br\s*\/?>/gi," ").replace(/<\/p>\s*<p>/gi," ").replace(/<[^>]+>/g,"").replace(/&nbsp;/g," ").replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/\s+/g," ").trim(); }
 function rfCorta(t,n){ t=rfTxt(t); return t.length>n?t.slice(0,n-1).replace(/\s+\S*$/,"")+"…":t; }
+function rfTopico(cards){
+  var q=rfTxt((cards[0]||{}).q||"").replace(/\s*\((?:art|arts)[^)]*\)/ig,"").replace(/^Art[^:]*:\s*/i,"").replace(/\?$/,"").trim();
+  return q||"este ponto";
+}
+function rfReflex(cards){
+  var t=rfTopico(cards);
+  return {
+    c:"🧾 Se eu fosse o contador: sobre “"+t+"”, que processo, parametrização do sistema ou lançamento eu ajustaria primeiro? Que documento eu guardaria para comprovar que cumpri a regra?",
+    a:"🔍 Se eu fosse o auditor: sobre “"+t+"”, que evidência eu pediria, qual risco de descumprimento eu veria e como eu testaria (amostra, conciliação, cruzamento de dados)?"
+  };
+}
 var RF_TAGS="#ReformaTributária #IBS #CBS #LC214 #DireitoTributário #Contabilidade #ConcursosPúblicos";
 function rfLn(key,cards,modo){
   var rot="LC 214/2025, art. "+key.replace("-","-");
@@ -3556,11 +3569,15 @@ function rfLn(key,cards,modo){
   if(modo==="carrossel"){
     var out=["SLIDE 1 · Reforma Tributária, artigo por artigo\n"+rot+"\nDeslize para entender em "+uso.length+" passos."];
     uso.forEach(function(c,i){ out.push("SLIDE "+(i+2)+" · "+rfTxt(c.q).replace(/\?$/,"")+"\n\n"+rfCorta(c.a,260)); });
-    out.push("SLIDE "+(uso.length+2)+" · Conferiu? Salve para revisar e compartilhe com quem estuda a Reforma.\nConfira sempre a redação vigente (LC 214/2025, com as alterações da LC 227/2026).\n\n"+RF_TAGS);
+    var rx=rfReflex(cards);
+    out.push("SLIDE "+(uso.length+2)+" · "+rx.c);
+    out.push("SLIDE "+(uso.length+3)+" · "+rx.a);
+    out.push("SLIDE "+(uso.length+4)+" · Conferiu? Salve para revisar e compartilhe com quem estuda a Reforma.\nConfira sempre a redação vigente (LC 214/2025, com as alterações da LC 227/2026).\n\n"+RF_TAGS);
     return out.join("\n\n---\n\n");
   }
   var t="📌 Reforma Tributária, artigo por artigo\n"+rot+"\n\n";
   uso.forEach(function(c){ t+="🔹 "+rfTxt(c.q)+"\n"+rfCorta(c.a,240)+"\n\n"; });
+  var rx2=rfReflex(cards); t+=rx2.c+"\n\n"+rx2.a+"\n\n";
   t+="⚠️ Confira sempre a redação vigente: LC 214/2025, com as alterações da LC 227/2026.\n\n💬 Qual ponto deste artigo mais gera dúvida na sua rotina? Comente.\n\n"+RF_TAGS;
   return t;
 }
@@ -3630,6 +3647,119 @@ function rfArtTela(key,volta){
   document.getElementById("rfBack").onclick=function(){ volta?rfArtLista(volta):rfArtigos(); };
   if(ant) document.getElementById("raAnt").onclick=function(){ rfArtTela(ant,volta); };
   if(prox) document.getElementById("raProx").onclick=function(){ rfArtTela(prox,volta); };
+}
+
+
+/* ---------- LINKEDIN: post do dia e plano da semana (Reforma, Contabilidade, Tributário, Aduaneira) ---------- */
+var LI_P=[
+  {id:"ref", nome:"Reforma Tributária", tipo:"art", tags:"#ReformaTributária #IBS #CBS #LC214 #DireitoTributário"},
+  {id:"con", nome:"Contabilidade", ds:["contab","cavan","cpub"], tags:"#Contabilidade #NormasContábeis #CPC #ContabilidadePública",
+    ponte:"🔗 Ponte com a Reforma: como este tema aparece na apuração de IBS e CBS da sua empresa?"},
+  {id:"trb", nome:"Direito Tributário", ds:["dtrib"], tags:"#DireitoTributário #CTN #Tributos #Fiscal",
+    ponte:"🔗 Ponte com a Reforma: como este conceito se aplica ao IBS e à CBS?"},
+  {id:"adu", nome:"Aduaneira e comércio internacional", ds:["legadu"], tags:"#ComércioExterior #LegislaçãoAduaneira #Importação #Exportação",
+    ponte:"🔗 Ponte com a Reforma: como este tema conversa com o IBS e a CBS na importação e na exportação?"},
+  {id:"ref2", nome:"Reforma na prova de ATRFB", tipo:"art", atrfb:true, tags:"#ReformaTributária #ATRFB #ReceitaFederal #ConcursosPúblicos #IBS #CBS"}
+];
+function liHash(t){ var h=0; for(var i=0;i<t.length;i++) h=(h*31+t.charCodeAt(i))>>>0; return h; }
+function liS(){ if(!S.li) S.li={done:{}}; if(!S.li.done) S.li.done={}; return S.li; }
+function liCands(p){
+  var sr=srs(), out=[];
+  if(p.tipo==="art"){
+    var ix=rfArtIdx();
+    Object.keys(ix.byArt).forEach(function(a){
+      var cs=ix.byArt[a], sc=0;
+      cs.forEach(function(c){ var st=sr[qjoin(c.m,"c"+c.i)]; if(st) sc+=(st.lap||0)*3+((st.r||0)<1?1:0); });
+      out.push({id:"rf:"+a,kind:"art",key:a,cards:cs,sc:sc,tit:"LC 214/2025, art. "+a});
+    });
+  } else {
+    p.ds.forEach(function(d){ (DISC[d]?DISC[d].mods:[]).forEach(function(k){
+      var m=REG[k]; if(!m||!m.CARDS) return;
+      for(var i=0;i<m.CARDS.length;i+=4){
+        var cs=[],sc=0;
+        for(var j=i;j<Math.min(i+4,m.CARDS.length);j++){ cs.push({m:k,i:j,q:m.CARDS[j][0],a:m.CARDS[j][1]}); var st=sr[qjoin(k,"c"+j)]; if(st) sc+=(st.lap||0)*3; }
+        if(cs.length>=3) out.push({id:k+":"+i,kind:"chunk",mod:k,cards:cs,sc:sc,tit:(DISC[d].nome+" · "+(m.nome||k)).slice(0,90)});
+      }
+    }); });
+  }
+  return out;
+}
+function liEscolhe(p,excl,seed){
+  var li=liS(), c=liCands(p).filter(function(x){return excl.indexOf(x.id)<0&&!li.done[x.id];});
+  if(!c.length) c=liCands(p).filter(function(x){return excl.indexOf(x.id)<0;});
+  if(!c.length) return null;
+  c.forEach(function(x){ x.r=x.sc*1000+(liHash(seed+x.id)%1000); });
+  c.sort(function(a,b){return b.r-a.r;});
+  return c[0];
+}
+function liSemana(){
+  var d=new Date(), dow=(d.getDay()+6)%7, seg=new Date(d.getFullYear(),d.getMonth(),d.getDate()-dow), sem=seg.getFullYear()+"-"+(seg.getMonth()+1)+"-"+seg.getDate();
+  var usados=[], out=[];
+  LI_P.forEach(function(p,i){ var it=liEscolhe(p,usados,sem+p.id); if(it){ usados.push(it.id); } out.push({dia:["Segunda","Terça","Quarta","Quinta","Sexta"][i],p:p,it:it,hoje:i===Math.min(dow,4)}); });
+  return out;
+}
+function liTexto(it,p,modo){
+  var base;
+  if(it.kind==="art"){
+    base=rfLn(it.key,it.cards,modo);
+    if(p.atrfb) base=base.replace("⚠️","🎯 Para quem estuda para Auditor-Fiscal da Receita Federal (ATRFB): este é o tipo de ponto que vale dominar com a letra da lei.\n\n⚠️").replace("SLIDE "+(Math.min(it.cards.length,10)+4)+" ·","SLIDE "+(Math.min(it.cards.length,10)+4)+" · 🎯 Para quem estuda para ATRFB: domine a letra da lei.\n\n");
+    return base;
+  }
+  var uso=it.cards.slice(0,modo==="carrossel"?10:4), tags=(p.tags||"")+" #ConcursosPúblicos #ATRFB";
+  var aviso="Confira sempre a redação vigente das normas.";
+  if(modo==="carrossel"){
+    var o=["SLIDE 1 · "+p.nome+"\n"+it.tit+"\nDeslize para entender em "+uso.length+" passos."];
+    uso.forEach(function(c,i){ o.push("SLIDE "+(i+2)+" · "+rfTxt(c.q).replace(/\?$/,"")+"\n\n"+rfCorta(c.a,260)); });
+    var rx=rfReflex(it.cards);
+    o.push("SLIDE "+(uso.length+2)+" · "+rx.c);
+    o.push("SLIDE "+(uso.length+3)+" · "+rx.a);
+    o.push("SLIDE "+(uso.length+4)+" · "+(p.ponte||"")+"\n\n🎯 Para quem estuda para Auditor-Fiscal da Receita Federal.\n"+aviso+"\n\n"+tags);
+    return o.join("\n\n---\n\n");
+  }
+  var t="📌 "+p.nome+" na prática\n"+it.tit+"\n\n";
+  uso.forEach(function(c){ t+="🔹 "+rfTxt(c.q)+"\n"+rfCorta(c.a,240)+"\n\n"; });
+  var rx3=rfReflex(it.cards); t+=rx3.c+"\n\n"+rx3.a+"\n\n";
+  if(p.ponte) t+=p.ponte+"\n\n";
+  t+="🎯 Para quem estuda para Auditor-Fiscal da Receita Federal (ATRFB).\n⚠️ "+aviso+"\n\n💬 Qual ponto você mais confunde? Comente.\n\n"+tags;
+  return t;
+}
+function liEdita(it,p,volta){
+  rfOpen();
+  var modo="post", feito=!!liS().done[it.id];
+  var h='<div class="rf-h"><span class="q-kicker">LinkedIn · '+esc(p.nome)+'</span><h2>'+esc(it.tit)+'</h2><p>'+it.cards.length+' cartas de base. Edite o texto antes de publicar.</p></div><div class="ra-cards">';
+  it.cards.slice(0,6).forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div></div>'; });
+  h+='</div><div class="rf-sec"><h3>Texto</h3><div class="ra-tabs"><button type="button" class="ra-tab on" id="raPost">Post</button><button type="button" class="ra-tab" id="raCar">Carrossel (texto dos slides)</button></div>'+
+    '<textarea id="raTa" class="ra-ta" rows="12" aria-label="Texto do post, editável"></textarea>'+
+    '<div class="ra-bar"><button class="big" id="raCopia" style="flex:1">Copiar texto</button><a class="ghost ra-ln" href="https://www.linkedin.com/feed/?shareActive=true" target="_blank" rel="noopener">Abrir LinkedIn</a></div>'+
+    '<div class="ra-bar"><button class="ghost" id="liFeito" style="flex:1">'+(feito?"Publicado ✓ (desmarcar)":"Marcar como publicado")+'</button></div>'+
+    '<p class="ra-nota">O texto sai das cartas de estudo. Revise antes de publicar e confirme a redação vigente.</p></div>';
+  ovInner.innerHTML=h;
+  var ta=document.getElementById("raTa");
+  function pinta(){ ta.value=liTexto(it,p,modo); document.getElementById("raPost").classList.toggle("on",modo==="post"); document.getElementById("raCar").classList.toggle("on",modo!=="post"); }
+  pinta();
+  document.getElementById("raPost").onclick=function(){ modo="post"; pinta(); };
+  document.getElementById("raCar").onclick=function(){ modo="carrossel"; pinta(); };
+  document.getElementById("raCopia").onclick=function(){ rfCopia(ta.value,this); };
+  document.getElementById("liFeito").onclick=function(){ var l=liS(); if(l.done[it.id]) delete l.done[it.id]; else l.done[it.id]=today(); persist(); liEdita(it,p,volta); };
+  setFoot("",rfVoltar());
+  document.getElementById("rfBack").onclick=function(){ liHub(); };
+}
+function liHub(){
+  rfOpen();
+  var sem=liSemana(), li=liS(), feitos=Object.keys(li.done).length;
+  var h='<div class="rf-h"><span class="q-kicker">LinkedIn</span><h2>Post do dia e plano da semana</h2><p>Um tema por dia útil, ligando Contabilidade, Direito Tributário e Legislação Aduaneira à Reforma e à prova de ATRFB. Você já publicou '+feitos+'.</p></div>';
+  sem.forEach(function(x,i){
+    if(!x.it){ h+=rfBtn("li"+i,x.dia+" · "+esc(x.p.nome),"sem cartas disponíveis ainda","—",true); return; }
+    var f=li.done[x.it.id];
+    h+=rfBtn("li"+i,(x.hoje?"Hoje · ":"")+x.dia+" · "+esc(x.p.nome),esc(x.it.tit)+(x.it.sc?" · você errou aqui":""),f?"✓":"Abrir");
+  });
+  h+='<p class="ra-nota">A escolha prioriza os temas em que você mais errou nas cartas e evita repetir o que você marcou como publicado. Comércio internacional entra pelo módulo de Legislação Aduaneira (valoração, Mercosul, regimes) até existir um módulo próprio.</p>';
+  h+='<div class="rf-sec"><h3>Escolher por conta própria</h3>'+rfBtn("liArt","Artigo por artigo da LC 214","Busque o artigo e gere o texto","Abrir")+'</div>';
+  ovInner.innerHTML=h;
+  setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  document.getElementById("liArt").onclick=function(){ rfArtigos(); };
+  sem.forEach(function(x,i){ var b=document.getElementById("li"+i); if(b&&!b.disabled) b.onclick=function(){ liEdita(x.it,x.p); }; });
 }
 
 /* ---------- CICLO GUIADO: o que estudar hoje, pelo seu desempenho em questões ---------- */
@@ -4057,6 +4187,7 @@ function hojeCard(){
       ["i-list","Método SPQ","fases com 80% de acerto",function(){ spqHub(); }],
       ["i-book","Mapas mentais","CF, CTN e LC 214",function(){ mapasHub(); }],
       ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }],
+      ["i-list","Post LinkedIn","tema do dia e da semana",function(){ liHub(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
     T.forEach(function(x){
@@ -4807,7 +4938,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,cron:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,li:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -4995,7 +5126,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
