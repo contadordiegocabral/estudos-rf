@@ -601,6 +601,12 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 .hj-tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px;border:2px solid var(--line-strong);border-bottom-width:4px;border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
 .hj-tile b{font-size:.95rem}.hj-tile small{color:var(--ink-2);font-size:.76rem}.hj-tile .ti-i svg{width:22px;height:22px}
 .hj-more{margin-top:6px}.hj-more>summary{cursor:pointer;font-weight:700;padding:10px 4px;color:var(--ink-2)}
+#bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--surface);border-top:2px solid var(--line-strong)}
+#bnav button{flex:1;padding:12px 4px;border:2px solid transparent;border-radius:12px;background:transparent;color:var(--ink-2);font:inherit;font-weight:800;font-size:.9rem;cursor:pointer}
+#bnav button[aria-pressed="true"]{background:var(--surface-2,#eaf2ff);border-color:var(--line-strong);color:var(--ink)}
+.trail{padding-bottom:86px}
+body[data-nav="hoje"] #trail>.cursomapa,body[data-nav="hoje"] #trail>.livrelab,body[data-nav="hoje"] #trail>.discbar,body[data-nav="hoje"] #trail>.discmore,body[data-nav="hoje"] #trail>.modbar,body[data-nav="hoje"] #trail>.unit{display:none}
+body[data-nav="trilha"] #trail>.hojecard{display:none}
 .rf-b{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;width:100%;padding:12px 14px;border:2px solid var(--line-strong);border-bottom-width:4px;border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer}
 .rf-b:hover:not(:disabled){border-color:var(--brand)}
 .rf-b:disabled{opacity:.45;cursor:not-allowed}
@@ -961,6 +967,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 </div>
 
 <main class="trail" id="trail"></main>
+<nav id="bnav" aria-label="Navegação principal"><button type="button" data-n="hoje" aria-pressed="true">Hoje</button><button type="button" data-n="trilha" aria-pressed="false">Trilha</button><button type="button" data-n="treinar" aria-pressed="false">Treinar</button><button type="button" data-n="mapas" aria-pressed="false">Mapas</button></nav>
 
 <div class="overlay" id="ov" role="dialog" aria-modal="true" aria-label="Lição">
   <div class="ov-top">

@@ -3972,6 +3972,44 @@ function hojeCard(){
   }
   return root;
 }
+/* ---------- navegação inferior: Hoje, Trilha, Treinar, Mapas ---------- */
+function setNav(n){ document.body.setAttribute("data-nav",n);
+  var bs=document.querySelectorAll("#bnav button"); for(var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed",String(bs[i].dataset.n===n)); }
+function treinarHub(){
+  rfOpen();
+  var sst=srsStats(), pend=sst.due+Math.min(srsFresh().length,dailyTarget());
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Treinar</span><h2>Escolha um treino</h2><p>Todos os treinos do app num lugar só.</p></div>'+
+    '<div class="rf-sec">'+
+    rfBtn("trRev","Revisão do dia","Questões e cartas que voltam hoje",pend?String(pend):"em dia")+
+    rfBtn("trCg","Ciclo guiado","O app aponta onde você mais precisa treinar","Ver")+
+    rfBtn("trSp","Sprint de memorização",sprintN()+" itens do banco, sem teoria","Começar")+
+    rfBtn("trSr","Super revisão","Erros e vencidos de todas as matérias","Abrir")+
+    rfBtn("trSim","Simulado ISS Curitiba","Prova completa com tempo","Abrir")+
+    rfBtn("trRf","Reforma Tributária","Flashcards, questões e memorização","Abrir")+
+    '</div>';
+  setFoot("",'<button class="ghost" id="trFecha" style="flex:1">Fechar</button>');
+  function on(id,fn){ var b=document.getElementById(id); if(b) b.onclick=fn; }
+  on("trFecha",function(){ closeOv(); });
+  on("trRev",function(){ L.finished=true; closeOv(); openDaily(); });
+  on("trCg",function(){ cicloGuiado(); });
+  on("trSp",function(){ L.finished=true; closeOv(); startSprint(sprintN()); });
+  on("trSr",function(){ L.finished=true; closeOv(); runSuperRevisao(); });
+  on("trSim",function(){ L.finished=true; closeOv(); PV_SIM.conc="isscwb"; pvSimScreen(); });
+  on("trRf",function(){ rfHub(); });
+}
+(function(){
+  var nav=document.getElementById("bnav"); if(!nav) return;
+  nav.querySelectorAll("button").forEach(function(b){
+    b.onclick=function(){
+      var n=b.dataset.n;
+      if(n==="treinar"){ treinarHub(); return; }
+      if(n==="mapas"){ mapasHub(); return; }
+      setNav(n); window.scrollTo(0,0);
+    };
+  });
+  setNav("hoje");
+})();
+
 function contCard(){
   var c=S.last; if(!c||!REG[c.mod]||!DISC[c.disc]) return document.createElement("span");
   var ls=licoesDoMod(c.mod), it=null;
