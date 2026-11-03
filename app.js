@@ -402,7 +402,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -1090,6 +1090,7 @@ function recordAttempt(id,ok){
   else { pm.misses[e]=Math.min(3,(pm.misses[e]||0)+1); }
   srsTouch(qjoin(p.m,e),ok);
   dstatBump(ok);
+  spqLog(p.m,ok?1:0,1);
 }
 
 /* =======================================================
@@ -3340,6 +3341,7 @@ function tecRegistra(mod,q,ok){
   var ks=Object.keys(d).sort(); while(ks.length>60){ delete d[ks.shift()]; }
   if(!S.tecMod)S.tecMod={}; S.tecMod[mod]=t;
   for(var i=0;i<q;i++) dstatBump(i<ok);
+  spqLog(mod,ok,q);
   addXp(Math.ceil(q/2));
   persist(); renderTrail();
 }
@@ -3866,7 +3868,7 @@ function hojeCard(){
       ["i-repeat","Revisão do dia",pend0?(pend0+" para hoje"):"em dia",function(){ openDaily(); }],
       ["i-target","TEC do dia","registrar as questões",function(){ more.open=true; var t=more.querySelector(".tecd"); if(t&&t.scrollIntoView) t.scrollIntoView({block:"start"}); }],
       ["i-trophy","Ciclo guiado","o que treinar agora",function(){ cicloGuiado(); }],
-      ["i-list","Sprint",sprintN()+" itens, sem teoria",function(){ startSprint(sprintN()); }],
+      ["i-list","Método SPQ","fases com 80% de acerto",function(){ spqHub(); }],
       ["i-book","Mapas mentais","CF, CTN e LC 214",function(){ mapasHub(); }],
       ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }]
     ];
@@ -3973,6 +3975,135 @@ function hojeCard(){
   }
   return root;
 }
+/* ---------- MÉTODO SPQ: pouca teoria, muita questão; só passa de fase com 80% ---------- */
+var SPQ_MIN=10, SPQ_ALVO=0.8, SPQ_JAN=20;
+function spqS(){ if(!S.spq) S.spq={}; if(!S.spq.h) S.spq.h={}; if(!S.spq.ok) S.spq.ok={}; return S.spq; }
+/* q respostas no módulo, ok delas certas, intercaladas (a janela guarda as últimas 30) */
+function spqLog(mod,ok,q){
+  if(!REG[mod]||!q) return;
+  var sp=spqS(), h=sp.h[mod]||"", add="", c=0;
+  for(var i=0;i<q;i++){ var want=Math.round((i+1)*ok/q); if(want>c){ add+="1"; c++; } else add+="0"; }
+  h=(h+add).slice(-30); sp.h[mod]=h;
+  if(!sp.ok[mod]){ var st=spqStat(mod); if(st.n>=SPQ_MIN&&st.acc>=SPQ_ALVO) sp.ok[mod]=today(); }
+}
+function spqStat(mod){
+  var h=(spqS().h[mod]||"").slice(-SPQ_JAN), n=h.length, r=0;
+  for(var i=0;i<n;i++) if(h.charAt(i)==="1") r++;
+  return {n:n,r:r,acc:n?r/n:0,ok:!!spqS().ok[mod]};
+}
+var _spqTop={};
+function spqTopicos(d){
+  var D=DISC[d]; if(!D) return [];
+  var prontos=D.mods.filter(function(k){return REG[k];});
+  var sel=null; try{ sel=pctPlano([d],80).sel; }catch(e){}
+  function tem(k){ var m=REG[k], n=0; for(var e in (m.EX||{})) if(m.EX[e]&&m.EX[e].t!=="match") n++; return n>=3||tecLinksDe(k).length>0; }
+  var out=prontos.filter(function(k){ return (!sel||sel[k])&&tem(k); });
+  if(!out.length) out=prontos.filter(tem).slice(0,5);
+  return out;
+}
+function spqDiscs(){ return DISC_ORDER.filter(function(d){ return focoOk(d)&&spqTopicos(d).length; }); }
+function spqLiberado(top,i){ return i===0||spqStat(top[i-1]).ok; }
+function spqIds(k,n){
+  var m=REG[k], s=srs(), t=today(), a=[],b=[],c=[],d=[];
+  var base=[]; for(var e in (m.EX||{})) if(m.EX[e]&&m.EX[e].t!=="match") base.push(qjoin(k,e));
+  if(!base.length&&m.CARDS) for(var i=0;i<m.CARDS.length;i++) base.push(qjoin(k,"c"+i));
+  base.forEach(function(f){ var st=s[f];
+    if(!st) d.push(f); else if((st.lap||0)>=LEECH) a.push(f); else if(daysBetween(st.due,t)>=0) b.push(f); else if((st.lap||0)>0) c.push(f); });
+  return a.concat(shuffle(b),shuffle(c),shuffle(d)).slice(0,n);
+}
+function spqPct(st){ return Math.round(st.acc*100); }
+function spqHub(){
+  rfOpen();
+  var ds=spqDiscs(), h='<div class="rf-h"><span class="q-kicker">Método SPQ</span><h2>Só por questões</h2>'+
+    '<p>Pouca teoria, muita questão. Cada matéria é uma sequência de fases (os tópicos principais). Para abrir a próxima fase, você precisa de pelo menos <b>80% de acerto</b> nas últimas '+SPQ_JAN+' questões do tópico (mínimo de '+SPQ_MIN+' respondidas).</p></div>'+
+    '<div class="rf-sec">'+rfBtn("spqGuia","Como estudar por questões e comentários","O passo a passo de cada questão","Ver")+'</div>'+
+    '<div class="rf-sec"><h3>Suas matérias</h3>';
+  ds.forEach(function(d,i){
+    var top=spqTopicos(d), feitas=top.filter(function(k){return spqStat(k).ok;}).length;
+    h+=rfBtn("spqD"+i,DISC[d].nome,feitas+" de "+top.length+" fases concluídas",feitas===top.length?"Completa":"Abrir");
+  });
+  h+='</div>';
+  ovInner.innerHTML=h;
+  setFoot("",'<button class="ghost" id="spqFecha" style="flex:1">Fechar</button>');
+  document.getElementById("spqFecha").onclick=function(){ closeOv(); };
+  document.getElementById("spqGuia").onclick=spqGuia;
+  ds.forEach(function(d,i){ document.getElementById("spqD"+i).onclick=function(){ spqDisc(d); }; });
+  persist();
+}
+function spqDisc(d){
+  rfOpen();
+  var top=spqTopicos(d), h='<div class="rf-h"><span class="q-kicker">Método SPQ · '+DISC[d].nome+'</span><h2>Fases</h2><p>Uma fase por vez. Alvo: 80% de acerto no tópico.</p></div><div class="rf-sec">';
+  top.forEach(function(k,i){
+    var st=spqStat(k), lib=spqLiberado(top,i), pc=st.n?spqPct(st)+"% · "+st.n+" resp.":"sem questões ainda";
+    var tag=st.ok?"✔ "+(st.n?spqPct(st)+"%":"ok"):(lib?"Abrir":"🔒");
+    h+=rfBtn("spqF"+i,"Fase "+(i+1)+" · "+REG[k].nome,(st.ok?"Concluída · ":lib?"Em andamento · ":"Bloqueada: conclua a fase "+i+" · ")+pc,tag,!lib);
+  });
+  h+='</div>';
+  ovInner.innerHTML=h;
+  setFoot("",'<button class="ghost" id="rfBack" style="flex:1">Voltar</button>');
+  document.getElementById("rfBack").onclick=spqHub;
+  top.forEach(function(k,i){ var b=document.getElementById("spqF"+i); if(b&&!b.disabled) b.onclick=function(){ spqFase(d,k); }; });
+}
+function spqFase(d,k){
+  rfOpen();
+  var m=REG[k], st=spqStat(k), pct=spqPct(st), top=spqTopicos(d), idx=top.indexOf(k), prox=top[idx+1];
+  var h='<div class="rf-h"><span class="q-kicker">Fase '+(idx+1)+' de '+top.length+' · '+DISC[d].nome+'</span><h2>'+m.nome+'</h2></div>';
+  h+='<div class="cg-l"><div class="cg-t"><b>Acerto nas últimas '+SPQ_JAN+'</b><span>'+(st.n?pct+'% · '+st.r+'/'+st.n:'sem respostas')+' · alvo 80%</span></div><div class="cg-bar"><i style="width:'+pct+'%" class="'+(pct>=80?"ok":pct>=60?"md":"ru")+'"></i></div></div>';
+  if(st.ok){ h+='<div class="box"><span class="bl">Fase concluída</span><p>Você bateu 80% neste tópico.'+(prox?' A próxima fase está liberada.':' Era a última fase desta matéria.')+'</p></div>'; }
+  else if(st.n<SPQ_MIN){ h+='<p class="tec-n">Responda pelo menos '+SPQ_MIN+' questões ('+(SPQ_MIN-st.n)+' faltando) para o app medir o seu acerto.</p>'; }
+  else { h+='<p class="tec-n">Faltam acertos: você está em '+pct+'%. Revise os erros, leia os comentários e treine de novo.</p>'; }
+  /* 1. teoria relâmpago */
+  var cs=(m.CARDS||[]).slice(0,5);
+  if(cs.length){
+    h+='<div class="rf-sec"><h3>1 · Teoria relâmpago (5 min)</h3>';
+    cs.forEach(function(c){ h+='<details class="hj-det"><summary>'+rfStrip(c[0])+'</summary><div class="box"><p>'+c[1]+'</p></div></details>'; });
+    h+='</div>';
+  }
+  /* 2. questões do app */
+  var ids=spqIds(k,10), erros=0, s=srs();
+  Object.keys(m.EX||{}).forEach(function(e){ var x=s[qjoin(k,e)]; if(x&&x.lap>0) erros++; });
+  h+='<div class="rf-sec"><h3>2 · Questões do app</h3>'+
+    rfBtn("spqQ","Resolver 10 questões","Erradas e vencidas primeiro, depois as inéditas",ids.length,!ids.length)+
+    rfBtn("spqE","Refazer só as que errei","Leia o comentário de cada uma",erros,!erros)+'</div>';
+  /* 3. TEC */
+  var ls=tecLinksDe(k).slice(0,4);
+  h+='<div class="rf-sec"><h3>3 · Questões do TEC</h3>';
+  if(ls.length){ h+='<div class="teclist mini">'+ls.map(function(l){ return '<a href="'+l.u+'" target="_blank" rel="noopener"><span class="bn">'+String(l.n).replace(/^Monte seu caderno no TEC — /,"").replace(/^[^:]*: /,"")+'</span><span class="bu">'+(l.real?'caderno pronto':'filtro')+'</span></a>'; }).join("")+'</div>'; }
+  else h+='<p class="tec-n">Sem caderno do TEC cadastrado para este tópico. Filtre no TEC por matéria e assunto.</p>';
+  h+='<div class="tecd-reg"><span class="tecd-f"><input type="number" id="spqTq" min="1" max="300" placeholder="Feitas" aria-label="Questões feitas"><input type="number" id="spqTo" min="0" max="300" placeholder="Acertos" aria-label="Acertos"><button type="button" class="ghost" id="spqTs">Registrar</button></span></div></div>';
+  h+='<div class="rf-sec"><h3>4 · Comentários</h3>'+rfBtn("spqG","Como ler o comentário e anotar o erro","Faça isso em cada questão errada ou chutada","Ver")+'</div>';
+  if(prox&&st.ok) h+='<div class="rf-sec">'+rfBtn("spqN","Ir para a próxima fase",REG[prox].nome,"Ir")+'</div>';
+  ovInner.innerHTML=h;
+  setFoot("",'<button class="ghost" id="rfBack" style="flex:1">Voltar</button>');
+  document.getElementById("rfBack").onclick=function(){ spqDisc(d); };
+  function on(id,fn){ var b=document.getElementById(id); if(b&&!b.disabled) b.onclick=fn; }
+  function go(l,tit){ if(!l.length) return; L.finished=true; closeOv(); startSprint(l.length,l,tit); }
+  on("spqQ",function(){ go(ids,"Fase · "+m.nome); });
+  on("spqE",function(){ var e=[]; Object.keys(m.EX||{}).forEach(function(x){ var y=srs()[qjoin(k,x)]; if(y&&y.lap>0) e.push(qjoin(k,x)); }); go(e.slice(0,15),"Meus erros · "+m.nome); });
+  on("spqG",function(){ spqGuia(function(){ spqFase(d,k); }); });
+  on("spqN",function(){ spqFase(d,prox); });
+  on("spqTs",function(){
+    var q=parseInt(document.getElementById("spqTq").value,10), o=parseInt(document.getElementById("spqTo").value,10)||0;
+    if(!(q>0)) return; tecRegistra(k,q,Math.min(o,q)); spqFase(d,k);
+  });
+}
+function spqGuia(volta){
+  rfOpen();
+  var passos=[
+    ["Antes de olhar a resposta","Leia o enunciado inteiro, sublinhe a palavra-chave (sempre, nunca, exceto, somente) e responda sem consultar nada. Marque mentalmente: certeza, dúvida ou chute."],
+    ["Depois de responder, leia SEMPRE o comentário","Leia mesmo quando acertou. Acerto por chute conta como erro para o estudo. Procure o fundamento (artigo, súmula, conceito) e por que cada alternativa errada está errada."],
+    ["Classifique o erro","Falta de teoria, pegadinha de redação, desatenção ou chute. Cada tipo pede um remédio diferente: teoria pede resumo curto, pegadinha pede comparar pares, desatenção pede sublinhar a palavra-chave."],
+    ["Escreva a regra em uma linha","Uma frase sua, com o artigo: “Isenção exclui o crédito (art. 175 do CTN); suspensão só impede a cobrança.” Essa linha é a sua teoria. Não copie o comentário inteiro."],
+    ["Favorite e refaça","No TEC, favorite as questões que errou ou chutou. Refaça em 1 dia, 7 dias e 30 dias. No app, o erro volta sozinho na revisão."],
+    ["Como medir","Use blocos de 10 a 20 questões do mesmo tópico, depois misture tópicos. Registre o resultado aqui. Com 80% ou mais nas últimas 20, passe de fase. Abaixo disso, volte nos erros e no resumo antes de fazer mais questões."],
+    ["Banca e estilo","No ISS Curitiba e na ATRFB, treine o estilo da banca. Veja o padrão do enunciado, as pegadinhas que se repetem e os temas que mais caem. Isso conta tanto quanto a teoria."]
+  ];
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Método SPQ</span><h2>Como estudar por questões</h2><p>O segredo está no comentário, não na quantidade.</p></div>'+
+    passos.map(function(x,i){ return '<div class="box"><span class="bl">'+(i+1)+' · '+x[0]+'</span><p>'+x[1]+'</p></div>'; }).join("");
+  setFoot("",'<button class="ghost" id="rfBack" style="flex:1">Voltar</button>');
+  document.getElementById("rfBack").onclick=function(){ if(typeof volta==="function") volta(); else spqHub(); };
+}
+
 /* ---------- navegação inferior: Hoje, Trilha, Treinar, Mapas ---------- */
 function setNav(n){ document.body.setAttribute("data-nav",n);
   var bs=document.querySelectorAll("#bnav button"); for(var i=0;i<bs.length;i++) bs[i].setAttribute("aria-pressed",String(bs[i].dataset.n===n)); }
@@ -3981,6 +4112,7 @@ function treinarHub(){
   var sst=srsStats(), pend=sst.due+Math.min(srsFresh().length,dailyTarget());
   ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Treinar</span><h2>Escolha um treino</h2><p>Todos os treinos do app num lugar só.</p></div>'+
     '<div class="rf-sec">'+
+    rfBtn("trSpq","Método SPQ","Fases por tópico: só passa com 80% de acerto","Abrir")+
     rfBtn("trRev","Revisão do dia","Questões e cartas que voltam hoje",pend?String(pend):"em dia")+
     rfBtn("trCg","Ciclo guiado","O app aponta onde você mais precisa treinar","Ver")+
     rfBtn("trSp","Sprint de memorização",sprintN()+" itens do banco, sem teoria","Começar")+
@@ -3991,6 +4123,7 @@ function treinarHub(){
   setFoot("",'<button class="ghost" id="trFecha" style="flex:1">Fechar</button>');
   function on(id,fn){ var b=document.getElementById(id); if(b) b.onclick=fn; }
   on("trFecha",function(){ closeOv(); });
+  on("trSpq",function(){ spqHub(); });
   on("trRev",function(){ L.finished=true; closeOv(); openDaily(); });
   on("trCg",function(){ cicloGuiado(); });
   on("trSp",function(){ L.finished=true; closeOv(); startSprint(sprintN()); });
@@ -4393,7 +4526,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -4581,7 +4714,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
