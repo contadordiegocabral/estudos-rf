@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -1108,6 +1108,7 @@ function recordAttempt(id,ok){
   else { pm.misses[e]=Math.min(3,(pm.misses[e]||0)+1); }
   srsTouch(qjoin(p.m,e),ok);
   dstatBump(ok);
+  monBump(p.m,ok);
   spqLog(p.m,ok?1:0,1);
 }
 
@@ -3564,6 +3565,21 @@ function rfReflex(cards){
     a:"🔍 Se eu fosse o auditor: sobre “"+t+"”, que evidência eu pediria, qual risco de descumprimento eu veria e como eu testaria (amostra, conciliação, cruzamento de dados)?"
   };
 }
+function rfPrimeira(t){
+  var re=/[.!?](?=\s|$)/g, m;
+  while((m=re.exec(t))){
+    var antes=t.slice(0,m.index);
+    if(/(^|[\s(])(arts?|inc|incs|par|nº|cf|ec|lc|dec|ex)$/i.test(antes)) continue;
+    return t.slice(0,m.index+1);
+  }
+  return t;
+}
+var RF_ICO={const:"⚖️",adm:"🏛️",trib:"💰",adu:"🚢",ci:"🌍",dados:"📊"};
+function rfCorrTxt(cards,curto){
+  var gr=rdGrupo(cards); if(!gr||!window.RF_CORR) return [];
+  var out=[]; window.RF_CORR.AREAS.forEach(function(ar){ var x=gr.g.a[ar[0]]; if(x) out.push({ico:RF_ICO[ar[0]]||"🔗",nome:ar[1],t:curto?rfPrimeira(x.t):x.t}); });
+  return out;
+}
 var RF_TAGS="#ReformaTributária #IBS #CBS #LC214 #DireitoTributário #Contabilidade #ConcursosPúblicos";
 function rfLn(key,cards,modo){
   var rot="LC 214/2025, art. "+key.replace("-","-");
@@ -3571,15 +3587,15 @@ function rfLn(key,cards,modo){
   if(modo==="carrossel"){
     var out=["SLIDE 1 · Reforma Tributária, artigo por artigo\n"+rot+"\nDeslize para entender em "+uso.length+" passos."];
     uso.forEach(function(c,i){ out.push("SLIDE "+(i+2)+" · "+rfTxt(c.q).replace(/\?$/,"")+"\n\n"+rfCorta(c.a,260)); });
-    var rx=rfReflex(cards);
-    out.push("SLIDE "+(uso.length+2)+" · "+rx.c);
-    out.push("SLIDE "+(uso.length+3)+" · "+rx.a);
-    out.push("SLIDE "+(uso.length+4)+" · Conferiu? Salve para revisar e compartilhe com quem estuda a Reforma.\nConfira sempre a redação vigente (LC 214/2025, com as alterações da LC 227/2026).\n\n"+RF_TAGS);
+    var cr=rfCorrTxt(cards,false);
+    cr.forEach(function(x,i){ out.push("SLIDE "+(uso.length+2+i)+" · "+x.ico+" Correlação com "+x.nome+"\n\n"+x.t); });
+    out.push("SLIDE "+(uso.length+2+cr.length)+" · Conferiu? Salve para revisar e compartilhe com quem estuda a Reforma.\nConfira sempre a redação vigente (LC 214/2025, com as alterações da LC 227/2026).\n\n"+RF_TAGS);
     return out.join("\n\n---\n\n");
   }
   var t="📌 Reforma Tributária, artigo por artigo\n"+rot+"\n\n";
   uso.forEach(function(c){ t+="🔹 "+rfTxt(c.q)+"\n"+rfCorta(c.a,240)+"\n\n"; });
-  var rx2=rfReflex(cards); t+=rx2.c+"\n\n"+rx2.a+"\n\n";
+  var cr2=rfCorrTxt(cards,true);
+  if(cr2.length){ t+="🔗 Como este artigo conversa com outras matérias:\n"; cr2.forEach(function(x){ t+=x.ico+" "+x.nome+": "+x.t+"\n"; }); t+="\n"; }
   t+="⚠️ Confira sempre a redação vigente: LC 214/2025, com as alterações da LC 227/2026.\n\n💬 Qual ponto deste artigo mais gera dúvida na sua rotina? Comente.\n\n"+RF_TAGS;
   return t;
 }
@@ -3653,6 +3669,92 @@ function rfArtTela(key,volta){
 
 
 
+
+/* ---------- MONITOR DE DESEMPENHO: acertos, erros, melhora e piora ---------- */
+function monS(){ if(!S.mon) S.mon={}; return S.mon; }
+function monBump(mod,ok){
+  try{
+    var d=discOf(mod), m=monS(), t=today(), x=m[t]||(m[t]={}), y=x[d]||(x[d]=[0,0]);
+    if(ok) y[0]++; else y[1]++;
+    var ks=Object.keys(m).sort(); while(ks.length>120){ delete m[ks.shift()]; }
+  }catch(e){}
+}
+function monJan(ini,fim,disc){ /* soma ok/err de dayKey(ini)..dayKey(fim) (offsets negativos) */
+  var ok=0,er=0, m=monS(), ds=dstat();
+  for(var i=ini;i<=fim;i++){
+    var k=dayKey(i);
+    if(disc){ var x=m[k]&&m[k][disc]; if(x){ ok+=x[0]; er+=x[1]; } }
+    else { var g=ds[k]; if(g){ ok+=g.ok; er+=g.err; } }
+  }
+  return {ok:ok,err:er,n:ok+er,acc:(ok+er)?ok/(ok+er):null};
+}
+function monPct(a){ return a==null?"—":Math.round(a*100)+"%"; }
+function monSeta(atual,ant,minN){
+  if(atual.n<minN||ant.n<minN||atual.acc==null||ant.acc==null) return {t:"poucos dados",c:"mon-nd",d:null};
+  var d=Math.round((atual.acc-ant.acc)*100);
+  if(d>=5) return {t:"▲ melhorando (+"+d+" pp)",c:"mon-up",d:d};
+  if(d<=-5) return {t:"▼ piorando ("+d+" pp)",c:"mon-dn",d:d};
+  return {t:"▬ estável ("+(d>0?"+":"")+d+" pp)",c:"mon-eq",d:d};
+}
+function monTela(){
+  rfOpen();
+  var h7=monJan(-6,0), a7=monJan(-13,-7), h30=monJan(-29,0), hoje=monJan(0,0);
+  var sg=monSeta(h7,a7,15);
+  var h='<div class="rf-h"><span class="q-kicker">Desempenho</span><h2>Seus acertos e erros</h2><p>Acompanhe se você está melhorando ou piorando, no geral e por matéria.</p></div>';
+  /* resumo */
+  h+='<div class="mon-grid">'+
+    '<div class="mon-k"><b>'+monPct(hoje.acc)+'</b><small>hoje · '+hoje.n+' questões</small></div>'+
+    '<div class="mon-k"><b>'+monPct(h7.acc)+'</b><small>7 dias · '+h7.n+' questões</small></div>'+
+    '<div class="mon-k"><b>'+monPct(h30.acc)+'</b><small>30 dias · '+h30.n+' questões</small></div></div>';
+  h+='<div class="mon-box '+sg.c+'"><b>'+(h7.n?("Esta semana: "+sg.t):"Sem questões nos últimos 7 dias")+'</b><small>'+
+    (a7.n?("Semana anterior: "+monPct(a7.acc)+" em "+a7.n+" questões."):"Ainda não há semana anterior para comparar.")+
+    ' A comparação exige ao menos 15 questões em cada semana.</small></div>';
+  /* gráfico 14 dias */
+  var bars='';
+  for(var i=-13;i<=0;i++){ var x=monJan(i,i), p=x.acc==null?0:Math.round(x.acc*100);
+    bars+='<div class="mon-col" title="'+dayKey(i)+': '+(x.n?p+"% em "+x.n+" questões":"sem questões")+'"><div class="mon-bar'+(x.n?"":" vz")+(x.acc!=null&&x.acc<0.6?" bx":"")+'" style="height:'+(x.n?Math.max(6,p):4)+'%"></div><i>'+dayShort(i).charAt(0)+'</i></div>'; }
+  h+='<div class="rf-sec"><h3>Acerto por dia (14 dias)</h3><div class="mon-chart">'+bars+'</div><p class="ra-nota">Barras claras: dia sem questões. Barras em alerta: abaixo de 60%.</p></div>';
+  /* por matéria */
+  var linhas=[], tem=false;
+  DISC_ORDER.forEach(function(d){
+    var j1=monJan(-13,0,d), j0=monJan(-27,-14,d);
+    var tot={s:0,r:0};
+    DISC[d].mods.forEach(function(k){ var pm=S.mods&&S.mods[k]; if(pm&&pm.stats) Object.keys(pm.stats).forEach(function(e){ tot.s+=pm.stats[e].s||0; tot.r+=pm.stats[e].r||0; }); });
+    if(!tot.s&&!j1.n) return;
+    if(j1.n||j0.n) tem=true;
+    linhas.push({d:d,j1:j1,j0:j0,tot:tot,sa:monSeta(j1,j0,10)});
+  });
+  linhas.sort(function(a,b){ var x=a.sa.d==null?0:a.sa.d, y=b.sa.d==null?0:b.sa.d; return x-y; });
+  h+='<div class="rf-sec"><h3>Por matéria · últimos 14 dias contra os 14 anteriores</h3>';
+  if(!linhas.length) h+='<p class="ra-nota">Resolva questões para ver o desempenho por matéria.</p>';
+  linhas.forEach(function(L2){
+    var acc=L2.tot.s?L2.tot.r/L2.tot.s:null;
+    h+='<div class="mon-row"><div><b>'+esc(DISC[L2.d].nome)+'</b><small>'+(L2.j1.n?("14 dias: "+monPct(L2.j1.acc)+" em "+L2.j1.n+" questões · "):"")+'geral: '+monPct(acc)+' em '+L2.tot.s+'</small></div><span class="mon-tag '+L2.sa.c+'">'+L2.sa.t+'</span></div>';
+  });
+  if(linhas.length&&!tem) h+='<p class="ra-nota">A comparação por matéria começa a ser registrada a partir de agora: use o app por alguns dias para ver as setas. O percentual geral já considera tudo o que você respondeu.</p>';
+  h+='</div>';
+  /* onde mais erra */
+  var porMod={}, sr=srs();
+  Object.keys(sr).forEach(function(f){ var m=qsplit(f).m, st=sr[f]; if(!REG[m]) return; var o=porMod[m]||(porMod[m]={k:m,s:0,e:0,leech:0}); o.s+=st.s||0; o.e+=(st.s||0)-(st.r||0); if((st.lap||0)>=LEECH) o.leech++; });
+  var piores=Object.keys(porMod).map(function(k){return porMod[k];}).filter(function(o){return o.s>=6&&o.e>0;}).sort(function(a,b){ return (b.e/b.s)-(a.e/a.s); }).slice(0,6);
+  h+='<div class="rf-sec"><h3>Onde você mais erra</h3>';
+  if(!piores.length) h+='<p class="ra-nota">Ainda não há módulos com pelo menos 6 respostas.</p>';
+  piores.forEach(function(o){ h+='<div class="mon-row"><div><b>'+esc(REG[o.k].nome.length>62?REG[o.k].nome.slice(0,61)+"…":REG[o.k].nome)+'</b><small>'+esc(DISC[discOf(o.k)].nome)+' · erro em '+Math.round(o.e/o.s*100)+'% de '+o.s+' respostas'+(o.leech?" · "+o.leech+" teimosos":"")+'</small></div></div>'; });
+  h+='</div>';
+  /* motivos */
+  var mot={t:0,p:0,d:0,c:0}, nm=0, sp=(S.spq&&S.spq.mot)||{};
+  Object.keys(sp).forEach(function(k){ ["t","p","d","c"].forEach(function(c){ mot[c]+=sp[k][c]||0; nm+=sp[k][c]||0; }); });
+  h+='<div class="rf-sec"><h3>Por que você erra</h3>';
+  if(!nm) h+='<p class="ra-nota">Ao errar uma questão, marque o motivo (falta de teoria, pegadinha, desatenção ou chute). Aqui aparece o padrão.</p>';
+  else MOT.forEach(function(m){ var v=mot[m[0]]||0; h+='<div class="mon-row"><div><b>'+m[1]+'</b><small>'+v+' de '+nm+' ('+Math.round(v/nm*100)+'%)</small></div></div>'; });
+  h+='</div>';
+  h+='<div class="rf-sec">'+rfBtn("monCg","Treinar o que está pior agora","Abre o Ciclo guiado com os pontos fracos","Abrir")+'</div>';
+  ovInner.innerHTML=h;
+  setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  document.getElementById("monCg").onclick=function(){ cicloGuiado(); };
+}
+
 /* ---------- REFORMA DO DIA: um artigo por dia, com correlações ---------- */
 function rdS(){ if(!S.rd) S.rd={done:{}}; if(!S.rd.done) S.rd.done={}; return S.rd; }
 function rdKeys(){ var ix=rfArtIdx(); return Object.keys(ix.byArt).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);}); }
@@ -3680,7 +3782,7 @@ function rdTela(key){
   cards.forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div><small>'+esc(REG[c.m].nome||c.m)+'</small></div>'; });
   h+='</div>'+rdCorrelacoes(cards)+
     '<div class="rf-sec">'+rfBtn("rdTreina","Treinar as cartas deste artigo","Flashcards com revisão espaçada",cards.length)+
-    rfBtn("rdPost","Gerar texto para o LinkedIn","Post e carrossel com as reflexões de contador e de auditor","Abrir")+
+    rfBtn("rdPost","Gerar texto para o LinkedIn","Post e carrossel com as correlações do artigo","Abrir")+
     rfBtn("rdOutro","Escolher outro artigo","Busca por número ou por trecho da lei","Abrir")+'</div>';
   ovInner.innerHTML=h;
   var ant=pos>0?ks[pos-1]:null, prox=pos<ks.length-1?ks[pos+1]:null;
@@ -3747,7 +3849,7 @@ function liTexto(it,p,modo){
   var base;
   if(it.kind==="art"){
     base=rfLn(it.key,it.cards,modo);
-    if(p.atrfb) base=base.replace("⚠️","🎯 Para quem estuda para Auditor-Fiscal da Receita Federal (ATRFB): este é o tipo de ponto que vale dominar com a letra da lei.\n\n⚠️").replace("SLIDE "+(Math.min(it.cards.length,10)+4)+" ·","SLIDE "+(Math.min(it.cards.length,10)+4)+" · 🎯 Para quem estuda para ATRFB: domine a letra da lei.\n\n");
+    if(p.atrfb) base=base.replace("⚠️","🎯 Para quem estuda para Auditor-Fiscal da Receita Federal (ATRFB): este é o tipo de ponto que vale dominar com a letra da lei.\n\n⚠️").replace(/(SLIDE \d+ ·) Conferiu\?/,"$1 🎯 Para quem estuda para ATRFB: domine a letra da lei.\n\nConferiu?");
     return base;
   }
   var uso=it.cards.slice(0,modo==="carrossel"?10:4), tags=(p.tags||"")+" #ConcursosPúblicos #ATRFB";
@@ -3755,15 +3857,11 @@ function liTexto(it,p,modo){
   if(modo==="carrossel"){
     var o=["SLIDE 1 · "+p.nome+"\n"+it.tit+"\nDeslize para entender em "+uso.length+" passos."];
     uso.forEach(function(c,i){ o.push("SLIDE "+(i+2)+" · "+rfTxt(c.q).replace(/\?$/,"")+"\n\n"+rfCorta(c.a,260)); });
-    var rx=rfReflex(it.cards);
-    o.push("SLIDE "+(uso.length+2)+" · "+rx.c);
-    o.push("SLIDE "+(uso.length+3)+" · "+rx.a);
-    o.push("SLIDE "+(uso.length+4)+" · "+(p.ponte||"")+"\n\n🎯 Para quem estuda para Auditor-Fiscal da Receita Federal.\n"+aviso+"\n\n"+tags);
+    o.push("SLIDE "+(uso.length+2)+" · "+(p.ponte||"")+"\n\n🎯 Para quem estuda para Auditor-Fiscal da Receita Federal.\n"+aviso+"\n\n"+tags);
     return o.join("\n\n---\n\n");
   }
   var t="📌 "+p.nome+" na prática\n"+it.tit+"\n\n";
   uso.forEach(function(c){ t+="🔹 "+rfTxt(c.q)+"\n"+rfCorta(c.a,240)+"\n\n"; });
-  var rx3=rfReflex(it.cards); t+=rx3.c+"\n\n"+rx3.a+"\n\n";
   if(p.ponte) t+=p.ponte+"\n\n";
   t+="🎯 Para quem estuda para Auditor-Fiscal da Receita Federal (ATRFB).\n⚠️ "+aviso+"\n\n💬 Qual ponto você mais confunde? Comente.\n\n"+tags;
   return t;
@@ -4234,6 +4332,7 @@ function hojeCard(){
       ["i-book","Reforma do dia",(function(){ try{ var k=rdHoje(); return k?("art. "+k+" e correlações"):"artigo por artigo"; }catch(e){ return "artigo por artigo"; } })(),function(){ var k=rdHoje(); if(k) rdTela(k); else rfHub(); }],
       ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }],
       ["i-list","Post LinkedIn","tema do dia e da semana",function(){ liHub(); }],
+      ["i-trophy","Desempenho",(function(){ try{ var a=monJan(-6,0),b=monJan(-13,-7),g=monSeta(a,b,15); return a.n?(monPct(a.acc)+" em 7 dias · "+g.t.split(" (")[0].replace(/^[▲▼▬] /,"")):"acertos, erros e tendência"; }catch(e){ return "acertos, erros e tendência"; } })(),function(){ monTela(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
     T.forEach(function(x){
@@ -4984,7 +5083,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -5172,7 +5271,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
