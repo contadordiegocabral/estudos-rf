@@ -3671,6 +3671,141 @@ function rfArtTela(key,volta){
 
 
 
+
+/* ---------- ÁUDIO: ouvir cartas, teoria e a Reforma do dia (voz do aparelho) ---------- */
+var AU={q:[],i:0,s:0,on:false,rate:1,voz:"",pausa:true,tm:null,gen:0};
+(function(){ try{ var o=JSON.parse(localStorage.getItem("afo01_aud")||"{}"); if(o.rate) AU.rate=o.rate; if(o.voz) AU.voz=o.voz; if(o.pausa===false) AU.pausa=false; }catch(e){} })();
+function auSalva(){ try{ localStorage.setItem("afo01_aud",JSON.stringify({rate:AU.rate,voz:AU.voz,pausa:AU.pausa})); }catch(e){} }
+function auOk(){ return typeof window!=="undefined"&&"speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined"; }
+function auLimpa(h){
+  var t=rfTxt(String(h||"").replace(/<(?:\/?(?:p|div|li|ul|ol|h[1-6]|tr|td|br|table|section)|span[^>]*class="bl")[^>]*>/gi,". "));
+  t=t.replace(/([.!?;:])(\s*[.;:])+/g,"$1").replace(/\s+\./g,".");
+  return t.replace(/\barts\.\s*/gi,"artigos ").replace(/\bart\.\s*/gi,"artigo ").replace(/§§/g,"parágrafos ").replace(/§\s*/g,"parágrafo ")
+    .replace(/\binc\.\s*/gi,"inciso ").replace(/\bnº\s*/gi,"número ").replace(/\bLC\b/g,"Lei Complementar").replace(/\bCF\b/g,"Constituição Federal")
+    .replace(/\bEC\b/g,"Emenda Constitucional").replace(/\bpp\b/g,"pontos percentuais").replace(/\s*[·•]\s*/g,", ").replace(/\s*×\s*/g," contra ").replace(/\s*→\s*/g," leva a ").replace(/\s*↔\s*/g," e ").replace(/≥/g," maior ou igual a ").replace(/≤/g," menor ou igual a ").replace(/\s*[✓✔]\s*/g," ").replace(/\bR\$\s*/g,"R$ ").replace(/\s+/g," ").trim();
+}
+function auPartes(txt,max){
+  var out=[], fr=txt.split(/(?<=[.!?;:])\s+/), cur="";
+  fr.forEach(function(f){ if(!f) return; if((cur+" "+f).length>max&&cur){ out.push(cur); cur=f; } else cur=cur?cur+" "+f:f; });
+  if(cur) out.push(cur);
+  return out.length?out:[txt];
+}
+function auItemCarta(c,soResp){
+  var q=auLimpa(c[0]), a=auLimpa(c[1]), seg=[];
+  if(!soResp){ auPartes("Pergunta. "+q,200).forEach(function(p){ seg.push({t:p,w:0}); }); seg[seg.length-1].w=AU.pausa?2200:500; }
+  auPartes((soResp?"":"Resposta. ")+a,200).forEach(function(p){ seg.push({t:p,w:0}); }); seg[seg.length-1].w=1200;
+  return {tit:rfTxt(c[0]).slice(0,90),seg:seg,txt:rfTxt(c[0])+" — "+rfTxt(c[1])};
+}
+function auItemTexto(tit,txt){
+  var seg=auPartes(auLimpa(txt),200).map(function(p){ return {t:p,w:0}; }); if(seg.length) seg[seg.length-1].w=1500;
+  return {tit:tit,seg:seg,txt:rfTxt(txt)};
+}
+function auFilaTeoria(k){
+  var m=REG[k], out=[]; if(!m) return out;
+  m.UNITS.forEach(function(u){ u.lessons.forEach(function(l){
+    if(l.type!=="teoria") return; var T=(m.TEORIA||{})[l.data]||[];
+    var tx=T.map(function(s){ return (s.h?s.h+". ":"")+(s.b||"").replace(/<\/(p|div|li)>/gi,". "); }).join(" ");
+    out.push(auItemTexto(l.title,"Teoria. "+l.title+". "+tx));
+  }); });
+  return out;
+}
+function auFilaCartas(k,soResp){ var m=REG[k]; return m&&m.CARDS?m.CARDS.map(function(c){ return auItemCarta(c,soResp); }):[]; }
+function auFilaFids(fids,max){
+  var out=[]; fids.forEach(function(f){ if(out.length>=max) return; var c=cardOf(f); if(c) out.push(auItemCarta(c,false)); }); return out;
+}
+function auFilaReforma(){
+  var k=rdHoje(); if(!k) return [];
+  var cards=rfArtIdx().byArt[k]||[], out=cards.map(function(c){ return auItemCarta([c.q,c.a],false); });
+  rfCorrTxt(cards,false).forEach(function(x){ out.push(auItemTexto("Correlação: "+x.nome,"Correlação com "+x.nome+". "+x.t)); });
+  return out;
+}
+function auParar(){ AU.on=false; AU.gen++; if(AU.tm){ clearTimeout(AU.tm); AU.tm=null; } try{ speechSynthesis.cancel(); }catch(e){} auPaint(); }
+function auVoz(){
+  var vs=[]; try{ vs=speechSynthesis.getVoices()||[]; }catch(e){}
+  var v=null; if(AU.voz) v=vs.filter(function(x){return x.name===AU.voz;})[0];
+  if(!v) v=vs.filter(function(x){return /^pt-BR/i.test(x.lang);})[0]||vs.filter(function(x){return /^pt/i.test(x.lang);})[0]||null;
+  return v;
+}
+function auFalar(){
+  if(!AU.on) return; var it=AU.q[AU.i]; if(!it){ auParar(); return; }
+  var sg=it.seg[AU.s]; if(!sg){ AU.i++; AU.s=0; auPaint(); if(AU.i>=AU.q.length){ AU.on=false; auPaint(); return; } return auFalar(); }
+  var my=++AU.gen, u=new SpeechSynthesisUtterance(sg.t); u.lang="pt-BR"; u.rate=AU.rate; var v=auVoz(); if(v){ u.voice=v; u.lang=v.lang; }
+  function prox(){ if(my!==AU.gen||!AU.on) return; AU.tm=setTimeout(function(){ AU.tm=null; if(my!==AU.gen||!AU.on) return; AU.s++; auFalar(); },sg.w||0); }
+  u.onend=prox; u.onerror=function(e){ if(e&&(e.error==="interrupted"||e.error==="canceled")) return; prox(); };
+  try{ speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){ console.error("AUDIO",e&&e.message); AU.on=false; }
+  auPaint();
+}
+function auTocar(fila,tit){
+  if(!auOk()){ alert("Este aparelho não oferece voz sintetizada no navegador."); return; }
+  if(!fila||!fila.length) return;
+  auParar(); AU.q=fila; AU.i=0; AU.s=0; AU.tit=tit||"Áudio"; AU.on=true; auFalar(); auMedia();
+}
+function auPlayPause(){ if(!AU.q.length) return; if(AU.on){ AU.on=false; AU.gen++; if(AU.tm){clearTimeout(AU.tm);AU.tm=null;} try{ speechSynthesis.cancel(); }catch(e){} auPaint(); } else { AU.on=true; auFalar(); } }
+function auPula(d){ if(!AU.q.length) return; var on=AU.on; AU.gen++; if(AU.tm){clearTimeout(AU.tm);AU.tm=null;} try{ speechSynthesis.cancel(); }catch(e){} AU.i=Math.max(0,Math.min(AU.q.length-1,AU.i+d)); AU.s=0; if(on){ AU.on=true; auFalar(); } else auPaint(); }
+function auMedia(){
+  try{ if("mediaSession" in navigator){
+    navigator.mediaSession.metadata=new MediaMetadata({title:AU.tit||"Áudio",artist:"Meus Estudos"});
+    navigator.mediaSession.setActionHandler("play",auPlayPause); navigator.mediaSession.setActionHandler("pause",auPlayPause);
+    navigator.mediaSession.setActionHandler("nexttrack",function(){ auPula(1); }); navigator.mediaSession.setActionHandler("previoustrack",function(){ auPula(-1); });
+  } }catch(e){}
+}
+function auMini(){
+  var b=document.getElementById("auMini");
+  if(!AU.q.length){ if(b) b.remove(); return; }
+  if(!b){ b=document.createElement("div"); b.id="auMini"; b.className="au-mini"; document.body.appendChild(b); }
+  var it=AU.q[AU.i];
+  b.innerHTML='<button type="button" id="auMiniAbre" class="au-mt">'+esc((it?it.tit:AU.tit)||"Áudio")+'<small>'+(AU.i+1)+' de '+AU.q.length+'</small></button><button type="button" id="auMiniPP" aria-label="'+(AU.on?"Pausar":"Tocar")+'">'+(AU.on?"❚❚":"▶")+'</button><button type="button" id="auMiniX" aria-label="Parar e fechar">✕</button>';
+  document.getElementById("auMiniAbre").onclick=function(){ auTela(); };
+  document.getElementById("auMiniPP").onclick=auPlayPause;
+  document.getElementById("auMiniX").onclick=function(){ auParar(); AU.q=[]; auMini(); };
+}
+function auPaint(){
+  auMini();
+  var np=document.getElementById("auNow"); if(!np) return;
+  var it=AU.q[AU.i]; np.innerHTML=it?('<b>'+esc(it.tit)+'</b><p>'+esc(it.txt.slice(0,420))+(it.txt.length>420?"…":"")+'</p><small>'+(AU.i+1)+' de '+AU.q.length+(AU.on?" · tocando":" · pausado")+'</small>'):'<p>Escolha algo abaixo para ouvir.</p>';
+  var pp=document.getElementById("auPP"); if(pp) pp.textContent=AU.on?"❚❚ Pausar":"▶ Tocar";
+}
+function auTela(){
+  rfOpen();
+  var vs=[]; try{ vs=(speechSynthesis.getVoices()||[]).filter(function(v){return /^pt/i.test(v.lang);}); }catch(e){}
+  var h='<div class="rf-h"><span class="q-kicker">Áudio</span><h2>Ouvir os materiais</h2><p>O app lê em voz alta usando a voz em português do seu aparelho. Fones ajudam, e a leitura segue com a tela aberta.</p></div>';
+  if(!auOk()) h+='<div class="mon-box mon-dn"><b>Este navegador não tem voz sintetizada.</b><small>Abra o app no Chrome, no Safari ou no Edge do celular para ouvir.</small></div>';
+  h+='<div class="au-now" id="auNow"></div><div class="au-ctl"><button type="button" class="ghost" id="auPrev">⏮</button><button type="button" class="big" id="auPP">▶ Tocar</button><button type="button" class="ghost" id="auNext">⏭</button></div>'+
+    '<div class="au-opt"><label>Velocidade <select id="auRate">'+[0.8,0.9,1,1.1,1.25,1.5,1.75].map(function(r){ return '<option value="'+r+'"'+(r===AU.rate?" selected":"")+'>'+r+'x</option>'; }).join("")+'</select></label>'+
+    '<label>Voz <select id="auVoz"><option value="">Automática</option>'+vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(v.name===AU.voz?" selected":"")+'>'+esc(v.name)+'</option>'; }).join("")+'</select></label>'+
+    '<label class="au-ck"><input type="checkbox" id="auPausa"'+(AU.pausa?" checked":"")+'> Pausa para pensar entre pergunta e resposta</label></div>';
+  h+='<div class="rf-sec"><h3>Listas prontas</h3>'+
+    rfBtn("auRev","Revisão do dia","Cartas que voltam hoje",Math.min(30,srsDue().filter(function(f){return isCardE(qsplit(f).e);}).length))+
+    rfBtn("auRef","Reforma do dia","Artigo de hoje, cartas e correlações",rdHoje()?("art. "+rdHoje()):"—")+
+    rfBtn("auFraca","Cartas que você mais erra","Os pontos fracos, em pergunta e resposta",Math.min(30,Object.keys(srs()).filter(function(f){ return isCardE(qsplit(f).e)&&(srs()[f].lap||0)>0&&srsValid(f); }).length))+
+    rfBtn("auUlt","Módulo atual: teoria","Resumo do módulo em que você está",REG[S.cur]?REG[S.cur].n:"—")+
+    '</div><div class="rf-sec"><h3>Escolher por matéria</h3><div class="ra-grid" id="auMat">';
+  DISC_ORDER.forEach(function(d){ if(!DISC[d].mods.some(function(k){return REG[k];})) return; h+='<button type="button" class="ra-chip" data-d="'+d+'"><b>'+esc(DISC[d].nome)+'</b><small>'+DISC[d].mods.filter(function(k){return REG[k];}).length+' módulos</small></button>'; });
+  h+='</div></div>';
+  ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar (o áudio continua)</button>');
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  document.getElementById("auPP").onclick=auPlayPause; document.getElementById("auPrev").onclick=function(){ auPula(-1); }; document.getElementById("auNext").onclick=function(){ auPula(1); };
+  document.getElementById("auRate").onchange=function(){ AU.rate=parseFloat(this.value)||1; auSalva(); if(AU.on){ auPula(0); } };
+  document.getElementById("auVoz").onchange=function(){ AU.voz=this.value; auSalva(); if(AU.on){ auPula(0); } };
+  document.getElementById("auPausa").onchange=function(){ AU.pausa=this.checked; auSalva(); };
+  document.getElementById("auRev").onclick=function(){ var f=srsDue().filter(function(x){return isCardE(qsplit(x).e);}); auTocar(auFilaFids(f,30),"Revisão do dia"); };
+  document.getElementById("auRef").onclick=function(){ auTocar(auFilaReforma(),"Reforma do dia · art. "+rdHoje()); };
+  document.getElementById("auFraca").onclick=function(){ var f=Object.keys(srs()).filter(function(x){ return isCardE(qsplit(x).e)&&(srs()[x].lap||0)>0&&srsValid(x); }).sort(function(a,b){return (srs()[b].lap||0)-(srs()[a].lap||0);}); auTocar(auFilaFids(f,30),"Cartas que você mais erra"); };
+  document.getElementById("auUlt").onclick=function(){ auTocar(auFilaTeoria(S.cur),"Teoria · "+(REG[S.cur]?REG[S.cur].nome:"")); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll("#auMat .ra-chip"),function(b){ b.onclick=function(){ auMateria(b.getAttribute("data-d")); }; });
+  auPaint();
+}
+function auMateria(d){
+  rfOpen();
+  var h='<div class="rf-h"><span class="q-kicker">Áudio · '+esc(DISC[d].nome)+'</span><h2>Escolha o módulo</h2><p>Cada módulo tem a teoria resumida e as cartas de pergunta e resposta.</p></div>';
+  DISC[d].mods.forEach(function(k){ var m=REG[k]; if(!m) return;
+    h+='<div class="rt-b"><div class="rt-h"><b>'+esc(m.nome.length>80?m.nome.slice(0,79)+"…":m.nome)+'</b></div><small>'+(m.CARDS?m.CARDS.length:0)+' cartas</small><div class="rt-a"><button type="button" class="ghost" data-k="'+k+'" data-a="t">Ouvir a teoria</button><button type="button" class="ghost" data-k="'+k+'" data-a="c">Cartas</button><button type="button" class="ghost" data-k="'+k+'" data-a="r">Só respostas</button></div></div>'; });
+  ovInner.innerHTML=h; setFoot("",rfVoltar());
+  document.getElementById("rfBack").onclick=auTela;
+  Array.prototype.forEach.call(ovInner.querySelectorAll("button[data-k]"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"), a=b.getAttribute("data-a"), nm=REG[k].nome;
+    var f=a==="t"?auFilaTeoria(k):auFilaCartas(k,a==="r"); if(!f.length){ b.textContent="Sem conteúdo"; return; } auTocar(f,(a==="t"?"Teoria · ":"Cartas · ")+nm); auTela(); }; });
+}
+
 /* ---------- ROTEIRO DE HOJE: a divisão do dia, pronta para seguir ---------- */
 var HJ_TEC=null;
 function rtS(){ if(!S.rot||S.rot.d!==today()) S.rot={d:today(),b:{}}; return S.rot; }
@@ -4442,6 +4577,7 @@ function hojeCard(){
       ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }],
       ["i-list","Post LinkedIn","tema do dia e da semana",function(){ liHub(); }],
       ["i-trophy","Desempenho",(function(){ try{ var a=monJan(-6,0),b=monJan(-13,-7),g=monSeta(a,b,15); return a.n?(monPct(a.acc)+" em 7 dias · "+g.t.split(" (")[0].replace(/^[▲▼▬] /,"")):"acertos, erros e tendência"; }catch(e){ return "acertos, erros e tendência"; } })(),function(){ monTela(); }],
+      ["i-mic","Áudio","ouvir cartas, teoria e Reforma",function(){ auTela(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
     HJ_TEC=T[2][3];
