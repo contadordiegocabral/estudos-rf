@@ -2361,7 +2361,7 @@ function dstatBump(ok){
 function metaMin(){ return S.metaMin||120; }
 function metaQ(){ return S.metaQ||40; }
 function questoesHoje(){ var x=dstat()[today()]; return x?x.ok+x.err:0; }
-function fmtHM(s){ s=Math.round(s); var h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return h?h+"h"+(m<10?"0":"")+m:m+" min"; }
+function fmtHM(s){ s=Math.round(s); if(s>0&&s<60) return s+" s"; var h=Math.floor(s/3600), m=Math.floor((s%3600)/60); return h?h+"h"+(m<10?"0":"")+m:m+" min"; }
 
 /* cronômetro: conta enquanto o app está aberto, visível e você interage */
 var est={on:true,last:Date.now()};
@@ -3647,7 +3647,7 @@ function rfArtTela(key,volta){
   rfOpen();
   var ix=rfArtIdx(), cards=ix.byArt[key]||[], modo="post";
   var keys=Object.keys(ix.byArt).sort(function(a,b){return rfArtNum(a)-rfArtNum(b);}), pos=keys.indexOf(key);
-  var h='<div class="rf-h"><span class="q-kicker">LC 214/2025</span><h2>Art. '+esc(key)+'</h2><p>'+cards.length+' cartas citam este artigo. Leia, treine e depois gere o texto.</p></div><div class="ra-cards">';
+  var h='<div class="rf-h"><span class="q-kicker">LC 214/2025</span><h2>Art. '+esc(key)+'</h2><p>'+cards.length+(cards.length===1?' carta cita':' cartas citam')+' este artigo. Leia, treine e depois gere o texto.</p></div><div class="ra-cards">';
   cards.forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div><small>'+esc(REG[c.m].nome||c.m)+'</small></div>'; });
   h+='</div><div class="rf-sec"><h3>Texto para o LinkedIn</h3><div class="ra-tabs"><button type="button" class="ra-tab on" id="raPost">Post</button><button type="button" class="ra-tab" id="raCar">Carrossel (texto dos slides)</button></div>'+
      '<textarea id="raTa" class="ra-ta" rows="12" aria-label="Texto do post, editável"></textarea>'+
@@ -3810,7 +3810,7 @@ function monTela(){
   var piores=Object.keys(porMod).map(function(k){return porMod[k];}).filter(function(o){return o.s>=6&&o.e>0;}).sort(function(a,b){ return (b.e/b.s)-(a.e/a.s); }).slice(0,6);
   h+='<div class="rf-sec"><h3>Onde você mais erra</h3>';
   if(!piores.length) h+='<p class="ra-nota">Ainda não há módulos com pelo menos 6 respostas.</p>';
-  piores.forEach(function(o){ h+='<div class="mon-row"><div><b>'+esc(REG[o.k].nome.length>62?REG[o.k].nome.slice(0,61)+"…":REG[o.k].nome)+'</b><small>'+esc(DISC[discOf(o.k)].nome)+' · erro em '+Math.round(o.e/o.s*100)+'% de '+o.s+' respostas'+(o.leech?" · "+o.leech+" teimosos":"")+'</small></div></div>'; });
+  piores.forEach(function(o){ h+='<div class="mon-row"><div><b>'+esc(REG[o.k].nome.length>62?REG[o.k].nome.slice(0,61)+"…":REG[o.k].nome)+'</b><small>'+esc(DISC[discOf(o.k)].nome)+' · erro em '+Math.round(o.e/o.s*100)+'% de '+o.s+' respostas'+(o.leech?" · "+o.leech+(o.leech===1?" teimoso":" teimosos"):"")+'</small></div></div>'; });
   h+='</div>';
   /* motivos */
   var mot={t:0,p:0,d:0,c:0}, nm=0, sp=(S.spq&&S.spq.mot)||{};
@@ -3886,7 +3886,7 @@ function rdCorrelacoes(cards){
 function rdTela(key){
   rfOpen();
   var ix=rfArtIdx(), cards=ix.byArt[key]||[], ks=rdKeys(), pos=ks.indexOf(key), done=rdS().done, feitos=Object.keys(done).length;
-  var h='<div class="rf-h"><span class="q-kicker">Reforma do dia · '+(pos+1)+' de '+ks.length+(done[key]?' · concluído ✓':'')+'</span><h2>LC 214/2025, art. '+esc(key)+'</h2><p>'+cards.length+' cartas. Leia, relacione com as outras matérias e depois treine. Você concluiu '+feitos+' artigos.</p></div><div class="ra-cards">';
+  var h='<div class="rf-h"><span class="q-kicker">Reforma do dia · '+(pos+1)+' de '+ks.length+(done[key]?' · concluído ✓':'')+'</span><h2>LC 214/2025, art. '+esc(key)+'</h2><p>'+cards.length+(cards.length===1?' carta':' cartas')+'. Leia, relacione com as outras matérias e depois treine. Você concluiu '+feitos+(feitos===1?' artigo':' artigos')+'.</p></div><div class="ra-cards">';
   cards.forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div><small>'+esc(REG[c.m].nome||c.m)+'</small></div>'; });
   h+='</div>'+rdCorrelacoes(cards)+
     '<div class="rf-sec">'+rfBtn("rdTreina","Treinar as cartas deste artigo","Flashcards com revisão espaçada",cards.length)+
@@ -3977,7 +3977,7 @@ function liTexto(it,p,modo){
 function liEdita(it,p,volta){
   rfOpen();
   var modo="post", feito=!!liS().done[it.id];
-  var h='<div class="rf-h"><span class="q-kicker">LinkedIn · '+esc(p.nome)+'</span><h2>'+esc(it.tit)+'</h2><p>'+it.cards.length+' cartas de base. Edite o texto antes de publicar.</p></div><div class="ra-cards">';
+  var h='<div class="rf-h"><span class="q-kicker">LinkedIn · '+esc(p.nome)+'</span><h2>'+esc(it.tit)+'</h2><p>'+it.cards.length+(it.cards.length===1?' carta':' cartas')+' de base. Edite o texto antes de publicar.</p></div><div class="ra-cards">';
   it.cards.slice(0,6).forEach(function(c){ h+='<div class="ra-card"><b>'+esc(rfTxt(c.q))+'</b><div>'+c.a+'</div></div>'; });
   h+='</div><div class="rf-sec"><h3>Texto</h3><div class="ra-tabs"><button type="button" class="ra-tab on" id="raPost">Post</button><button type="button" class="ra-tab" id="raCar">Carrossel (texto dos slides)</button></div>'+
     '<textarea id="raTa" class="ra-ta" rows="12" aria-label="Texto do post, editável"></textarea>'+
