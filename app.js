@@ -4942,6 +4942,7 @@ function treinarHub(){
       var n=b.dataset.n;
       if(n==="treinar"){ treinarHub(); return; }
       if(n==="mapas"){ mapasHub(); return; }
+      if(n==="audio"){ auTela(); return; }
       setNav(n); window.scrollTo(0,0);
     };
   });

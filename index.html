@@ -82,6 +82,7 @@ a{color:var(--brand-ink)}
 .hud-btn{background:none;border:0;cursor:pointer;color:var(--ink-3);padding:6px;border-radius:9px;display:flex}
 .hud-btn:hover{background:var(--surface-2);color:var(--ink)}
 .hud-btn svg{width:21px;height:21px}
+@media(max-width:400px){.hud-in{padding:8px 6px;gap:3px}.hud-btn{padding:4px}.hud-btn svg{width:18px;height:18px}}
 .rank{max-width:44rem;margin:0 auto;padding:0 14px 9px;display:flex;flex-direction:column;gap:4px}
 .rank-top{display:flex;justify-content:space-between;gap:12px;align-items:baseline;min-width:0}
 .rank-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:800;font-size:.9rem}
@@ -602,7 +603,7 @@ textarea::placeholder{color:var(--ink-3);font-weight:600}
 .hj-tile b{font-size:.95rem}.hj-tile small{color:var(--ink-2);font-size:.76rem}.hj-tile .ti-i svg{width:22px;height:22px}
 .hj-more{margin-top:6px}.hj-more>summary{cursor:pointer;font-weight:700;padding:10px 4px;color:var(--ink-2)}
 #bnav{position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--surface);border-top:2px solid var(--line-strong)}
-#bnav button{flex:1;padding:12px 4px;border:2px solid transparent;border-radius:12px;background:transparent;color:var(--ink-2);font:inherit;font-weight:800;font-size:.9rem;cursor:pointer}
+#bnav button{flex:1;min-width:0;padding:12px 2px;border:2px solid transparent;border-radius:12px;background:transparent;color:var(--ink-2);font:inherit;font-weight:800;font-size:.9rem;cursor:pointer}
 #bnav button[aria-pressed="true"]{background:var(--surface-2,#eaf2ff);border-color:var(--line-strong);color:var(--ink)}
 .trail{padding-bottom:86px}
 body[data-nav="hoje"] #trail>.cursomapa,body[data-nav="hoje"] #trail>.livrelab,body[data-nav="hoje"] #trail>.discbar,body[data-nav="hoje"] #trail>.discmore,body[data-nav="hoje"] #trail>.modbar,body[data-nav="hoje"] #trail>.unit{display:none}
@@ -992,7 +993,7 @@ body[data-nav="trilha"] #trail>.hojecard{display:none}
 </div>
 
 <main class="trail" id="trail"></main>
-<nav id="bnav" aria-label="Navegação principal"><button type="button" data-n="hoje" aria-pressed="true">Hoje</button><button type="button" data-n="trilha" aria-pressed="false">Trilha</button><button type="button" data-n="treinar" aria-pressed="false">Treinar</button><button type="button" data-n="mapas" aria-pressed="false">Mapas</button></nav>
+<nav id="bnav" aria-label="Navegação principal"><button type="button" data-n="hoje" aria-pressed="true">Hoje</button><button type="button" data-n="trilha" aria-pressed="false">Trilha</button><button type="button" data-n="treinar" aria-pressed="false">Treinar</button><button type="button" data-n="mapas" aria-pressed="false">Mapas</button><button type="button" data-n="audio" aria-pressed="false">Áudio</button></nav>
 
 <div class="overlay" id="ov" role="dialog" aria-modal="true" aria-label="Lição">
   <div class="ov-top">
