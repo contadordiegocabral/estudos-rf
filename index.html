@@ -634,6 +634,17 @@ body[data-nav="trilha"] #trail>.hojecard{display:none}
 .au-ctl{display:flex;gap:8px;margin-top:10px}.au-ctl .big{flex:1}.au-ctl .ghost{flex:0 0 56px}
 .au-opt{display:grid;gap:8px;margin-top:10px;font-size:.88rem}.au-opt label{display:flex;justify-content:space-between;align-items:center;gap:8px}.au-opt select{max-width:60%;padding:6px 8px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}.au-ck{justify-content:flex-start!important}
 .au-mini{position:fixed;left:10px;right:10px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:45;display:flex;gap:6px;align-items:center;padding:6px 8px;border:2px solid var(--brand);border-radius:14px;background:var(--surface);box-shadow:0 4px 14px rgba(0,0,0,.18)}.au-mini button{border:0;background:transparent;color:var(--ink);font:inherit;padding:8px 10px;cursor:pointer}.au-mini .au-mt{flex:1;text-align:left;display:grid;gap:1px;min-width:0;font-size:.84rem;font-weight:700;overflow:hidden}.au-mini .au-mt small{color:var(--ink-3);font-weight:400;font-size:.72rem}
+@media(max-width:420px){#bnav{gap:3px;padding-left:6px;padding-right:6px}#bnav button{font-size:.76rem;padding:12px 1px}}
+.ank-tot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.ank-tot div{border:2px solid var(--line);border-radius:12px;padding:8px;text-align:center;background:var(--surface);display:grid;gap:3px}.ank-tot small{color:var(--ink-3);font-size:.7rem}.ank-tot .ank-n{font-size:1.3rem}
+.ank-n{font-weight:800;font-variant-numeric:tabular-nums}.ank-b{color:#2d6cdf}.ank-r{color:#c0392b}.ank-g{color:#2e8b57}.ank-n.on{text-decoration:underline;text-underline-offset:4px}
+.ank-d{display:flex;justify-content:space-between;align-items:center;gap:8px;width:100%;text-align:left;padding:11px 13px;border:2px solid var(--line-strong);border-bottom-width:4px;border-radius:14px;background:var(--surface);color:var(--ink);font:inherit;cursor:pointer;margin-top:8px}.ank-dn{display:grid;gap:1px;min-width:0}.ank-dn small{color:var(--ink-3);font-size:.74rem}.ank-cs{display:flex;gap:10px;font-size:.95rem}
+.ank-cfg{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.9rem;margin-top:6px}.ank-cfg select{padding:6px 8px;border:2px solid var(--line-strong);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit}
+.ank-top{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:.82rem;color:var(--ink-2);margin-bottom:10px}
+.ank-card{border:2px solid var(--line-strong);border-radius:16px;padding:20px 16px;background:var(--surface);min-height:220px;display:grid;align-content:start;gap:12px;font-size:1.08rem;line-height:1.5}.ank-q{font-weight:700;text-align:center}.ank-a hr{border:0;border-top:2px solid var(--line);margin:0 0 12px}.ank-a{font-size:1rem}.ank-meta{margin-top:8px;text-align:center;font-size:.72rem;color:var(--ink-3)}
+.ov-foot.ank-notas .ov-foot-in,.ank-notas #ovFootIn{display:grid!important;grid-template-columns:repeat(4,1fr);gap:6px}
+.ank-notas button{display:grid;gap:2px;padding:9px 2px;border-radius:12px;border:2px solid var(--line-strong);border-bottom-width:4px;background:var(--surface);color:var(--ink);font:inherit;font-weight:700;font-size:.82rem;cursor:pointer}.ank-notas button small{font-weight:400;font-size:.68rem;color:var(--ink-3)}
+.ank-g1{border-color:#c0392b!important}.ank-g2{border-color:#d68910!important}.ank-g3{border-color:#2e8b57!important}.ank-g4{border-color:#2d6cdf!important}
+.ank-fc .mon-col b{font-size:.62rem}.ank-sp{margin-top:6px;padding:6px 10px;font-size:.78rem}
 .rf-b:hover:not(:disabled){border-color:var(--brand)}
 .rf-b:disabled{opacity:.45;cursor:not-allowed}
 .rf-bt{display:flex;flex-direction:column;gap:2px}.rf-bt small{color:var(--ink-2);font-weight:600;font-size:.82rem}
@@ -993,7 +1004,7 @@ body[data-nav="trilha"] #trail>.hojecard{display:none}
 </div>
 
 <main class="trail" id="trail"></main>
-<nav id="bnav" aria-label="Navegação principal"><button type="button" data-n="hoje" aria-pressed="true">Hoje</button><button type="button" data-n="trilha" aria-pressed="false">Trilha</button><button type="button" data-n="treinar" aria-pressed="false">Treinar</button><button type="button" data-n="mapas" aria-pressed="false">Mapas</button><button type="button" data-n="audio" aria-pressed="false">Áudio</button></nav>
+<nav id="bnav" aria-label="Navegação principal"><button type="button" data-n="hoje" aria-pressed="true">Hoje</button><button type="button" data-n="trilha" aria-pressed="false">Trilha</button><button type="button" data-n="treinar" aria-pressed="false">Treinar</button><button type="button" data-n="mapas" aria-pressed="false">Mapas</button><button type="button" data-n="audio" aria-pressed="false">Áudio</button><button type="button" data-n="anki" aria-pressed="false">Anki</button></nav>
 
 <div class="overlay" id="ov" role="dialog" aria-modal="true" aria-label="Lição">
   <div class="ov-top">

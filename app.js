@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"auto",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,ank:S.ank||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3672,6 +3672,208 @@ function rfArtTela(key,volta){
 
 
 
+
+/* ---------- ANKI: baralhos por matéria e módulo, 4 notas e intervalos, com as cartas do app ---------- */
+var AN={ids:[],tit:"",cur:null,mostra:false,t0:0,undo:[],ativo:false};
+function ankS(){
+  if(!S.ank) S.ank={c:{},day:{},cfg:{novas:20},log:{}};
+  if(!S.ank.c) S.ank.c={}; if(!S.ank.cfg) S.ank.cfg={novas:20}; if(!S.ank.log) S.ank.log={};
+  if(!S.ank.day||S.ank.day.d!==today()) S.ank.day={d:today(),nov:0,rev:0,tot:0,ok:0,ms:0,extra:0};
+  return S.ank;
+}
+function ankIdsMods(mods){ var out=[]; mods.forEach(function(k){ var m=REG[k]; if(m&&m.CARDS) for(var i=0;i<m.CARDS.length;i++) out.push(qjoin(k,"c"+i)); }); return out; }
+function ankIdsDisc(d){ return ankIdsMods(DISC[d].mods); }
+function ankLimN(){ var a=ankS(); return Math.max(0,(a.cfg.novas||20)+(a.day.extra||0)-a.day.nov); }
+function ankLimR(){ return Math.max(0,200-ankS().day.rev); }
+function ankListas(ids){
+  var a=ankS(), c=a.c, now=Date.now(), td=today(), L=[],Lf=[],R=[],N=[];
+  ids.forEach(function(f){
+    var st=c[f]; if(!st){ N.push(f); return; } if(st.susp) return;
+    if(st.t===1||st.t===3){ if(st.due<=now) L.push(f); else if(st.due<=now+20*60000) Lf.push(f); }
+    else if(st.due<=td) R.push(f);
+  });
+  return {L:L,Lf:Lf,R:R,N:N};
+}
+function ankContagem(ids){
+  var q=ankListas(ids); return {n:Math.min(q.N.length,ankLimN()),a:q.L.length+q.Lf.length,r:Math.min(q.R.length,ankLimR())};
+}
+function ankPick(ids){
+  var q=ankListas(ids), c=ankS().c;
+  if(q.L.length){ q.L.sort(function(x,y){return c[x].due-c[y].due;}); return {f:q.L[0],k:"a"}; }
+  if(q.R.length&&ankLimR()>0){ q.R.sort(function(x,y){ return c[x].due<c[y].due?-1:c[x].due>c[y].due?1:(liHash(x+today())%7)-(liHash(y+today())%7); }); return {f:q.R[0],k:"r"}; }
+  if(q.N.length&&ankLimN()>0) return {f:q.N[0],k:"n"};
+  if(q.Lf.length){ q.Lf.sort(function(x,y){return c[x].due-c[y].due;}); return {f:q.Lf[0],k:"a"}; }
+  return null;
+}
+function ankSched(st,g,now){
+  var c=st?JSON.parse(JSON.stringify(st)):{t:0,ivl:0,ease:2.5,step:0,lap:0,rep:0}, LS=[1,10], M=60000;
+  c.rep=(c.rep||0)+1;
+  function grad(d){ c.t=2; c.ivl=d; c.due=dayKey(d); c.step=0; }
+  if(c.t===0||c.t===1){
+    if(g===1){ c.t=1; c.step=0; c.due=now+LS[0]*M; }
+    else if(g===2){ c.t=1; var s=c.step||0; c.due=now+(s===0?(LS[0]+LS[1])/2:LS[s])*M; }
+    else if(g===3){ var s2=(c.step||0)+1; if(s2>=LS.length) grad(1); else { c.t=1; c.step=s2; c.due=now+LS[s2]*M; } }
+    else grad(4);
+  } else if(c.t===3){
+    if(g===1){ c.step=0; c.due=now+LS[1]*M; }
+    else if(g===2){ c.due=now+LS[1]*M; }
+    else if(g===3) grad(Math.max(1,c.ivl||1));
+    else grad(Math.max(2,(c.ivl||1)+1));
+  } else {
+    var iv=c.ivl||1;
+    if(g===1){ c.lap=(c.lap||0)+1; c.ease=Math.max(1.3,(c.ease||2.5)-0.2); c.ivl=Math.max(1,Math.round(iv*0.2)); c.t=3; c.step=0; c.due=now+LS[1]*M; }
+    else if(g===2){ c.ease=Math.max(1.3,(c.ease||2.5)-0.15); grad(Math.max(iv+1,Math.round(iv*1.2))); }
+    else if(g===3){ var h=Math.max(iv+1,Math.round(iv*1.2)); grad(Math.max(h+1,Math.round(iv*(c.ease||2.5)))); }
+    else { var h2=Math.max(iv+1,Math.round(iv*1.2)), g2=Math.max(h2+1,Math.round(iv*(c.ease||2.5))); c.ease=(c.ease||2.5)+0.15; grad(Math.max(g2+1,Math.round(iv*(c.ease)*1.3))); }
+  }
+  return c;
+}
+function ankIntv(st,g){
+  var now=Date.now(), c=ankSched(st,g,now), mins;
+  if(c.t===1||c.t===3) mins=Math.max(1,Math.round((c.due-now)/60000));
+  else mins=Math.max(1,(c.ivl||1))*1440;
+  if(mins<60) return mins+" min"; if(mins<1440) return Math.round(mins/60)+" h";
+  var d=Math.round(mins/1440); if(d<30) return d+" d"; if(d<365) return (Math.round(d/30*10)/10).toString().replace(".",",")+" mês"; return (Math.round(d/365*10)/10).toString().replace(".",",")+" ano";
+}
+function ankMatEstado(fids){
+  var c=ankS().c, o={nova:0,apr:0,jov:0,mad:0,sus:0};
+  fids.forEach(function(f){ var st=c[f]; if(!st) o.nova++; else if(st.susp) o.sus++; else if(st.t===1||st.t===3) o.apr++; else if((st.ivl||0)>=21) o.mad++; else o.jov++; });
+  return o;
+}
+function ankConta(ct,cls,on){ return '<span class="ank-n '+cls+(on?" on":"")+'">'+ct+'</span>'; }
+function ankHub(){
+  rfOpen();
+  var a=ankS(), alvo=rtAlvo(), dsAlvo=rtDiscs(alvo);
+  var todas=DISC_ORDER.filter(function(d){ return DISC[d].mods.some(function(k){return REG[k];}); });
+  var foc=todas.filter(function(d){ return focoOk(d); });
+  var h='<div class="rf-h"><span class="q-kicker">Anki</span><h2>Baralhos</h2><p>As cartas do app em baralhos por matéria e módulo. Você avalia cada resposta e o intervalo se ajusta sozinho.</p></div>';
+  var ids=[]; foc.forEach(function(d){ ids=ids.concat(ankIdsDisc(d)); });
+  var tot=ankContagem(ids);
+  h+='<div class="ank-tot"><div><small>Novas</small>'+ankConta(tot.n,"ank-b")+'</div><div><small>Aprender</small>'+ankConta(tot.a,"ank-r")+'</div><div><small>Revisar</small>'+ankConta(tot.r,"ank-g")+'</div></div>';
+  h+=rfBtn("ankAll","Estudar tudo"+(foc.length<todas.length?" (matérias em foco)":""),"Novas, em aprendizado e revisões de hoje",tot.n+tot.a+tot.r,!(tot.n+tot.a+tot.r));
+  h+='<div class="rf-sec"><h3>Baralhos por matéria</h3>';
+  foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
+    h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
+  h+='</div><div class="rf-sec"><h3>Ferramentas</h3>'+rfBtn("ankEst","Estatísticas","Hoje, previsão de revisões e maturidade das cartas","Ver")+rfBtn("ankBusca","Buscar cartas","Procure por palavra, suspenda ou reative cartas","Abrir")+
+    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label></div>';
+  ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
+  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
+  var b=document.getElementById("ankAll"); if(b&&!b.disabled) b.onclick=function(){ ankEstuda(ids,"Todos os baralhos"); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
+  document.getElementById("ankNovas").onchange=function(){ ankS().cfg.novas=parseInt(this.value,10)||20; persist(); ankHub(); };
+  document.getElementById("ankEst").onclick=ankEst; document.getElementById("ankBusca").onclick=ankBusca;
+}
+function ankDeck(d){
+  rfOpen();
+  var ids=ankIdsDisc(d), ct=ankContagem(ids);
+  var h='<div class="rf-h"><span class="q-kicker">Anki · '+esc(DISC[d].nome)+'</span><h2>Módulos</h2></div><div class="ank-tot"><div><small>Novas</small>'+ankConta(ct.n,"ank-b")+'</div><div><small>Aprender</small>'+ankConta(ct.a,"ank-r")+'</div><div><small>Revisar</small>'+ankConta(ct.r,"ank-g")+'</div></div>'+rfBtn("ankDAll","Estudar a matéria inteira","Todos os módulos juntos",ct.n+ct.a+ct.r,!(ct.n+ct.a+ct.r))+'<div class="rf-sec"><h3>Subbaralhos</h3>';
+  DISC[d].mods.forEach(function(k){ var m=REG[k]; if(!m||!m.CARDS||!m.CARDS.length) return; var c2=ankContagem(ankIdsMods([k]));
+    h+='<button type="button" class="ank-d" data-k="'+k+'"><span class="ank-dn"><b>'+esc(m.nome.length>70?m.nome.slice(0,69)+"…":m.nome)+'</b><small>'+m.CARDS.length+' cartas</small></span><span class="ank-cs">'+ankConta(c2.n,"ank-b")+ankConta(c2.a,"ank-r")+ankConta(c2.r,"ank-g")+'</span></button>'; });
+  ovInner.innerHTML=h+'</div>'; setFoot("",rfVoltar());
+  document.getElementById("rfBack").onclick=ankHub;
+  var b=document.getElementById("ankDAll"); if(b&&!b.disabled) b.onclick=function(){ ankEstuda(ids,DISC[d].nome); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ var k=x.getAttribute("data-k"); ankEstuda(ankIdsMods([k]),REG[k].nome,d); }; });
+}
+function ankEstuda(ids,tit,volta){
+  AN.ids=ids; AN.tit=tit; AN.volta=volta||null; AN.undo=[]; AN.ativo=true; ankProx();
+}
+function ankFim(){ AN.ativo=false; document.removeEventListener("keydown",ankKey); }
+function ankProx(){
+  rfOpen(); document.removeEventListener("keydown",ankKey); document.addEventListener("keydown",ankKey);
+  var p=ankPick(AN.ids), a=ankS();
+  if(!p){
+    AN.cur=null; var d=a.day, ac=d.tot?Math.round(d.ok/d.tot*100)+"%":"—";
+    ovInner.innerHTML='<div class="cele"><div class="medal">'+svg("i-check")+'</div><h2>Baralho concluído por hoje</h2><p>'+esc(AN.tit)+'. Hoje você respondeu '+d.tot+' cartas, com '+ac+' de acerto.</p></div>'+rfBtn("ankMais","Mais 10 cartas novas","Aumenta o limite de hoje",10,!AN.ids.some(function(f){return !a.c[f];}));
+    setFoot("",'<button class="ghost" id="ankSai" style="flex:1">Voltar aos baralhos</button>');
+    document.getElementById("ankSai").onclick=function(){ ankFim(); AN.volta?ankDeck(AN.volta):ankHub(); };
+    var mb=document.getElementById("ankMais"); if(mb&&!mb.disabled) mb.onclick=function(){ ankS().day.extra=(ankS().day.extra||0)+10; persist(); ankProx(); };
+    setProg(100); return;
+  }
+  AN.cur=p; AN.mostra=false; AN.t0=Date.now();
+  var c=cardOf(p.f), ct=ankContagem(AN.ids), mod=qsplit(p.f).m;
+  ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span><span class="ank-cs">'+ankConta(ct.n,"ank-b",p.k==="n")+ankConta(ct.a,"ank-r",p.k==="a")+ankConta(ct.r,"ank-g",p.k==="r")+'</span></div>'+
+    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
+  ankFoot();
+  setProg(0);
+}
+function ankFoot(){
+  var st=ankS().c[AN.cur.f]||null;
+  if(!AN.mostra){
+    setFoot("",'<button class="ghost" id="ankUndo"'+(AN.undo.length?"":" disabled")+' style="flex:0 0 auto">Desfazer</button><button class="big" id="ankShow" style="flex:1">Mostrar resposta</button><button class="ghost" id="ankMenu" style="flex:0 0 auto" aria-label="Mais">⋯</button>');
+    document.getElementById("ankShow").onclick=ankMostra;
+  } else {
+    var nomes=["De novo","Difícil","Bom","Fácil"], cls=["a","d","b","f"], bt="";
+    for(var g=1;g<=4;g++) bt+='<button type="button" class="ank-g'+g+'" data-g="'+g+'"><small>'+ankIntv(st,g)+'</small>'+nomes[g-1]+'</button>';
+    setFoot("ank-notas",bt);
+    Array.prototype.forEach.call(ovFootIn.querySelectorAll("button[data-g]"),function(b){ b.onclick=function(){ ankDa(parseInt(b.getAttribute("data-g"),10)); }; });
+    return;
+  }
+  document.getElementById("ankUndo").onclick=ankDesfaz;
+  document.getElementById("ankMenu").onclick=ankMenu;
+}
+function ankMostra(){ if(!AN.cur||AN.mostra) return; AN.mostra=true; var e=document.getElementById("ankA"); if(e) e.hidden=false; ankFoot(); }
+function ankDa(g){
+  if(!AN.cur||!AN.mostra) return;
+  var a=ankS(), f=AN.cur.f, prev=a.c[f]?JSON.parse(JSON.stringify(a.c[f])):null, d=a.day, dayPrev=JSON.parse(JSON.stringify(d));
+  AN.undo.push({f:f,prev:prev,day:dayPrev});
+  if(AN.undo.length>30) AN.undo.shift();
+  a.c[f]=ankSched(prev,g,Date.now());
+  if(!prev) d.nov++; else if(prev.t===2) d.rev++;
+  d.tot++; if(g>1) d.ok++; d.ms+=Math.min(60000,Date.now()-AN.t0);
+  var lg=a.log[today()]||(a.log[today()]={n:0,ok:0}); lg.n++; if(g>1) lg.ok++;
+  var ks=Object.keys(a.log).sort(); while(ks.length>90) delete a.log[ks.shift()];
+  try{ dstatBump(g>1); monBump(qsplit(f).m,g>1); }catch(e){}
+  if(d.tot%5===0) addXp(1);
+  persist(); ankProx();
+}
+function ankDesfaz(){
+  var u=AN.undo.pop(); if(!u) return; var a=ankS();
+  if(u.prev) a.c[u.f]=u.prev; else delete a.c[u.f];
+  a.day=u.day; persist(); AN.cur={f:u.f,k:u.prev?(u.prev.t===2?"r":"a"):"n"}; AN.mostra=false; AN.t0=Date.now();
+  var c=cardOf(u.f), ct=ankContagem(AN.ids), mod=qsplit(u.f).m;
+  ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></div><div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.slice(0,60))+'</div>';
+  ankFoot();
+}
+function ankMenu(){
+  if(!AN.cur) return; var f=AN.cur.f;
+  var b=confirm("Suspender esta carta? Ela deixa de aparecer até você reativá-la na busca.");
+  if(b){ var a=ankS(), prev=a.c[f]||{t:0,ivl:0,ease:2.5,step:0,lap:0,rep:0}; prev.susp=1; a.c[f]=prev; persist(); ankProx(); }
+}
+function ankKey(e){
+  if(!AN.ativo||!AN.cur) return; var o=document.getElementById("ov"); if(!o||!o.classList.contains("on")) return;
+  if(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!AN.mostra) ankMostra(); else ankDa(3); }
+  else if(AN.mostra&&/^[1-4]$/.test(e.key)) ankDa(parseInt(e.key,10));
+  else if(e.key==="z"||e.key==="Z") ankDesfaz();
+}
+function ankEst(){
+  rfOpen(); var a=ankS(), ids=[]; DISC_ORDER.forEach(function(d){ ids=ids.concat(ankIdsDisc(d)); });
+  var m=ankMatEstado(ids), d=a.day, td=today(), fc=[0,0,0,0,0,0,0], atr=0;
+  Object.keys(a.c).forEach(function(f){ var st=a.c[f]; if(!st||st.susp||st.t!==2) return; var dd=daysBetween(td,st.due); if(dd<=0) atr++; else if(dd<=7) fc[dd-1]++; });
+  var mx=Math.max(1,atr,Math.max.apply(null,fc)), bars='<div class="mon-col"><div class="mon-bar bx" style="height:'+Math.max(4,Math.round(atr/mx*100))+'%"></div><b>'+atr+'</b><i>hoje</i></div>';
+  for(var i=0;i<7;i++) bars+='<div class="mon-col"><div class="mon-bar'+(fc[i]?"":" vz")+'" style="height:'+Math.max(4,Math.round(fc[i]/mx*100))+'%"></div><b>'+fc[i]+'</b><i>'+dayShort(i+1).charAt(0)+'</i></div>';
+  var l7=0,o7=0; for(var j=-6;j<=0;j++){ var x=a.log[dayKey(j)]; if(x){ l7+=x.n; o7+=x.ok; } }
+  var h='<div class="rf-h"><span class="q-kicker">Anki</span><h2>Estatísticas</h2></div><div class="mon-grid"><div class="mon-k"><b>'+d.tot+'</b><small>cartas hoje</small></div><div class="mon-k"><b>'+(d.tot?Math.round(d.ok/d.tot*100)+"%":"—")+'</b><small>acerto hoje</small></div><div class="mon-k"><b>'+Math.round(d.ms/60000)+'</b><small>min hoje</small></div></div>'+
+    '<div class="mon-grid"><div class="mon-k"><b>'+l7+'</b><small>cartas em 7 dias</small></div><div class="mon-k"><b>'+(l7?Math.round(o7/l7*100)+"%":"—")+'</b><small>acerto em 7 dias</small></div><div class="mon-k"><b>'+(o7?l7-o7:0)+'</b><small>"de novo" em 7 dias</small></div></div>'+
+    '<div class="rf-sec"><h3>Revisões previstas</h3><div class="mon-chart ank-fc">'+bars+'</div></div>'+
+    '<div class="rf-sec"><h3>Suas cartas</h3>'+[["Novas (ainda não vistas)",m.nova],["Aprendendo",m.apr],["Jovens (intervalo até 20 dias)",m.jov],["Maduras (21 dias ou mais)",m.mad],["Suspensas",m.sus]].map(function(r){ return '<div class="mon-row"><div><b>'+r[0]+'</b></div><span class="mon-tag">'+r[1]+'</span></div>'; }).join("")+'</div>';
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+}
+function ankBusca(){
+  rfOpen();
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Anki</span><h2>Buscar cartas</h2><p>Digite ao menos 3 letras. Mostro até 30 resultados.</p></div><div class="ra-bar"><input id="ankQ" class="ra-in" placeholder="Ex.: split payment, fato gerador" aria-label="Buscar cartas"></div><div id="ankRes" class="ra-cards"></div>';
+  setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+  var tm=null, inp=document.getElementById("ankQ");
+  inp.oninput=function(){ clearTimeout(tm); tm=setTimeout(go,250); };
+  function go(){
+    var q=(inp.value||"").trim().toLowerCase(), res=document.getElementById("ankRes"); if(q.length<3){ res.innerHTML=""; return; }
+    var out=[]; outer: for(var d=0;d<DISC_ORDER.length;d++){ var mods=DISC[DISC_ORDER[d]].mods; for(var mi=0;mi<mods.length;mi++){ var m=REG[mods[mi]]; if(!m||!m.CARDS) continue; for(var i=0;i<m.CARDS.length;i++){ var c=m.CARDS[i]; if((rfTxt(c[0])+" "+rfTxt(c[1])).toLowerCase().indexOf(q)>=0){ out.push(qjoin(mods[mi],"c"+i)); if(out.length>=30) break outer; } } } }
+    var a=ankS(); res.innerHTML=out.length?out.map(function(f){ var c=cardOf(f), st=a.c[f], sit=!st?"nova":(st.susp?"suspensa":(st.t===2?"revisão, "+(st.ivl||1)+" d":"aprendendo"));
+      return '<div class="ra-card"><b>'+esc(rfTxt(c[0]))+'</b><div>'+c[1]+'</div><small>'+esc(REG[qsplit(f).m].nome.slice(0,60))+' · '+sit+'</small><button type="button" class="ghost ank-sp" data-f="'+f+'">'+(st&&st.susp?"Reativar":"Suspender")+'</button></div>'; }).join(""):'<p class="ra-nota">Nada encontrado.</p>';
+    Array.prototype.forEach.call(res.querySelectorAll(".ank-sp"),function(b){ b.onclick=function(){ var f=b.getAttribute("data-f"), x=a.c[f]||{t:0,ivl:0,ease:2.5,step:0,lap:0,rep:0}; if(x.susp) delete x.susp; else x.susp=1; a.c[f]=x; if(!x.susp&&x.t===0&&!x.rep) delete a.c[f]; persist(); go(); }; });
+  }
+}
+
 /* ---------- ÁUDIO: ouvir cartas, teoria e a Reforma do dia (voz do aparelho) ---------- */
 var AU={q:[],i:0,s:0,on:false,rate:1,voz:"",pausa:true,tm:null,gen:0};
 (function(){ try{ var o=JSON.parse(localStorage.getItem("afo01_aud")||"{}"); if(o.rate) AU.rate=o.rate; if(o.voz) AU.voz=o.voz; if(o.pausa===false) AU.pausa=false; }catch(e){} })();
@@ -4943,6 +5145,7 @@ function treinarHub(){
       if(n==="treinar"){ treinarHub(); return; }
       if(n==="mapas"){ mapasHub(); return; }
       if(n==="audio"){ auTela(); return; }
+      if(n==="anki"){ ankHub(); return; }
       setNav(n); window.scrollTo(0,0);
     };
   });
@@ -5331,7 +5534,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,ank:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -5526,7 +5729,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.ank)S.ank=d.ank; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
