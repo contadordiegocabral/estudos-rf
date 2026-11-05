@@ -1107,6 +1107,7 @@ function recordAttempt(id,ok){
   if(ok){ if(pm.misses[e]){pm.misses[e]--; if(pm.misses[e]<=0)delete pm.misses[e];} }
   else { pm.misses[e]=Math.min(3,(pm.misses[e]||0)+1); }
   srsTouch(qjoin(p.m,e),ok);
+  if(!ok&&isCardE(e)){ try{ ankErro(qjoin(p.m,e)); }catch(x){} }
   dstatBump(ok);
   monBump(p.m,ok);
   spqLog(p.m,ok?1:0,1);
@@ -3698,6 +3699,7 @@ function ankContagem(ids){
   var q=ankListas(ids); return {n:Math.min(q.N.length,ankLimN()),a:q.L.length+q.Lf.length,r:Math.min(q.R.length,ankLimR())};
 }
 function ankPick(ids){
+  if(AN.ck!=null) return ankPickCk();
   var q=ankListas(ids), c=ankS().c;
   if(q.L.length){ q.L.sort(function(x,y){return c[x].due-c[y].due;}); return {f:q.L[0],k:"a"}; }
   if(q.R.length&&ankLimR()>0){ q.R.sort(function(x,y){ return c[x].due<c[y].due?-1:c[x].due>c[y].due?1:(liHash(x+today())%7)-(liHash(y+today())%7); }); return {f:q.R[0],k:"r"}; }
@@ -3741,25 +3743,50 @@ function ankMatEstado(fids){
   return o;
 }
 function ankConta(ct,cls,on){ return '<span class="ank-n '+cls+(on?" on":"")+'">'+ct+'</span>'; }
+function ankCkB(f){
+  var st=ankS().c[f]; if(!st||st.susp||!st.fd) return 0;
+  var age=daysBetween(st.fd,today()), ck=st.ck||{}, b=0;
+  [7,15,30].forEach(function(K){ if(age>=K&&!ck[K]) b=K; });
+  return b;
+}
+function ankCkIds(K){
+  var c=ankS().c, out=[];
+  Object.keys(c).forEach(function(f){ var b=ankCkB(f); if(b&&(K===0||K==null||b===K)&&cardOf(f)) out.push(f); });
+  out.sort(function(x,y){ return daysBetween(c[y].fd,today())-daysBetween(c[x].fd,today()); });
+  return out;
+}
+function ankPickCk(){
+  var l=AN.ids.filter(function(f){ var b=ankCkB(f); return b&&(AN.ck===0||b===AN.ck); });
+  return l.length?{f:l[0],k:"c"}:null;
+}
+/* o que sobra para estudar nesta sessão */
+function ankResta(){
+  if(AN.ck!=null){ return AN.ids.filter(function(f){ var b=ankCkB(f); return b&&(AN.ck===0||b===AN.ck); }).length; }
+  var c=ankContagem(AN.ids); return c.n+c.a+c.r;
+}
+function ankPct(){ var r=ankResta(), d=AN.feitas||0; return (d+r)?Math.round(d/(d+r)*100):100; }
+function ankBarra(){ var p=ankPct(); return '<div class="ank-bar" role="progressbar" aria-valuenow="'+p+'" aria-valuemin="0" aria-valuemax="100"><i style="width:'+p+'%"></i></div><div class="ank-pc">'+p+'% concluído · '+(AN.feitas||0)+' cartas respondidas</div>'; }
 function ankHub(){
   rfOpen();
-  var a=ankS(), alvo=rtAlvo(), dsAlvo=rtDiscs(alvo);
-  var todas=DISC_ORDER.filter(function(d){ return DISC[d].mods.some(function(k){return REG[k];}); });
+  var a=ankS(), todas=DISC_ORDER.filter(function(d){ return DISC[d].mods.some(function(k){return REG[k];}); });
   var foc=todas.filter(function(d){ return focoOk(d); });
   var h='<div class="rf-h"><span class="q-kicker">Anki</span><h2>Baralhos</h2><p>As cartas do app em baralhos por matéria e módulo. Você avalia cada resposta e o intervalo se ajusta sozinho.</p></div>';
   var ids=[]; foc.forEach(function(d){ ids=ids.concat(ankIdsDisc(d)); });
   var tot=ankContagem(ids);
   h+='<div class="ank-tot"><div><small>Novas</small>'+ankConta(tot.n,"ank-b")+'</div><div><small>Aprender</small>'+ankConta(tot.a,"ank-r")+'</div><div><small>Revisar</small>'+ankConta(tot.r,"ank-g")+'</div></div>';
   h+=rfBtn("ankAll","Estudar tudo"+(foc.length<todas.length?" (matérias em foco)":""),"Novas, em aprendizado e revisões de hoje",tot.n+tot.a+tot.r,!(tot.n+tot.a+tot.r));
+  var k7=ankCkIds(7).length,k15=ankCkIds(15).length,k30=ankCkIds(30).length;
+  h+='<div class="rf-sec"><h3>Revisões de 7, 15 e 30 dias</h3><p class="ra-nota">Cada carta volta uma vez com 7, 15 e 30 dias desde que você a viu pela primeira vez. Acertar não muda a agenda; errar manda a carta de volta ao aprendizado.</p><div class="ank-ck"><button type="button" data-k="7"'+(k7?"":" disabled")+'><span class="ank-n ank-p">'+k7+'</span><small>7 dias</small></button><button type="button" data-k="15"'+(k15?"":" disabled")+'><span class="ank-n ank-p">'+k15+'</span><small>15 dias</small></button><button type="button" data-k="30"'+(k30?"":" disabled")+'><span class="ank-n ank-p">'+k30+'</span><small>30 dias</small></button></div></div>';
   h+='<div class="rf-sec"><h3>Baralhos por matéria</h3>';
   foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
     h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
   h+='</div><div class="rf-sec"><h3>Ferramentas</h3>'+rfBtn("ankEst","Estatísticas","Hoje, previsão de revisões e maturidade das cartas","Ver")+rfBtn("ankBusca","Buscar cartas","Procure por palavra, suspenda ou reative cartas","Abrir")+
-    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label></div>';
+    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><p class="ra-nota">Conexões: erros em cartas da trilha e do treino voltam sozinhos ao Anki; o acerto aqui entra no Desempenho.</p></div>';
   ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
   document.getElementById("rfFecha").onclick=function(){ closeOv(); };
-  var b=document.getElementById("ankAll"); if(b&&!b.disabled) b.onclick=function(){ ankEstuda(ids,"Todos os baralhos"); };
+  var b=document.getElementById("ankAll"); if(b&&!b.disabled) b.onclick=function(){ ankEstuda(ids,"Todos os baralhos",{}); };
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-ck button"),function(x){ x.onclick=function(){ var K=parseInt(x.getAttribute("data-k"),10); ankEstuda(ankCkIds(K),"Revisão de "+K+" dias",{ck:K}); }; });
   document.getElementById("ankNovas").onchange=function(){ ankS().cfg.novas=parseInt(this.value,10)||20; persist(); ankHub(); };
   document.getElementById("ankEst").onclick=ankEst; document.getElementById("ankBusca").onclick=ankBusca;
 }
@@ -3771,30 +3798,55 @@ function ankDeck(d){
     h+='<button type="button" class="ank-d" data-k="'+k+'"><span class="ank-dn"><b>'+esc(m.nome.length>70?m.nome.slice(0,69)+"…":m.nome)+'</b><small>'+m.CARDS.length+' cartas</small></span><span class="ank-cs">'+ankConta(c2.n,"ank-b")+ankConta(c2.a,"ank-r")+ankConta(c2.r,"ank-g")+'</span></button>'; });
   ovInner.innerHTML=h+'</div>'; setFoot("",rfVoltar());
   document.getElementById("rfBack").onclick=ankHub;
-  var b=document.getElementById("ankDAll"); if(b&&!b.disabled) b.onclick=function(){ ankEstuda(ids,DISC[d].nome); };
-  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ var k=x.getAttribute("data-k"); ankEstuda(ankIdsMods([k]),REG[k].nome,d); }; });
+  var b=document.getElementById("ankDAll"); if(b&&!b.disabled) b.onclick=function(){ ankEstuda(ids,DISC[d].nome,{disc:d}); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ var k=x.getAttribute("data-k"); ankEstuda(ankIdsMods([k]),REG[k].nome,{volta:d,disc:d,mod:k}); }; });
 }
-function ankEstuda(ids,tit,volta){
-  AN.ids=ids; AN.tit=tit; AN.volta=volta||null; AN.undo=[]; AN.ativo=true; ankProx();
+function ankEstuda(ids,tit,o){
+  o=o||{}; AN.ids=ids; AN.tit=tit; AN.volta=o.volta||null; AN.disc=o.disc||null; AN.mod=o.mod||null; AN.ck=(o.ck!=null?o.ck:null);
+  AN.undo=[]; AN.ativo=true; AN.feitas=0; ankProx();
 }
 function ankFim(){ AN.ativo=false; document.removeEventListener("keydown",ankKey); }
+/* próximo tópico ou matéria com cartas pendentes, depois que o atual chega a 100% */
+function ankSeguinte(){
+  if(AN.ck!=null){
+    var ord=[7,15,30];
+    for(var i=0;i<ord.length;i++){ if(ord[i]!==AN.ck&&ankCkIds(ord[i]).length) return {ids:ankCkIds(ord[i]),tit:"Revisão de "+ord[i]+" dias",o:{ck:ord[i]}}; }
+    return null;
+  }
+  var foc=DISC_ORDER.filter(function(d){ return focoOk(d)&&DISC[d].mods.some(function(k){return REG[k]&&REG[k].CARDS;}); });
+  if(AN.mod&&AN.disc){
+    var ms=DISC[AN.disc].mods.filter(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;}), p=ms.indexOf(AN.mod);
+    for(var j=1;j<ms.length;j++){ var k=ms[(p+j)%ms.length], ct=ankContagem(ankIdsMods([k])); if(ct.n+ct.a+ct.r>0) return {ids:ankIdsMods([k]),tit:REG[k].nome,o:{volta:AN.disc,disc:AN.disc,mod:k}}; }
+  }
+  if(AN.disc){
+    var q=foc.indexOf(AN.disc);
+    for(var n=1;n<=foc.length;n++){ var d=foc[(q+n)%foc.length]; if(d===AN.disc) continue; var c3=ankContagem(ankIdsDisc(d)); if(c3.n+c3.a+c3.r>0) return {ids:ankIdsDisc(d),tit:DISC[d].nome,o:{disc:d}}; }
+  }
+  return null;
+}
+function ankCardTela(){
+  var p=AN.cur, c=cardOf(p.f), mod=qsplit(p.f).m, ck=AN.ck!=null, rest;
+  var cont=ck?'<span class="ank-cs">'+ankConta(ankResta(),"ank-p",true)+'</span>':(function(){ var ct=ankContagem(AN.ids); return '<span class="ank-cs">'+ankConta(ct.n,"ank-b",p.k==="n")+ankConta(ct.a,"ank-r",p.k==="a")+ankConta(ct.r,"ank-g",p.k==="r")+'</span>'; })();
+  ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span>'+cont+'</div>'+ankBarra()+
+    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
+  ankFoot(); setProg(ankPct());
+}
 function ankProx(){
   rfOpen(); document.removeEventListener("keydown",ankKey); document.addEventListener("keydown",ankKey);
   var p=ankPick(AN.ids), a=ankS();
   if(!p){
-    AN.cur=null; var d=a.day, ac=d.tot?Math.round(d.ok/d.tot*100)+"%":"—";
-    ovInner.innerHTML='<div class="cele"><div class="medal">'+svg("i-check")+'</div><h2>Baralho concluído por hoje</h2><p>'+esc(AN.tit)+'. Hoje você respondeu '+d.tot+' cartas, com '+ac+' de acerto.</p></div>'+rfBtn("ankMais","Mais 10 cartas novas","Aumenta o limite de hoje",10,!AN.ids.some(function(f){return !a.c[f];}));
+    AN.cur=null; var d=a.day, ac=d.tot?Math.round(d.ok/d.tot*100)+"%":"—", sg=ankSeguinte();
+    ovInner.innerHTML='<div class="cele"><div class="medal">'+svg("i-check")+'</div><h2>100% — meta concluída</h2><p>'+esc(AN.tit)+'. Hoje você respondeu '+d.tot+' cartas, com '+ac+' de acerto.'+(sg?' Hora de mudar de assunto.':'')+'</p></div>'+
+      (sg?rfBtn("ankSeg","Próximo: "+esc(sg.tit.length>48?sg.tit.slice(0,47)+"…":sg.tit),"O próximo tópico com cartas pendentes","Ir"):"")+
+      (AN.ck==null?rfBtn("ankMais","Mais 10 cartas novas","Aumenta o limite de hoje",10,!AN.ids.some(function(f){return !a.c[f];})):"");
     setFoot("",'<button class="ghost" id="ankSai" style="flex:1">Voltar aos baralhos</button>');
     document.getElementById("ankSai").onclick=function(){ ankFim(); AN.volta?ankDeck(AN.volta):ankHub(); };
+    var sb=document.getElementById("ankSeg"); if(sb) sb.onclick=function(){ ankEstuda(sg.ids,sg.tit,sg.o); };
     var mb=document.getElementById("ankMais"); if(mb&&!mb.disabled) mb.onclick=function(){ ankS().day.extra=(ankS().day.extra||0)+10; persist(); ankProx(); };
     setProg(100); return;
   }
   AN.cur=p; AN.mostra=false; AN.t0=Date.now();
-  var c=cardOf(p.f), ct=ankContagem(AN.ids), mod=qsplit(p.f).m;
-  ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span><span class="ank-cs">'+ankConta(ct.n,"ank-b",p.k==="n")+ankConta(ct.a,"ank-r",p.k==="a")+ankConta(ct.r,"ank-g",p.k==="r")+'</span></div>'+
-    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
-  ankFoot();
-  setProg(0);
+  ankCardTela();
 }
 function ankFoot(){
   var st=ankS().c[AN.cur.f]||null;
@@ -3814,12 +3866,18 @@ function ankFoot(){
 function ankMostra(){ if(!AN.cur||AN.mostra) return; AN.mostra=true; var e=document.getElementById("ankA"); if(e) e.hidden=false; ankFoot(); }
 function ankDa(g){
   if(!AN.cur||!AN.mostra) return;
-  var a=ankS(), f=AN.cur.f, prev=a.c[f]?JSON.parse(JSON.stringify(a.c[f])):null, d=a.day, dayPrev=JSON.parse(JSON.stringify(d));
-  AN.undo.push({f:f,prev:prev,day:dayPrev});
+  var a=ankS(), f=AN.cur.f, prev=a.c[f]?JSON.parse(JSON.stringify(a.c[f])):null, d=a.day, dayPrev=JSON.parse(JSON.stringify(d)), ck=AN.ck!=null;
+  AN.undo.push({f:f,prev:prev,day:dayPrev,fe:AN.feitas||0});
   if(AN.undo.length>30) AN.undo.shift();
-  a.c[f]=ankSched(prev,g,Date.now());
-  if(!prev) d.nov++; else if(prev.t===2) d.rev++;
+  var nv;
+  if(ck&&prev&&g>1) nv=JSON.parse(JSON.stringify(prev)); else nv=ankSched(prev,g,Date.now());
+  if(!prev) nv.fd=today(); else if(prev.fd) nv.fd=prev.fd; else nv.fd=today();
+  nv.ck=nv.ck||{};
+  if(g>1){ var age=daysBetween(nv.fd,today()); [7,15,30].forEach(function(K){ if(age>=K) nv.ck[K]=1; }); }
+  a.c[f]=nv;
+  if(!ck){ if(!prev) d.nov++; else if(prev.t===2) d.rev++; }
   d.tot++; if(g>1) d.ok++; d.ms+=Math.min(60000,Date.now()-AN.t0);
+  AN.feitas=(AN.feitas||0)+1;
   var lg=a.log[today()]||(a.log[today()]={n:0,ok:0}); lg.n++; if(g>1) lg.ok++;
   var ks=Object.keys(a.log).sort(); while(ks.length>90) delete a.log[ks.shift()];
   try{ dstatBump(g>1); monBump(qsplit(f).m,g>1); }catch(e){}
@@ -3829,10 +3887,17 @@ function ankDa(g){
 function ankDesfaz(){
   var u=AN.undo.pop(); if(!u) return; var a=ankS();
   if(u.prev) a.c[u.f]=u.prev; else delete a.c[u.f];
-  a.day=u.day; persist(); AN.cur={f:u.f,k:u.prev?(u.prev.t===2?"r":"a"):"n"}; AN.mostra=false; AN.t0=Date.now();
-  var c=cardOf(u.f), ct=ankContagem(AN.ids), mod=qsplit(u.f).m;
-  ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></div><div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.slice(0,60))+'</div>';
-  ankFoot();
+  a.day=u.day; AN.feitas=u.fe; persist();
+  AN.cur={f:u.f,k:AN.ck!=null?"c":(u.prev?(u.prev.t===2?"r":"a"):"n")}; AN.mostra=false; AN.t0=Date.now();
+  ankCardTela();
+}
+/* erro em carta fora do Anki (trilha, treino, revisão): a carta volta para o aprendizado */
+function ankErro(fid){
+  var a=ankS(), st=a.c[fid], now=Date.now(); if(st&&st.susp) return;
+  if(!st){ a.c[fid]={t:1,ivl:0,ease:2.5,step:0,lap:0,rep:1,fd:today(),due:now,ck:{}}; }
+  else if(st.t===2){ st.lap=(st.lap||0)+1; st.ease=Math.max(1.3,(st.ease||2.5)-0.2); st.ivl=Math.max(1,Math.round((st.ivl||1)*0.2)); st.t=3; st.step=0; st.due=now+10*60000; }
+  else { st.due=Math.min(st.due||now,now+10*60000); }
+  persist();
 }
 function ankMenu(){
   if(!AN.cur) return; var f=AN.cur.f;
@@ -3872,140 +3937,6 @@ function ankBusca(){
       return '<div class="ra-card"><b>'+esc(rfTxt(c[0]))+'</b><div>'+c[1]+'</div><small>'+esc(REG[qsplit(f).m].nome.slice(0,60))+' · '+sit+'</small><button type="button" class="ghost ank-sp" data-f="'+f+'">'+(st&&st.susp?"Reativar":"Suspender")+'</button></div>'; }).join(""):'<p class="ra-nota">Nada encontrado.</p>';
     Array.prototype.forEach.call(res.querySelectorAll(".ank-sp"),function(b){ b.onclick=function(){ var f=b.getAttribute("data-f"), x=a.c[f]||{t:0,ivl:0,ease:2.5,step:0,lap:0,rep:0}; if(x.susp) delete x.susp; else x.susp=1; a.c[f]=x; if(!x.susp&&x.t===0&&!x.rep) delete a.c[f]; persist(); go(); }; });
   }
-}
-
-/* ---------- ÁUDIO: ouvir cartas, teoria e a Reforma do dia (voz do aparelho) ---------- */
-var AU={q:[],i:0,s:0,on:false,rate:1,voz:"",pausa:true,tm:null,gen:0};
-(function(){ try{ var o=JSON.parse(localStorage.getItem("afo01_aud")||"{}"); if(o.rate) AU.rate=o.rate; if(o.voz) AU.voz=o.voz; if(o.pausa===false) AU.pausa=false; }catch(e){} })();
-function auSalva(){ try{ localStorage.setItem("afo01_aud",JSON.stringify({rate:AU.rate,voz:AU.voz,pausa:AU.pausa})); }catch(e){} }
-function auOk(){ return typeof window!=="undefined"&&"speechSynthesis" in window&&typeof SpeechSynthesisUtterance!=="undefined"; }
-function auLimpa(h){
-  var t=rfTxt(String(h||"").replace(/<(?:\/?(?:p|div|li|ul|ol|h[1-6]|tr|td|br|table|section)|span[^>]*class="bl")[^>]*>/gi,". "));
-  t=t.replace(/([.!?;:])(\s*[.;:])+/g,"$1").replace(/\s+\./g,".");
-  return t.replace(/\barts\.\s*/gi,"artigos ").replace(/\bart\.\s*/gi,"artigo ").replace(/§§/g,"parágrafos ").replace(/§\s*/g,"parágrafo ")
-    .replace(/\binc\.\s*/gi,"inciso ").replace(/\bnº\s*/gi,"número ").replace(/\bLC\b/g,"Lei Complementar").replace(/\bCF\b/g,"Constituição Federal")
-    .replace(/\bEC\b/g,"Emenda Constitucional").replace(/\bpp\b/g,"pontos percentuais").replace(/\s*[·•]\s*/g,", ").replace(/\s*×\s*/g," contra ").replace(/\s*→\s*/g," leva a ").replace(/\s*↔\s*/g," e ").replace(/≥/g," maior ou igual a ").replace(/≤/g," menor ou igual a ").replace(/\s*[✓✔]\s*/g," ").replace(/\bR\$\s*/g,"R$ ").replace(/\s+/g," ").trim();
-}
-function auPartes(txt,max){
-  var out=[], fr=txt.split(/(?<=[.!?;:])\s+/), cur="";
-  fr.forEach(function(f){ if(!f) return; if((cur+" "+f).length>max&&cur){ out.push(cur); cur=f; } else cur=cur?cur+" "+f:f; });
-  if(cur) out.push(cur);
-  return out.length?out:[txt];
-}
-function auItemCarta(c,soResp){
-  var q=auLimpa(c[0]), a=auLimpa(c[1]), seg=[];
-  if(!soResp){ auPartes("Pergunta. "+q,200).forEach(function(p){ seg.push({t:p,w:0}); }); seg[seg.length-1].w=AU.pausa?2200:500; }
-  auPartes((soResp?"":"Resposta. ")+a,200).forEach(function(p){ seg.push({t:p,w:0}); }); seg[seg.length-1].w=1200;
-  return {tit:rfTxt(c[0]).slice(0,90),seg:seg,txt:rfTxt(c[0])+" — "+rfTxt(c[1])};
-}
-function auItemTexto(tit,txt){
-  var seg=auPartes(auLimpa(txt),200).map(function(p){ return {t:p,w:0}; }); if(seg.length) seg[seg.length-1].w=1500;
-  return {tit:tit,seg:seg,txt:rfTxt(txt)};
-}
-function auFilaTeoria(k){
-  var m=REG[k], out=[]; if(!m) return out;
-  m.UNITS.forEach(function(u){ u.lessons.forEach(function(l){
-    if(l.type!=="teoria") return; var T=(m.TEORIA||{})[l.data]||[];
-    var tx=T.map(function(s){ return (s.h?s.h+". ":"")+(s.b||"").replace(/<\/(p|div|li)>/gi,". "); }).join(" ");
-    out.push(auItemTexto(l.title,"Teoria. "+l.title+". "+tx));
-  }); });
-  return out;
-}
-function auFilaCartas(k,soResp){ var m=REG[k]; return m&&m.CARDS?m.CARDS.map(function(c){ return auItemCarta(c,soResp); }):[]; }
-function auFilaFids(fids,max){
-  var out=[]; fids.forEach(function(f){ if(out.length>=max) return; var c=cardOf(f); if(c) out.push(auItemCarta(c,false)); }); return out;
-}
-function auFilaReforma(){
-  var k=rdHoje(); if(!k) return [];
-  var cards=rfArtIdx().byArt[k]||[], out=cards.map(function(c){ return auItemCarta([c.q,c.a],false); });
-  rfCorrTxt(cards,false).forEach(function(x){ out.push(auItemTexto("Correlação: "+x.nome,"Correlação com "+x.nome+". "+x.t)); });
-  return out;
-}
-function auParar(){ AU.on=false; AU.gen++; if(AU.tm){ clearTimeout(AU.tm); AU.tm=null; } try{ speechSynthesis.cancel(); }catch(e){} auPaint(); }
-function auVoz(){
-  var vs=[]; try{ vs=speechSynthesis.getVoices()||[]; }catch(e){}
-  var v=null; if(AU.voz) v=vs.filter(function(x){return x.name===AU.voz;})[0];
-  if(!v) v=vs.filter(function(x){return /^pt-BR/i.test(x.lang);})[0]||vs.filter(function(x){return /^pt/i.test(x.lang);})[0]||null;
-  return v;
-}
-function auFalar(){
-  if(!AU.on) return; var it=AU.q[AU.i]; if(!it){ auParar(); return; }
-  var sg=it.seg[AU.s]; if(!sg){ AU.i++; AU.s=0; auPaint(); if(AU.i>=AU.q.length){ AU.on=false; auPaint(); return; } return auFalar(); }
-  var my=++AU.gen, u=new SpeechSynthesisUtterance(sg.t); u.lang="pt-BR"; u.rate=AU.rate; var v=auVoz(); if(v){ u.voice=v; u.lang=v.lang; }
-  function prox(){ if(my!==AU.gen||!AU.on) return; AU.tm=setTimeout(function(){ AU.tm=null; if(my!==AU.gen||!AU.on) return; AU.s++; auFalar(); },sg.w||0); }
-  u.onend=prox; u.onerror=function(e){ if(e&&(e.error==="interrupted"||e.error==="canceled")) return; prox(); };
-  try{ speechSynthesis.cancel(); speechSynthesis.speak(u); }catch(e){ console.error("AUDIO",e&&e.message); AU.on=false; }
-  auPaint();
-}
-function auTocar(fila,tit){
-  if(!auOk()){ alert("Este aparelho não oferece voz sintetizada no navegador."); return; }
-  if(!fila||!fila.length) return;
-  auParar(); AU.q=fila; AU.i=0; AU.s=0; AU.tit=tit||"Áudio"; AU.on=true; auFalar(); auMedia();
-}
-function auPlayPause(){ if(!AU.q.length) return; if(AU.on){ AU.on=false; AU.gen++; if(AU.tm){clearTimeout(AU.tm);AU.tm=null;} try{ speechSynthesis.cancel(); }catch(e){} auPaint(); } else { AU.on=true; auFalar(); } }
-function auPula(d){ if(!AU.q.length) return; var on=AU.on; AU.gen++; if(AU.tm){clearTimeout(AU.tm);AU.tm=null;} try{ speechSynthesis.cancel(); }catch(e){} AU.i=Math.max(0,Math.min(AU.q.length-1,AU.i+d)); AU.s=0; if(on){ AU.on=true; auFalar(); } else auPaint(); }
-function auMedia(){
-  try{ if("mediaSession" in navigator){
-    navigator.mediaSession.metadata=new MediaMetadata({title:AU.tit||"Áudio",artist:"Meus Estudos"});
-    navigator.mediaSession.setActionHandler("play",auPlayPause); navigator.mediaSession.setActionHandler("pause",auPlayPause);
-    navigator.mediaSession.setActionHandler("nexttrack",function(){ auPula(1); }); navigator.mediaSession.setActionHandler("previoustrack",function(){ auPula(-1); });
-  } }catch(e){}
-}
-function auMini(){
-  var b=document.getElementById("auMini");
-  if(!AU.q.length){ if(b) b.remove(); return; }
-  if(!b){ b=document.createElement("div"); b.id="auMini"; b.className="au-mini"; document.body.appendChild(b); }
-  var it=AU.q[AU.i];
-  b.innerHTML='<button type="button" id="auMiniAbre" class="au-mt">'+esc((it?it.tit:AU.tit)||"Áudio")+'<small>'+(AU.i+1)+' de '+AU.q.length+'</small></button><button type="button" id="auMiniPP" aria-label="'+(AU.on?"Pausar":"Tocar")+'">'+(AU.on?"❚❚":"▶")+'</button><button type="button" id="auMiniX" aria-label="Parar e fechar">✕</button>';
-  document.getElementById("auMiniAbre").onclick=function(){ auTela(); };
-  document.getElementById("auMiniPP").onclick=auPlayPause;
-  document.getElementById("auMiniX").onclick=function(){ auParar(); AU.q=[]; auMini(); };
-}
-function auPaint(){
-  auMini();
-  var np=document.getElementById("auNow"); if(!np) return;
-  var it=AU.q[AU.i]; np.innerHTML=it?('<b>'+esc(it.tit)+'</b><p>'+esc(it.txt.slice(0,420))+(it.txt.length>420?"…":"")+'</p><small>'+(AU.i+1)+' de '+AU.q.length+(AU.on?" · tocando":" · pausado")+'</small>'):'<p>Escolha algo abaixo para ouvir.</p>';
-  var pp=document.getElementById("auPP"); if(pp) pp.textContent=AU.on?"❚❚ Pausar":"▶ Tocar";
-}
-function auTela(){
-  rfOpen();
-  var vs=[]; try{ vs=(speechSynthesis.getVoices()||[]).filter(function(v){return /^pt/i.test(v.lang);}); }catch(e){}
-  var h='<div class="rf-h"><span class="q-kicker">Áudio</span><h2>Ouvir os materiais</h2><p>O app lê em voz alta usando a voz em português do seu aparelho. Fones ajudam, e a leitura segue com a tela aberta.</p></div>';
-  if(!auOk()) h+='<div class="mon-box mon-dn"><b>Este navegador não tem voz sintetizada.</b><small>Abra o app no Chrome, no Safari ou no Edge do celular para ouvir.</small></div>';
-  h+='<div class="au-now" id="auNow"></div><div class="au-ctl"><button type="button" class="ghost" id="auPrev">⏮</button><button type="button" class="big" id="auPP">▶ Tocar</button><button type="button" class="ghost" id="auNext">⏭</button></div>'+
-    '<div class="au-opt"><label>Velocidade <select id="auRate">'+[0.8,0.9,1,1.1,1.25,1.5,1.75].map(function(r){ return '<option value="'+r+'"'+(r===AU.rate?" selected":"")+'>'+r+'x</option>'; }).join("")+'</select></label>'+
-    '<label>Voz <select id="auVoz"><option value="">Automática</option>'+vs.map(function(v){ return '<option value="'+esc(v.name)+'"'+(v.name===AU.voz?" selected":"")+'>'+esc(v.name)+'</option>'; }).join("")+'</select></label>'+
-    '<label class="au-ck"><input type="checkbox" id="auPausa"'+(AU.pausa?" checked":"")+'> Pausa para pensar entre pergunta e resposta</label></div>';
-  h+='<div class="rf-sec"><h3>Listas prontas</h3>'+
-    rfBtn("auRev","Revisão do dia","Cartas que voltam hoje",Math.min(30,srsDue().filter(function(f){return isCardE(qsplit(f).e);}).length))+
-    rfBtn("auRef","Reforma do dia","Artigo de hoje, cartas e correlações",rdHoje()?("art. "+rdHoje()):"—")+
-    rfBtn("auFraca","Cartas que você mais erra","Os pontos fracos, em pergunta e resposta",Math.min(30,Object.keys(srs()).filter(function(f){ return isCardE(qsplit(f).e)&&(srs()[f].lap||0)>0&&srsValid(f); }).length))+
-    rfBtn("auUlt","Módulo atual: teoria","Resumo do módulo em que você está",REG[S.cur]?REG[S.cur].n:"—")+
-    '</div><div class="rf-sec"><h3>Escolher por matéria</h3><div class="ra-grid" id="auMat">';
-  DISC_ORDER.forEach(function(d){ if(!DISC[d].mods.some(function(k){return REG[k];})) return; h+='<button type="button" class="ra-chip" data-d="'+d+'"><b>'+esc(DISC[d].nome)+'</b><small>'+DISC[d].mods.filter(function(k){return REG[k];}).length+' módulos</small></button>'; });
-  h+='</div></div>';
-  ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar (o áudio continua)</button>');
-  document.getElementById("rfFecha").onclick=function(){ closeOv(); };
-  document.getElementById("auPP").onclick=auPlayPause; document.getElementById("auPrev").onclick=function(){ auPula(-1); }; document.getElementById("auNext").onclick=function(){ auPula(1); };
-  document.getElementById("auRate").onchange=function(){ AU.rate=parseFloat(this.value)||1; auSalva(); if(AU.on){ auPula(0); } };
-  document.getElementById("auVoz").onchange=function(){ AU.voz=this.value; auSalva(); if(AU.on){ auPula(0); } };
-  document.getElementById("auPausa").onchange=function(){ AU.pausa=this.checked; auSalva(); };
-  document.getElementById("auRev").onclick=function(){ var f=srsDue().filter(function(x){return isCardE(qsplit(x).e);}); auTocar(auFilaFids(f,30),"Revisão do dia"); };
-  document.getElementById("auRef").onclick=function(){ auTocar(auFilaReforma(),"Reforma do dia · art. "+rdHoje()); };
-  document.getElementById("auFraca").onclick=function(){ var f=Object.keys(srs()).filter(function(x){ return isCardE(qsplit(x).e)&&(srs()[x].lap||0)>0&&srsValid(x); }).sort(function(a,b){return (srs()[b].lap||0)-(srs()[a].lap||0);}); auTocar(auFilaFids(f,30),"Cartas que você mais erra"); };
-  document.getElementById("auUlt").onclick=function(){ auTocar(auFilaTeoria(S.cur),"Teoria · "+(REG[S.cur]?REG[S.cur].nome:"")); };
-  Array.prototype.forEach.call(ovInner.querySelectorAll("#auMat .ra-chip"),function(b){ b.onclick=function(){ auMateria(b.getAttribute("data-d")); }; });
-  auPaint();
-}
-function auMateria(d){
-  rfOpen();
-  var h='<div class="rf-h"><span class="q-kicker">Áudio · '+esc(DISC[d].nome)+'</span><h2>Escolha o módulo</h2><p>Cada módulo tem a teoria resumida e as cartas de pergunta e resposta.</p></div>';
-  DISC[d].mods.forEach(function(k){ var m=REG[k]; if(!m) return;
-    h+='<div class="rt-b"><div class="rt-h"><b>'+esc(m.nome.length>80?m.nome.slice(0,79)+"…":m.nome)+'</b></div><small>'+(m.CARDS?m.CARDS.length:0)+' cartas</small><div class="rt-a"><button type="button" class="ghost" data-k="'+k+'" data-a="t">Ouvir a teoria</button><button type="button" class="ghost" data-k="'+k+'" data-a="c">Cartas</button><button type="button" class="ghost" data-k="'+k+'" data-a="r">Só respostas</button></div></div>'; });
-  ovInner.innerHTML=h; setFoot("",rfVoltar());
-  document.getElementById("rfBack").onclick=auTela;
-  Array.prototype.forEach.call(ovInner.querySelectorAll("button[data-k]"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"), a=b.getAttribute("data-a"), nm=REG[k].nome;
-    var f=a==="t"?auFilaTeoria(k):auFilaCartas(k,a==="r"); if(!f.length){ b.textContent="Sem conteúdo"; return; } auTocar(f,(a==="t"?"Teoria · ":"Cartas · ")+nm); auTela(); }; });
 }
 
 /* ---------- ROTEIRO DE HOJE: a divisão do dia, pronta para seguir ---------- */
@@ -4061,10 +3992,12 @@ function rtTela(){
     '</div></div>';
   });
   h+='<p class="ra-nota">Divisão para 2 horas: 45 min de questões do TEC, 30 min de revisão, 30 min de teoria nova e 15 min da Reforma. Blocos de TEC, revisão e Reforma se marcam sozinhos quando você cumpre a meta.</p>';
+  h+='<div class="rf-sec">'+rfBtn("rtAnki","Anki do dia","Cartas novas, em aprendizado e revisões de 7, 15 e 30 dias","Abrir")+'</div>';
   var dsAlvo=rtDiscs(c), focoIgual=false;
   if(dsAlvo.length&&S.foco&&S.foco.length===dsAlvo.length) focoIgual=dsAlvo.every(function(d){return S.foco.indexOf(d)>=0;});
   if(dsAlvo.length) h+='<div class="rf-sec">'+rfBtn("rtFoco",focoIgual?"Trilha filtrada na prova ✓":"Trilha só com as matérias de "+esc(c.curto||c.nome),focoIgual?"Toque para voltar a todas as matérias":dsAlvo.length+" matérias do edital; as outras ficam guardadas",focoIgual?"Desfazer":"Aplicar")+'</div>';
   ovInner.innerHTML=h;
+  var ra=document.getElementById("rtAnki"); if(ra) ra.onclick=function(){ L.finished=true; closeOv(); ankHub(); };
   var fb=document.getElementById("rtFoco"); if(fb) fb.onclick=function(){ var sel={}; if(!focoIgual) dsAlvo.forEach(function(d){ sel[d]=true; }); L.finished=true; closeOv(); focoAplicar(sel); };
   var prox=null; for(var i=0;i<bl.length;i++){ if(!bl[i].ok){ prox=bl[i]; break; } }
   setFoot("",'<button class="ghost" id="rfFecha" style="flex:0 0 auto">Fechar</button>'+(prox?'<button class="big" id="rtProx" style="flex:1">Começar: '+esc(prox.tit)+'</button>':'<button class="big" id="rtProx" style="flex:1" disabled>Dia completo</button>'));
@@ -4196,6 +4129,7 @@ function monAlertaEl(){
     var ids=monQids(a.d);
     if(ids.length){ var bt=el("button","big","Treinar 15 questões de "+esc(DISC[a.d].nome)); bt.type="button"; bt.onclick=function(){ startSprint(Math.min(15,ids.length),ids.slice(0,15),"Reforço · "+DISC[a.d].nome); }; row.appendChild(bt); }
   }
+  if(a.d){ var ak=el("button","ghost","Cartas no Anki"); ak.type="button"; ak.onclick=function(){ ankEstuda(ankIdsDisc(a.d),DISC[a.d].nome,{disc:a.d}); }; row.appendChild(ak); }
   var vd=el("button","ghost","Ver desempenho"); vd.type="button"; vd.onclick=function(){ monTela(); }; row.appendChild(vd);
   b.appendChild(row); return b;
 }
@@ -4779,7 +4713,8 @@ function hojeCard(){
       ["i-book","Reforma Tributária","flashcards e questões",function(){ rfHub(); }],
       ["i-list","Post LinkedIn","tema do dia e da semana",function(){ liHub(); }],
       ["i-trophy","Desempenho",(function(){ try{ var a=monJan(-6,0),b=monJan(-13,-7),g=monSeta(a,b,15); return a.n?(monPct(a.acc)+" em 7 dias · "+g.t.split(" (")[0].replace(/^[▲▼▬] /,"")):"acertos, erros e tendência"; }catch(e){ return "acertos, erros e tendência"; } })(),function(){ monTela(); }],
-      ["i-mic","Áudio","ouvir cartas, teoria e Reforma",function(){ auTela(); }],
+      ["i-mic","Áudios","aulas em áudio (Áudio Concursos)",function(){ try{ window.open("https://player.emaudioconcursos.com.br/home/53660-fiscal","_blank","noopener"); }catch(e){} }],
+      ["i-cards","Anki",(function(){ try{ var ids=[]; DISC_ORDER.forEach(function(d){ if(focoOk(d)) ids=ids.concat(ankIdsDisc(d)); }); var c=ankContagem(ids), k=ankCkIds(0).length; return c.n+" novas · "+c.a+" aprender · "+c.r+" revisar"+(k?" · "+k+" de 7/15/30 d":""); }catch(e){ return "cartas com repetição"; } })(),function(){ ankHub(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
     HJ_TEC=T[2][3];
@@ -5144,7 +5079,7 @@ function treinarHub(){
       var n=b.dataset.n;
       if(n==="treinar"){ treinarHub(); return; }
       if(n==="mapas"){ mapasHub(); return; }
-      if(n==="audio"){ auTela(); return; }
+      if(n==="audio"){ try{ window.open("https://player.emaudioconcursos.com.br/home/53660-fiscal","_blank","noopener"); }catch(e){} return; }
       if(n==="anki"){ ankHub(); return; }
       setNav(n); window.scrollTo(0,0);
     };
