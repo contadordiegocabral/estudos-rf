@@ -39,7 +39,7 @@ def rep(a, b):
     h = h.replace(a, b, 1)
 
 # ---------- paleta azul ----------
-root = '''  --paper:#F4F8FF; --surface:#FFFFFF; --surface-2:#EFF6FF;
+root = '''  --paper:#FFFFFF; --surface:#FFFFFF; --surface-2:#F5F7FA;
   --ink:#0F1F3D; --ink-2:#4A5B7A; --ink-3:#7587A6;
   --line:#D8E4F8; --line-strong:#BFD3F2;
   --brand:#1D4ED8; --brand-d:#12408A; --brand-ink:#1D4ED8;
@@ -139,7 +139,7 @@ for f in glob.glob(OUT + '/b0*.js'):
     s = open(f, encoding='utf8').read()
     o = 'var cs=["#2D8A4E","#C08A2A","#2A6F97","#63508C","#B26B2B"]'
     if o in s: open(f, 'w', encoding='utf8').write(s.replace(o, 'var cs=["#1D4ED8","#C08A2A","#0891B2","#4F46E5","#E11D48"]'))
-mf = open('manifest.webmanifest').read().replace('#2D8A4E', '#12408A').replace('"background_color": "#FFFFFF"', '"background_color": "#F4F8FF"')
+mf = open('manifest.webmanifest').read().replace('#2D8A4E', '#12408A').replace('"background_color": "#FFFFFF"', '"background_color": "#FFFFFF"')
 open(OUT + '/manifest.webmanifest', 'w').write(mf)
 for f in ['icon-180.png', 'icon-192.png', 'icon-512.png']: shutil.copy(f, OUT)
 
