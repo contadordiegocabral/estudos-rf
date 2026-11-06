@@ -3837,6 +3837,45 @@ function ankMapaTopico(mod){
   setFoot("",'<button class="big" id="ankVolta" style="flex:1">Voltar ao cartão</button>');
   document.getElementById("ankVolta").onclick=function(){ ankProx(); };
 }
+/* ---------- ANKI: bateria de questões do TEC, organizada por matéria e tema ---------- */
+function ankTecAgg(k){ var q=0,ok=0, d=S.tecDia||{}; Object.keys(d).forEach(function(dia){ var m=d[dia]&&d[dia].mods&&d[dia].mods[k]; if(m){ q+=m.q; ok+=m.ok; } }); return {q:q,ok:ok,acc:q?ok/q:null}; }
+function ankTecDisc(d){ var q=0,ok=0; DISC[d].mods.forEach(function(k){ var a=ankTecAgg(k); q+=a.q; ok+=a.ok; }); return {q:q,ok:ok,acc:q?ok/q:null}; }
+function ankBatSug(){
+  var w=ankPesos(), melhor=null;
+  ankEscopo().forEach(function(d){ DISC[d].mods.forEach(function(k){ var m=REG[k]; if(!m||!m.CARDS||!m.CARDS.length) return; var a=ankTecAgg(k), sc;
+    if(a.q>=5&&a.acc<0.7) sc=100+(0.7-a.acc)*100+(w[d]||0)*50; else if(!a.q) sc=(w[d]||0)*100; else return;
+    if(!melhor||sc>melhor.sc) melhor={k:k,d:d,sc:sc,a:a}; }); });
+  return melhor;
+}
+function ankBateria(){
+  rfOpen();
+  var foc=ankEscopo(), w=ankPesos(), sg=ankBatSug();
+  var h='<div class="rf-h"><span class="q-kicker">Anki · Questões</span><h2>Bateria de questões do TEC</h2><p>Os temas do Anki, com os cadernos do TEC de cada um. Resolva no TEC, registre o resultado aqui e veja onde você acerta e onde erra.</p></div>';
+  if(sg) h+=rfBtn("batSug","Sugerido agora: "+esc(ankCurto(REG[sg.k].nome,60)),(sg.a.q?("você acertou "+Math.round(sg.a.acc*100)+"% em "+sg.a.q+" questões"):"ainda sem questões registradas")+" · "+esc(DISC[sg.d].nome),"Ir");
+  h+='<div class="rf-sec"><h3>Matérias</h3>';
+  foc.forEach(function(d){ var a=ankTecDisc(d), tx=a.q?(Math.round(a.acc*100)+"% em "+a.q+" questões"):"sem questões registradas";
+    h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+(w[d]?' · '+Math.round(w[d]*100)+'% da prova':'')+'</b><small>'+tx+'</small></span><span class="ank-cs">'+(a.q?'<span class="ank-n '+(a.acc>=0.8?"ank-g":a.acc>=0.6?"ank-b":"ank-r")+'">'+Math.round(a.acc*100)+'%</span>':'—')+'</span></button>'; });
+  ovInner.innerHTML=h+'</div>'; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankBatDisc(x.getAttribute("data-d")); }; });
+  var sb=document.getElementById("batSug"); if(sb) sb.onclick=function(){ ankBatDisc(sg.d,sg.k); };
+}
+function ankBatDisc(d,aberto){
+  rfOpen();
+  var ms=DISC[d].mods.filter(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;});
+  var h='<div class="rf-h"><span class="q-kicker">Bateria · '+esc(DISC[d].nome)+'</span><h2>Temas</h2></div>';
+  ms.forEach(function(k,i){
+    var m=REG[k], a=ankTecAgg(k), lk=[]; try{ lk=tecLinksDe(k)||[]; }catch(e){}
+    var ex=[]; if(m.EX) Object.keys(m.EX).forEach(function(e){ if(m.EX[e]&&m.EX[e].t!=="match") ex.push(qjoin(k,e)); });
+    h+='<details class="ec-t" data-k="'+k+'"'+(aberto===k?" open":"")+'><summary><span class="ec-n">'+(i+1)+'</span><span class="ec-s"><b>'+esc(ankCurto(m.nome,90))+'</b><small>'+(a.q?(Math.round(a.acc*100)+"% em "+a.q+" questões"):"sem questões registradas")+'</small></span></summary><div class="ec-b">'+
+      '<div class="ec-l"><b>Questões no TEC</b>'+(lk.length?lk.slice(0,6).map(function(l){ return '<a href="'+esc(l.u)+'" target="_blank" rel="noopener">'+(l.real?'':'Montar caderno · ')+esc(ankCurto(l.n,50))+'</a>'; }).join(""):'<a href="https://www.tecconcursos.com.br/" target="_blank" rel="noopener">Abrir o TEC</a>')+'</div>'+
+      '<div class="ank-tr"><label>Fiz <input type="number" min="0" max="100" inputmode="numeric" class="bq" data-k="'+k+'"></label><label>Acertei <input type="number" min="0" max="100" inputmode="numeric" class="ba" data-k="'+k+'"></label><button type="button" class="ghost breg" data-k="'+k+'">Registrar</button></div>'+
+      '<div class="ec-a"><button type="button" class="ghost bank" data-k="'+k+'">Cartas no Anki</button>'+(ex.length?'<button type="button" class="ghost btrn" data-k="'+k+'">10 questões no app</button>':'')+'</div></div></details>';
+  });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankBateria;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".breg"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"), q=parseInt(ovInner.querySelector('.bq[data-k="'+k+'"]').value,10)||0, ok=parseInt(ovInner.querySelector('.ba[data-k="'+k+'"]').value,10)||0; if(!q) return; tecRegistra(k,q,Math.min(ok,q)); ankBatDisc(d,k); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".bank"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"); ankEstuda(ankIdsMods([k]),REG[k].nome,{volta:d,disc:d,mod:k}); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".btrn"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"), m=REG[k], ids=[]; Object.keys(m.EX).forEach(function(e){ if(m.EX[e]&&m.EX[e].t!=="match") ids.push(qjoin(k,e)); }); ids=shuffle(ids).slice(0,10); startSprint(ids.length,ids,"Treino · "+ankCurto(m.nome,40)); }; });
+}
 function ankCkB(f){
   var st=ankS().c[f]; if(!st||st.susp||!st.fd) return 0;
   var age=daysBetween(st.fd,today()), ck=st.ck||{}, b=0;
@@ -3876,7 +3915,7 @@ function ankHub(){
     '<div class="ank-mix" role="group" aria-label="Ordem"><button type="button" data-m="0" aria-pressed="'+(!cf.mix)+'"><b>Uma matéria por vez</b><small>termina uma e passa para a próxima</small></button><button type="button" data-m="1" aria-pressed="'+(!!cf.mix)+'"><b>Embaralhado</b><small>mistura os temas das matérias marcadas</small></button></div>'+
     rfBtn("ankAll","Estudar "+sel.length+(sel.length===1?" matéria":" matérias")+(cf.mix?" embaralhadas":""),pend+" cartas para hoje (novas, aprender e revisar)",pend,!pend)+'</div>';
   var k7=ankCkIds(7).length,k15=ankCkIds(15).length,k30=ankCkIds(30).length;
-  h+='<div class="rf-sec"><h3>Revisões de 7, 15 e 30 dias</h3><p class="ra-nota">Cada carta volta uma vez com 7, 15 e 30 dias desde que você a viu pela primeira vez. Acertar não muda a agenda; errar manda a carta de volta ao aprendizado.</p><div class="ank-ck"><button type="button" data-k="7"'+(k7?"":" disabled")+'><span class="ank-n ank-p">'+k7+'</span><small>7 dias</small></button><button type="button" data-k="15"'+(k15?"":" disabled")+'><span class="ank-n ank-p">'+k15+'</span><small>15 dias</small></button><button type="button" data-k="30"'+(k30?"":" disabled")+'><span class="ank-n ank-p">'+k30+'</span><small>30 dias</small></button></div></div>';
+  h+=rfBtn("ankBat","Bateria de questões do TEC","Cadernos do TEC por matéria e tema, com seu resultado","Abrir")+'<div class="rf-sec"><h3>Revisões de 7, 15 e 30 dias</h3><p class="ra-nota">Cada carta volta uma vez com 7, 15 e 30 dias desde que você a viu pela primeira vez. Acertar não muda a agenda; errar manda a carta de volta ao aprendizado.</p><div class="ank-ck"><button type="button" data-k="7"'+(k7?"":" disabled")+'><span class="ank-n ank-p">'+k7+'</span><small>7 dias</small></button><button type="button" data-k="15"'+(k15?"":" disabled")+'><span class="ank-n ank-p">'+k15+'</span><small>15 dias</small></button><button type="button" data-k="30"'+(k30?"":" disabled")+'><span class="ank-n ank-p">'+k30+'</span><small>30 dias</small></button></div></div>';
   h+='<div class="rf-sec"><h3>Baralhos por matéria</h3>';
   foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
     h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
@@ -3892,6 +3931,7 @@ function ankHub(){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-mix button"),function(x){ x.onclick=function(){ cf.mix=x.getAttribute("data-m")==="1"; persist(); ankHub(); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-ck button"),function(x){ x.onclick=function(){ var K=parseInt(x.getAttribute("data-k"),10); ankEstuda(ankCkIds(K),"Revisão de "+K+" dias",{ck:K}); }; });
+  document.getElementById("ankBat").onclick=ankBateria;
   document.getElementById("ankHoje").onclick=function(){ L.finished=true; closeOv(); setNav("hoje"); window.scrollTo(0,0); };
   document.getElementById("ankTrilha").onclick=function(){ L.finished=true; closeOv(); setNav("trilha"); window.scrollTo(0,0); };
   document.getElementById("ankAprof").onclick=function(){ apHub(); };
