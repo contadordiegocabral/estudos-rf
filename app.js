@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"light",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,ank:S.ank||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"light",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,ank:S.ank||null,ec:S.ec||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3780,7 +3780,7 @@ function ankHub(){
   h+='<div class="rf-sec"><h3>Baralhos por matéria</h3>';
   foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
     h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
-  h+='</div><div class="rf-sec"><h3>Ferramentas</h3>'+rfBtn("ankEst","Estatísticas","Hoje, previsão de revisões e maturidade das cartas","Ver")+rfBtn("ankBusca","Buscar cartas","Procure por palavra, suspenda ou reative cartas","Abrir")+
+  h+='</div><div class="rf-sec"><h3>Ferramentas</h3>'+rfBtn("ankEc","Estudo completo","Resumo, Anki, questões do TEC e áudios de cada tópico","Abrir")+rfBtn("ankEst","Estatísticas","Hoje, previsão de revisões e maturidade das cartas","Ver")+rfBtn("ankBusca","Buscar cartas","Procure por palavra, suspenda ou reative cartas","Abrir")+
     '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><p class="ra-nota">Conexões: erros em cartas da trilha e do treino voltam sozinhos ao Anki; o acerto aqui entra no Desempenho.</p></div>';
   ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
   document.getElementById("rfFecha").onclick=function(){ closeOv(); };
@@ -3788,7 +3788,7 @@ function ankHub(){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-ck button"),function(x){ x.onclick=function(){ var K=parseInt(x.getAttribute("data-k"),10); ankEstuda(ankCkIds(K),"Revisão de "+K+" dias",{ck:K}); }; });
   document.getElementById("ankNovas").onchange=function(){ ankS().cfg.novas=parseInt(this.value,10)||20; persist(); ankHub(); };
-  document.getElementById("ankEst").onclick=ankEst; document.getElementById("ankBusca").onclick=ankBusca;
+  document.getElementById("ankEc").onclick=ecHub; document.getElementById("ankEst").onclick=ankEst; document.getElementById("ankBusca").onclick=ankBusca;
 }
 function ankDeck(d){
   rfOpen();
@@ -3937,6 +3937,53 @@ function ankBusca(){
       return '<div class="ra-card"><b>'+esc(rfTxt(c[0]))+'</b><div>'+c[1]+'</div><small>'+esc(REG[qsplit(f).m].nome.slice(0,60))+' · '+sit+'</small><button type="button" class="ghost ank-sp" data-f="'+f+'">'+(st&&st.susp?"Reativar":"Suspender")+'</button></div>'; }).join(""):'<p class="ra-nota">Nada encontrado.</p>';
     Array.prototype.forEach.call(res.querySelectorAll(".ank-sp"),function(b){ b.onclick=function(){ var f=b.getAttribute("data-f"), x=a.c[f]||{t:0,ivl:0,ease:2.5,step:0,lap:0,rep:0}; if(x.susp) delete x.susp; else x.susp=1; a.c[f]=x; if(!x.susp&&x.t===0&&!x.rep) delete a.c[f]; persist(); go(); }; });
   }
+}
+
+/* ---------- ESTUDO COMPLETO: resumo, Anki, questões do TEC e áudios por tópico ---------- */
+var EC_AUDIO="https://player.emaudioconcursos.com.br/home/53660-fiscal", EC_CACHE={};
+function ecS(){ if(!S.ec) S.ec={done:{}}; if(!S.ec.done) S.ec.done={}; return S.ec; }
+function ecResumo(k){
+  if(EC_CACHE[k]) return EC_CACHE[k];
+  var m=REG[k], out=[];
+  if(m&&m.TEORIA){
+    Object.keys(m.TEORIA).forEach(function(ch){ (m.TEORIA[ch]||[]).forEach(function(t){
+      if(out.length>=4) return;
+      var doc=document.createElement("div"); doc.innerHTML=t.b||""; var p=doc.querySelector("p"), tx=p?rfTxt(p.innerHTML):"";
+      var fr=tx?rfPrimeira(tx):""; if(fr.length>170) fr=fr.slice(0,167).replace(/\s+\S*$/,"")+"…";
+      if(t.h||fr) out.push({h:t.h||"",t:fr});
+    }); });
+  }
+  if(!out.length&&m&&m.CARDS){ for(var i=0;i<Math.min(3,m.CARDS.length);i++){ var a=rfTxt(m.CARDS[i][1]); if(a.length>170) a=a.slice(0,167)+"…"; out.push({h:rfTxt(m.CARDS[i][0]),t:a}); } }
+  EC_CACHE[k]=out; return out;
+}
+function ecHub(){
+  rfOpen();
+  var foc=DISC_ORDER.filter(function(d){ return focoOk(d)&&DISC[d].mods.some(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;}); }), dn=ecS().done;
+  var h='<div class="rf-h"><span class="q-kicker">Estudo completo</span><h2>Escolha a matéria</h2><p>Para cada tópico: resumo, cartas no Anki, questões no TEC, áudios e teoria completa. Marque como estudado ao terminar.</p></div>';
+  foc.forEach(function(d){
+    var ms=DISC[d].mods.filter(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;}), ok=ms.filter(function(k){return dn[k];}).length, ct=ankContagem(ankIdsDisc(d));
+    h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+ok+' de '+ms.length+' tópicos estudados · Anki hoje: '+(ct.n+ct.a+ct.r)+'</small></span><span class="ank-cs">'+Math.round(ok/Math.max(1,ms.length)*100)+'%</span></button>';
+  });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ecDisc(x.getAttribute("data-d")); }; });
+}
+function ecDisc(d,aberto){
+  rfOpen();
+  var ms=DISC[d].mods.filter(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;}), dn=ecS().done, ok=ms.filter(function(k){return dn[k];}).length;
+  var h='<div class="rf-h"><span class="q-kicker">Estudo completo · '+esc(DISC[d].nome)+'</span><h2>'+ok+' de '+ms.length+' tópicos</h2></div><div class="ank-bar"><i style="width:'+Math.round(ok/Math.max(1,ms.length)*100)+'%"></i></div>';
+  ms.forEach(function(k,i){
+    var m=REG[k], ct=ankContagem(ankIdsMods([k])), rs=ecResumo(k), lk=[]; try{ lk=tecLinksDe(k)||[]; }catch(e){}
+    h+='<details class="ec-t'+(dn[k]?" ok":"")+'" data-k="'+k+'"'+((aberto===k||(!aberto&&!dn[k]&&i===ms.findIndex(function(x){return !dn[x];})))?" open":"")+'><summary><span class="ec-n">'+(dn[k]?"✓":(i+1))+'</span><span class="ec-s"><b>'+esc(m.nome.length>90?m.nome.slice(0,89)+"…":m.nome)+'</b><small>'+m.CARDS.length+' cartas · Anki hoje: '+(ct.n+ct.a+ct.r)+'</small></span></summary><div class="ec-b">'+
+      '<ul class="ec-r">'+rs.map(function(r){ return '<li>'+(r.h?'<b>'+esc(r.h)+'.</b> ':'')+esc(r.t)+'</li>'; }).join("")+'</ul>'+
+      '<div class="ec-a"><button type="button" class="big ec-anki" data-k="'+k+'">Estudar no Anki</button><button type="button" class="ghost ec-teo" data-k="'+k+'">Teoria completa</button></div>'+
+      '<div class="ec-l"><b>Questões no TEC</b>'+(lk.length?lk.slice(0,4).map(function(l){ return '<a href="'+esc(l.u)+'" target="_blank" rel="noopener">'+esc(l.n.length>46?l.n.slice(0,45)+"…":l.n)+'</a>'; }).join(""):'<a href="https://www.tecconcursos.com.br/" target="_blank" rel="noopener">Abrir o TEC</a>')+'</div>'+
+      '<div class="ec-l"><b>Áudios</b><a href="'+EC_AUDIO+'" target="_blank" rel="noopener">Abrir no Áudio Concursos</a></div>'+
+      '<button type="button" class="ghost ec-ok" data-k="'+k+'">'+(dn[k]?"Desmarcar estudado":"Marcar como estudado")+'</button></div></details>';
+  });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ecHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ec-anki"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"); ankEstuda(ankIdsMods([k]),REG[k].nome,{volta:d,disc:d,mod:k}); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ec-teo"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"); L.finished=true; closeOv(); rdAbreMod(k); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ec-ok"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"), x=ecS().done; if(x[k]) delete x[k]; else { x[k]=today(); addXp(3); } persist(); ecDisc(d,k); }; });
 }
 
 /* ---------- ROTEIRO DE HOJE: a divisão do dia, pronta para seguir ---------- */
@@ -4714,6 +4761,7 @@ function hojeCard(){
       ["i-list","Post LinkedIn","tema do dia e da semana",function(){ liHub(); }],
       ["i-trophy","Desempenho",(function(){ try{ var a=monJan(-6,0),b=monJan(-13,-7),g=monSeta(a,b,15); return a.n?(monPct(a.acc)+" em 7 dias · "+g.t.split(" (")[0].replace(/^[▲▼▬] /,"")):"acertos, erros e tendência"; }catch(e){ return "acertos, erros e tendência"; } })(),function(){ monTela(); }],
       ["i-mic","Áudios","aulas em áudio (Áudio Concursos)",function(){ try{ window.open("https://player.emaudioconcursos.com.br/home/53660-fiscal","_blank","noopener"); }catch(e){} }],
+      ["i-book","Estudo completo","resumo + Anki + TEC + áudios",function(){ ecHub(); }],
       ["i-cards","Anki",(function(){ try{ var ids=[]; DISC_ORDER.forEach(function(d){ if(focoOk(d)) ids=ids.concat(ankIdsDisc(d)); }); var c=ankContagem(ids), k=ankCkIds(0).length; return c.n+" novas · "+c.a+" aprender · "+c.r+" revisar"+(k?" · "+k+" de 7/15/30 d":""); }catch(e){ return "cartas com repetição"; } })(),function(){ ankHub(); }],
       ["i-clock","Cronômetro",(cronS().run?"rodando agora":"marcar o tempo de estudo"),function(){ cronTela(); }]
     ];
@@ -5470,7 +5518,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,ank:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,ank:1,ec:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -5665,7 +5713,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.ank)S.ank=d.ank; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.ank)S.ank=d.ank; if(d.ec)S.ec=d.ec; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
