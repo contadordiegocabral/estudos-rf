@@ -3813,6 +3813,30 @@ function ankCheck(motivo){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-reg"),function(b){ b.onclick=function(){ var i=+b.getAttribute("data-i"), q=parseInt(ovInner.querySelector('.ank-tq[data-i="'+i+'"]').value,10)||0, ok=parseInt(ovInner.querySelector('.ank-ta[data-i="'+i+'"]').value,10)||0; if(!q) return; tecRegistra(ls[i].mod,q,Math.min(ok,q)); b.textContent="Registrado ✓"; b.disabled=true; }; });
   document.getElementById("ankCont").onclick=function(){ AN.rec=[]; ankProx(); };
 }
+/* ---------- ANKI: visual (mapa ou fluxo) na resposta e mapa do tópico ---------- */
+function ankCurto(t,n){ t=(t||"").replace(/\s+/g," ").trim(); return t.length>n?t.slice(0,n-1).replace(/\s+\S*$/,"")+"…":t; }
+function ankSegs(ans){
+  var fl=ans.split(/\s*(?:→|➜|=>|->)\s*/).map(function(x){return x.trim();}).filter(function(x){return x.length>1;});
+  if(fl.length>=3) return {tipo:"fluxo",p:fl.slice(0,7).map(function(x){return ankCurto(x,44);})};
+  var ps=ans.split(/;|\.(?=\s)|,\s|\s+e\s+(?=[a-zà-ú])|\s+ou\s+(?=[a-zà-ú])/).map(function(x){return x.trim();}).filter(function(x){return x.length>2;});
+  if(ps.length>=3) return {tipo:"mapa",p:ps.slice(0,6).map(function(x){return ankCurto(x,48);})};
+  return null;
+}
+function ankVisualHtml(c){
+  if(ankS().cfg.vis===false) return "";
+  var q=rfTxt(c[0]), a=rfTxt(c[1]), sg=ankSegs(a), btn='<button type="button" class="ghost ank-mt">Ver mapa do tópico</button>', v="";
+  if(sg&&sg.tipo==="fluxo") v='<b>Fluxo</b><div class="ank-fl">'+sg.p.map(function(x,i){ return (i?'<span class="ank-ar" aria-hidden="true">→</span>':'')+'<span class="ank-bx">'+esc(x)+'</span>'; }).join("")+'</div>';
+  else if(sg) v='<b>Mapa mental</b><div class="ank-mm"><div class="ank-mc">'+esc(ankCurto(q.replace(/[?:]\s*$/,""),70))+'</div><ul>'+sg.p.map(function(x,i){ return '<li class="mm'+(i%5)+'">'+esc(x)+'</li>'; }).join("")+'</ul></div>';
+  return '<div class="ank-vis">'+v+btn+'</div>';
+}
+function ankMapaTopico(mod){
+  rfOpen(); var m=REG[mod], itens=[];
+  if(m&&m.TEORIA) Object.keys(m.TEORIA).forEach(function(ch){ (m.TEORIA[ch]||[]).forEach(function(t){ if(t.h&&itens.length<9){ var doc=document.createElement("div"); doc.innerHTML=t.b||""; var p=doc.querySelector("p"), tx=p?rfPrimeira(rfTxt(p.innerHTML)):""; itens.push({h:t.h,t:ankCurto(tx,90)}); } }); });
+  if(!itens.length&&m&&m.CARDS) for(var i=0;i<Math.min(6,m.CARDS.length);i++) itens.push({h:ankCurto(rfTxt(m.CARDS[i][0]),60),t:ankCurto(rfTxt(m.CARDS[i][1]),90)});
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Mapa do tópico</span><h2>'+esc(ankCurto(m.nome,90))+'</h2></div><div class="ank-mm big"><div class="ank-mc">'+esc(ankCurto(m.nome,70))+'</div><ul>'+itens.map(function(x,i){ return '<li class="mm'+(i%5)+'"><b>'+esc(x.h)+'</b>'+(x.t?'<small>'+esc(x.t)+'</small>':'')+'</li>'; }).join("")+'</ul></div>';
+  setFoot("",'<button class="big" id="ankVolta" style="flex:1">Voltar ao cartão</button>');
+  document.getElementById("ankVolta").onclick=function(){ ankProx(); };
+}
 function ankCkB(f){
   var st=ankS().c[f]; if(!st||st.susp||!st.fd) return 0;
   var age=daysBetween(st.fd,today()), ck=st.ck||{}, b=0;
@@ -3839,7 +3863,7 @@ function ankBarra(){ var p=ankPct(); return '<div class="ank-bar" role="progress
 function ankHub(){
   rfOpen();
   var a=ankS(), foc=ankEscopo(), esc0=a.cfg.escopo||"f80", pw=ankPesos();
-  var h='<div class="rf-h"><span class="q-kicker">Anki</span><h2>Baralhos</h2><p>As cartas do app em baralhos por matéria e módulo. Você avalia cada resposta e o intervalo se ajusta sozinho.</p></div>';
+  var h='<div class="ank-nav"><button type="button" id="ankHoje">Hoje</button><button type="button" id="ankTrilha">Trilha</button><button type="button" id="ankAprof">Aprofundar</button></div><div class="rf-h"><span class="q-kicker">Anki</span><h2>Baralhos</h2><p>As cartas do app em baralhos por matéria e módulo. Você avalia cada resposta e o intervalo se ajusta sozinho.</p></div>';
   var ids=[]; foc.forEach(function(d){ ids=ids.concat(ankIdsDisc(d)); });
   var tot=ankContagem(ids);
   h+='<div class="ank-tot"><div><small>Novas</small>'+ankConta(tot.n,"ank-b")+'</div><div><small>Aprender</small>'+ankConta(tot.a,"ank-r")+'</div><div><small>Revisar</small>'+ankConta(tot.r,"ank-g")+'</div></div>';
@@ -3857,7 +3881,7 @@ function ankHub(){
   foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
     h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
   h+='</div><div class="rf-sec"><h3>Ferramentas</h3>'+rfBtn("ankEc","Estudo completo","Resumo, Anki, questões do TEC e áudios de cada tópico","Abrir")+rfBtn("ankEst","Estatísticas","Hoje, previsão de revisões e maturidade das cartas","Ver")+rfBtn("ankBusca","Buscar cartas","Procure por palavra, suspenda ou reative cartas","Abrir")+
-    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Teste no TEC a cada <select id="ankCp">'+[[10,"10 cartas"],[15,"15 cartas"],[25,"25 cartas"],[40,"40 cartas"],[0,"desligado"]].map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===(a.cfg.cp==null?25:a.cfg.cp)?" selected":"")+'>'+x[1]+'</option>'; }).join("")+'</select></label><p class="ra-nota">Conexões: erros em cartas da trilha e do treino voltam sozinhos ao Anki; o acerto aqui entra no Desempenho.</p></div>';
+    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Teste no TEC a cada <select id="ankCp">'+[[10,"10 cartas"],[15,"15 cartas"],[25,"25 cartas"],[40,"40 cartas"],[0,"desligado"]].map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===(a.cfg.cp==null?25:a.cfg.cp)?" selected":"")+'>'+x[1]+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Mapa ou fluxo na resposta <select id="ankVis"><option value="1"'+(a.cfg.vis===false?"":" selected")+'>ligado</option><option value="0"'+(a.cfg.vis===false?" selected":"")+'>desligado</option></select></label><p class="ra-nota">Conexões: erros em cartas da trilha e do treino voltam sozinhos ao Anki; o acerto aqui entra no Desempenho.</p></div>';
   ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
   document.getElementById("rfFecha").onclick=function(){ closeOv(); };
   var b=document.getElementById("ankAll"); if(b&&!b.disabled) b.onclick=function(){ var gr=sel.map(function(d){return ankIdsDisc(d);}); ankEstuda(selIds,sel.length===1?DISC[sel[0]].nome:(cf.mix?"Embaralhado":sel.length+" matérias"),{mix:!!cf.mix,groups:gr,disc:sel.length===1?sel[0]:null}); };
@@ -3868,6 +3892,10 @@ function ankHub(){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-mix button"),function(x){ x.onclick=function(){ cf.mix=x.getAttribute("data-m")==="1"; persist(); ankHub(); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-ck button"),function(x){ x.onclick=function(){ var K=parseInt(x.getAttribute("data-k"),10); ankEstuda(ankCkIds(K),"Revisão de "+K+" dias",{ck:K}); }; });
+  document.getElementById("ankHoje").onclick=function(){ L.finished=true; closeOv(); setNav("hoje"); window.scrollTo(0,0); };
+  document.getElementById("ankTrilha").onclick=function(){ L.finished=true; closeOv(); setNav("trilha"); window.scrollTo(0,0); };
+  document.getElementById("ankAprof").onclick=function(){ apHub(); };
+  document.getElementById("ankVis").onchange=function(){ ankS().cfg.vis=this.value==="1"; persist(); };
   document.getElementById("ankCp").onchange=function(){ ankS().cfg.cp=parseInt(this.value,10); persist(); ankHub(); };
   document.getElementById("ankNovas").onchange=function(){ ankS().cfg.novas=parseInt(this.value,10)||20; persist(); ankHub(); };
   document.getElementById("ankEc").onclick=ecHub; document.getElementById("ankEst").onclick=ankEst; document.getElementById("ankBusca").onclick=ankBusca;
@@ -3915,7 +3943,8 @@ function ankCardTela(){
   var cont=ck?'<span class="ank-cs">'+ankConta(ankResta(),"ank-p",true)+'</span>':(function(){ var ct=ankContagem(AN.ids); return '<span class="ank-cs">'+ankConta(ct.n,"ank-b",p.k==="n")+ankConta(ct.a,"ank-r",p.k==="a")+ankConta(ct.r,"ank-g",p.k==="r")+'</span>'; })();
   var dN=DISC[ankDiscDe(p.f)]?DISC[ankDiscDe(p.f)].nome:"", rg=""; try{ rg=ankReguaHtml(ankRegua(ankEscopo()),true); }catch(e){}
   ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span>'+cont+'</div>'+ankBarra()+rg+'<div class="ank-disc">'+esc(dN)+'</div>'+
-    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
+    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+ankVisualHtml(c)+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
+  var mt=ovInner.querySelector(".ank-mt"); if(mt) mt.onclick=function(){ ankMapaTopico(mod); };
   ankFoot(); setProg(ankPct());
 }
 function ankProx(){
@@ -3999,7 +4028,7 @@ function ankMenu(){
   var pop=el("div","ank-pop","");
   pop.id="ankPop";
   pop.innerHTML='<b>Aprofundar este tópico</b>'+
-    '<button type="button" data-a="teo">Teoria do tópico</button><button type="button" data-a="tec">Questões no TEC</button><button type="button" data-a="aud">Áudios</button><button type="button" data-a="map">Mapas mentais</button>'+(ex.length?'<button type="button" data-a="trn">Treinar 10 questões do tópico</button>':'')+
+    '<button type="button" data-a="mapt">Mapa do tópico</button><button type="button" data-a="teo">Teoria do tópico</button><button type="button" data-a="tec">Questões no TEC</button><button type="button" data-a="aud">Áudios</button><button type="button" data-a="map">Mapas mentais</button>'+(ex.length?'<button type="button" data-a="trn">Treinar 10 questões do tópico</button>':'')+
     '<button type="button" data-a="sus" class="ank-danger">Suspender esta carta</button><button type="button" data-a="x">Fechar</button>';
   ovInner.appendChild(pop);
   Array.prototype.forEach.call(pop.querySelectorAll("button"),function(b){ b.onclick=function(){
@@ -4008,6 +4037,7 @@ function ankMenu(){
     if(a==="sus"){ var A=ankS(), prev=A.c[f]||{t:0,ivl:0,ease:2.5,step:0,lap:0,rep:0}; prev.susp=1; A.c[f]=prev; persist(); pop.remove(); ankProx(); return; }
     if(a==="tec"){ var lk=[]; try{ lk=tecLinksDe(mod)||[]; }catch(e){} try{ window.open(lk.length?lk[0].u:"https://www.tecconcursos.com.br/","_blank","noopener"); }catch(e){} pop.remove(); return; }
     if(a==="aud"){ try{ window.open(EC_AUDIO,"_blank","noopener"); }catch(e){} pop.remove(); return; }
+    if(a==="mapt"){ ankMapaTopico(mod); return; }
     ankFim(); L.finished=true;
     if(a==="teo"){ closeOv(); rdAbreMod(mod); }
     else if(a==="map"){ mapasHub(); }
@@ -5269,6 +5299,7 @@ function treinarHub(){
     };
   });
   setNav("hoje");
+  setTimeout(function(){ try{ var o=document.getElementById("ov"); if(!o||!o.classList.contains("on")) ankHub(); }catch(e){} },700);
 })();
 
 function contCard(){
