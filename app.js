@@ -3822,18 +3822,18 @@ function ankSegs(ans){
   if(ps.length>=3) return {tipo:"mapa",p:ps.slice(0,6).map(function(x){return ankCurto(x,48);})};
   return null;
 }
-function ankVisualHtml(c){
+function ankVisualHtml(c,mod){
   if(ankS().cfg.vis===false) return "";
-  var q=rfTxt(c[0]), a=rfTxt(c[1]), sg=ankSegs(a), btn='<button type="button" class="ghost ank-mt">Ver mapa do tópico</button>', v="";
-  if(sg&&sg.tipo==="fluxo") v='<b>Fluxo</b><div class="ank-fl">'+sg.p.map(function(x,i){ return (i?'<span class="ank-ar" aria-hidden="true">→</span>':'')+'<span class="ank-bx">'+esc(x)+'</span>'; }).join("")+'</div>';
-  else if(sg) v='<b>Mapa mental</b><div class="ank-mm"><div class="ank-mc">'+esc(ankCurto(q.replace(/[?:]\s*$/,""),70))+'</div><ul>'+sg.p.map(function(x,i){ return '<li class="mm'+(i%5)+'">'+esc(x)+'</li>'; }).join("")+'</ul></div>';
-  return '<div class="ank-vis">'+v+btn+'</div>';
+  var q=rfTxt(c[0]), a=rfTxt(c[1]), sg=ankSegs(a), v="", rv=rfvPorMod(mod);
+  if(sg&&sg.tipo==="fluxo") v='<b>Fluxo</b><div class="vis-box">'+visFluxo({titulo:"Fluxo",itens:sg.p.map(function(x){return {h:x,t:""};})})+'</div>';
+  else if(sg) v='<b>Mapa mental</b><div class="vis-box">'+visMapa({titulo:"Mapa mental",centro:ankCurto(q.replace(/[?:]\s*$/,""),60),itens:sg.p.map(function(x){return {h:x,t:""};})})+'</div>';
+  return '<div class="ank-vis">'+v+'<div class="ec-a"><button type="button" class="ghost ank-mt">Mapa do tópico</button>'+(rv?'<button type="button" class="ghost ank-mr" data-id="'+rv.id+'">Mapa da Reforma</button>':'')+'</div></div>';
 }
 function ankMapaTopico(mod){
   rfOpen(); var m=REG[mod], itens=[];
   if(m&&m.TEORIA) Object.keys(m.TEORIA).forEach(function(ch){ (m.TEORIA[ch]||[]).forEach(function(t){ if(t.h&&itens.length<9){ var doc=document.createElement("div"); doc.innerHTML=t.b||""; var p=doc.querySelector("p"), tx=p?rfPrimeira(rfTxt(p.innerHTML)):""; itens.push({h:t.h,t:ankCurto(tx,90)}); } }); });
   if(!itens.length&&m&&m.CARDS) for(var i=0;i<Math.min(6,m.CARDS.length);i++) itens.push({h:ankCurto(rfTxt(m.CARDS[i][0]),60),t:ankCurto(rfTxt(m.CARDS[i][1]),90)});
-  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Mapa do tópico</span><h2>'+esc(ankCurto(m.nome,90))+'</h2></div><div class="ank-mm big"><div class="ank-mc">'+esc(ankCurto(m.nome,70))+'</div><ul>'+itens.map(function(x,i){ return '<li class="mm'+(i%5)+'"><b>'+esc(x.h)+'</b>'+(x.t?'<small>'+esc(x.t)+'</small>':'')+'</li>'; }).join("")+'</ul></div>';
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Mapa do tópico</span><h2>'+esc(ankCurto(m.nome,90))+'</h2></div><div class="vis-box">'+visMapa({titulo:m.nome,centro:ankCurto(m.nome,60),itens:itens.map(function(x){return {h:ankCurto(x.h,48),t:x.t};})})+'</div>';
   setFoot("",'<button class="big" id="ankVolta" style="flex:1">Voltar ao cartão</button>');
   document.getElementById("ankVolta").onclick=function(){ ankProx(); };
 }
@@ -3876,6 +3876,147 @@ function ankBatDisc(d,aberto){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".bank"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"); ankEstuda(ankIdsMods([k]),REG[k].nome,{volta:d,disc:d,mod:k}); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".btrn"),function(b){ b.onclick=function(){ var k=b.getAttribute("data-k"), m=REG[k], ids=[]; Object.keys(m.EX).forEach(function(e){ if(m.EX[e]&&m.EX[e].t!=="match") ids.push(qjoin(k,e)); }); ids=shuffle(ids).slice(0,10); startSprint(ids.length,ids,"Treino · "+ankCurto(m.nome,40)); }; });
 }
+/* ---------- ANKI: mapas e fluxos em SVG; biblioteca visual da Reforma Tributária ---------- */
+var VIS_COR=["#2d6cdf","#2e8b57","#d68910","#7d3cc8","#c0392b","#0e8f9a"];
+function visWrap(t,n,max){
+  var w=(t||"").replace(/\s+/g," ").trim().split(" "), ls=[], cur="";
+  w.forEach(function(x){ if((cur+" "+x).trim().length>n&&cur){ ls.push(cur); cur=x; } else cur=(cur+" "+x).trim(); });
+  if(cur) ls.push(cur);
+  if(ls.length>max){ ls=ls.slice(0,max); ls[max-1]=ls[max-1].replace(/\s*\S{0,3}$/,"")+"…"; }
+  return ls.length?ls:[""];
+}
+function visTxt(x,y,ls,st,lh){ return ls.map(function(l,i){ return '<text x="'+x+'" y="'+(y+i*lh)+'" style="'+st+'">'+esc(l)+'</text>'; }).join(""); }
+function visMapa(sp){
+  var it=sp.itens.slice(0,8), W=340, X=150, IW=186, R=50, g=10, cs=[], tot=0;
+  it.forEach(function(x){ var hl=visWrap(x.h,24,2), tl=x.t?visWrap(x.t,30,4):[], h=12+hl.length*14+tl.length*12.5+8; cs.push({hl:hl,tl:tl,h:h}); tot+=h; });
+  var H=Math.max(tot+g*(it.length-1)+16,2*R+20), y=(H-(tot+g*(it.length-1)))/2, cx=56, cy=H/2, out="";
+  var cl=visWrap(sp.centro,14,5);
+  cs.forEach(function(c,i){
+    var col=VIS_COR[i%VIS_COR.length], cyy=y+c.h/2;
+    out+='<path d="M'+(cx+R)+','+cy+' C'+(cx+R+40)+','+cy+' '+(X-40)+','+cyy+' '+X+','+cyy+'" fill="none" stroke="'+col+'" stroke-width="2.6" stroke-linecap="round" opacity=".85"/>';
+    out+='<rect x="'+X+'" y="'+y+'" width="'+IW+'" height="'+c.h+'" rx="11" fill="'+col+'" fill-opacity=".12" stroke="'+col+'" stroke-width="1.6"/>';
+    out+='<circle cx="'+X+'" cy="'+cyy+'" r="4.5" fill="'+col+'"/>';
+    out+=visTxt(X+12,y+19,c.hl,"font:700 12px system-ui,sans-serif;fill:var(--ink)",14);
+    if(c.tl.length) out+=visTxt(X+12,y+19+(c.hl.length-1)*14+15,c.tl,"font:400 10.5px system-ui,sans-serif;fill:var(--ink-2)",12.5);
+    y+=c.h+g;
+  });
+  out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" style="fill:var(--brand)"/><circle cx="'+cx+'" cy="'+cy+'" r="'+(R-5)+'" fill="none" stroke="#fff" stroke-opacity=".35"/>';
+  out+=cl.map(function(l,i){ return '<text x="'+cx+'" y="'+(cy-(cl.length-1)*6.5+i*13+4)+'" text-anchor="middle" style="font:700 11px system-ui,sans-serif;fill:#fff">'+esc(l)+'</text>'; }).join("");
+  return '<svg class="vis-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(sp.titulo||sp.centro)+'">'+out+'</svg>';
+}
+function visFluxo(sp){
+  var it=sp.itens.slice(0,8), W=340, BX=46, BW=290, g=22, y=6, out="", cs=[];
+  it.forEach(function(x){ var hl=visWrap(x.h,34,2), tl=x.t?visWrap(x.t,44,5):[]; cs.push({hl:hl,tl:tl,h:12+hl.length*15+tl.length*13+8}); });
+  cs.forEach(function(c,i){
+    var col=VIS_COR[i%VIS_COR.length], cy=y+c.h/2;
+    if(i) out+='<line x1="20" y1="'+(y-g+13+6)+'" x2="20" y2="'+(y-8)+'" stroke="'+col+'" stroke-width="2.6" stroke-linecap="round"/><path d="M14,'+(y-9)+' L20,'+(y-1)+' L26,'+(y-9)+'" fill="none" stroke="'+col+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>';
+    out+='<rect x="'+BX+'" y="'+y+'" width="'+BW+'" height="'+c.h+'" rx="12" fill="'+col+'" fill-opacity=".12" stroke="'+col+'" stroke-width="1.6"/>';
+    out+='<circle cx="20" cy="'+cy+'" r="13" fill="'+col+'"/><text x="20" y="'+(cy+4.5)+'" text-anchor="middle" style="font:800 12px system-ui,sans-serif;fill:#fff">'+(i+1)+'</text>';
+    out+=visTxt(BX+12,y+20,c.hl,"font:700 12.5px system-ui,sans-serif;fill:var(--ink)",15);
+    if(c.tl.length) out+=visTxt(BX+12,y+20+(c.hl.length-1)*15+15,c.tl,"font:400 11px system-ui,sans-serif;fill:var(--ink-2)",13);
+    y+=c.h+g;
+  });
+  var H=y-g+8;
+  return '<svg class="vis-svg" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+esc(sp.titulo||"Fluxo")+'">'+out+'</svg>';
+}
+function visHtml(sp){ return sp.tipo==="fluxo"?visFluxo(sp):visMapa(sp); }
+var RFV=[
+ {id:"geral",titulo:"Visão geral da Reforma do consumo",tipo:"mapa",centro:"Reforma do consumo (EC 132/2023)",itens:[
+  {h:"CBS",t:"Contribuição federal sobre bens e serviços. Substitui PIS e Cofins."},
+  {h:"IBS",t:"Imposto de Estados e Municípios sobre bens e serviços. Substitui ICMS e ISS."},
+  {h:"IS",t:"Imposto Seletivo sobre bens e serviços prejudiciais à saúde ou ao meio ambiente."},
+  {h:"IVA dual",t:"Mesmas regras gerais para CBS e IBS: base ampla, não cumulatividade e cobrança no destino."},
+  {h:"Gestão",t:"CBS pela Receita Federal; IBS pelo Comitê Gestor (CGIBS)."},
+  {h:"Regulamentação",t:"LC 214/2025 institui IBS, CBS e IS. Transição até 2033."}]},
+ {id:"trans",titulo:"Linha do tempo da transição",tipo:"fluxo",centro:"Transição",itens:[
+  {h:"2026 · ano de teste",t:"CBS a 0,9% e IBS a 0,1%, compensáveis com tributos já existentes."},
+  {h:"2027 · CBS plena",t:"PIS e Cofins são extintos. IPI vai a zero, exceto produtos que competem com a Zona Franca. O Imposto Seletivo começa."},
+  {h:"2027 e 2028 · IBS de teste",t:"O IBS segue com alíquota de 0,1% enquanto ICMS e ISS continuam integrais."},
+  {h:"2029 a 2032 · troca gradual",t:"ICMS e ISS caem para 90%, 80%, 70% e 60% das alíquotas, enquanto o IBS sobe."},
+  {h:"2033 · modelo pleno",t:"ICMS e ISS são extintos. IBS e CBS valem integralmente."}]},
+ {id:"split",titulo:"Como funciona o split payment",tipo:"fluxo",centro:"Split payment",itens:[
+  {h:"Venda",t:"O fornecedor emite o documento fiscal com IBS e CBS destacados."},
+  {h:"Pagamento",t:"O cliente paga por meio eletrônico: Pix, cartão ou boleto."},
+  {h:"Separação",t:"O prestador do serviço de pagamento separa o valor do IBS e da CBS."},
+  {h:"Repasse",t:"O tributo vai direto ao Fisco: CGIBS para o IBS e Receita Federal para a CBS."},
+  {h:"Fornecedor",t:"Recebe o valor líquido do tributo."}]},
+ {id:"nc",titulo:"Não cumulatividade e créditos",tipo:"fluxo",centro:"Não cumulatividade",itens:[
+  {h:"Compra",t:"Você paga IBS e CBS destacados na nota do fornecedor."},
+  {h:"Crédito",t:"O imposto da compra vira crédito (crédito amplo). Exceção: bens de uso e consumo pessoal."},
+  {h:"Venda",t:"Você destaca IBS e CBS na sua nota. Esse é o débito."},
+  {h:"Apuração",t:"Débitos menos créditos. Você paga a diferença."},
+  {h:"Saldo credor",t:"Pode ser compensado ou ressarcido, conforme a lei."}]},
+ {id:"dif",titulo:"Alíquotas e regimes diferenciados",tipo:"mapa",centro:"Alíquotas diferenciadas",itens:[
+  {h:"Alíquota padrão",t:"Regra geral: soma de CBS, IBS estadual e IBS municipal."},
+  {h:"Redução de 60%",t:"Exemplos: educação, saúde, dispositivos médicos, transporte coletivo e certos alimentos."},
+  {h:"Redução de 30%",t:"Serviços de profissões intelectuais, científicas, literárias ou artísticas regulamentadas."},
+  {h:"Alíquota zero",t:"Cesta Básica Nacional de Alimentos e itens definidos em lei."},
+  {h:"Cashback",t:"Devolução de parte do IBS e da CBS a famílias de baixa renda."},
+  {h:"Anexos da LC 214",t:"A lista de produtos e serviços de cada regime está nos anexos."}]},
+ {id:"inc",titulo:"Incidência, local e contribuintes",tipo:"mapa",centro:"Incidência e contribuintes",itens:[
+  {h:"Fato gerador",t:"Fornecimento de bens e serviços, inclusive importações."},
+  {h:"Operação onerosa",t:"Regra geral. A lei prevê hipóteses de operações não onerosas."},
+  {h:"Local da operação",t:"Cobrança no destino, onde ocorre o consumo."},
+  {h:"Contribuinte",t:"Quem exerce atividade econômica com habitualidade ou volume, e o importador."},
+  {h:"Responsáveis",t:"A lei pode atribuir responsabilidade, inclusive a plataformas digitais."},
+  {h:"Imunidades e não incidência",t:"Exportações e imunidades constitucionais."}]},
+ {id:"imp",titulo:"Importação, exportação e regimes aduaneiros",tipo:"mapa",centro:"Comércio exterior",itens:[
+  {h:"Importação",t:"IBS e CBS incidem na entrada do bem ou serviço vindo do exterior."},
+  {h:"Isonomia",t:"Produto importado e nacional sofrem a mesma tributação."},
+  {h:"Exportação",t:"Não incide IBS e CBS, e os créditos são mantidos."},
+  {h:"Regimes aduaneiros",t:"Suspensões em regimes especiais, ZPE e bens de capital."}]},
+ {id:"fin",titulo:"Regimes específicos",tipo:"mapa",centro:"Regimes específicos",itens:[
+  {h:"Combustíveis",t:"Regime próprio de apuração."},
+  {h:"Serviços financeiros",t:"Base de cálculo e crédito com regras próprias."},
+  {h:"Planos de saúde",t:"Regime próprio."},
+  {h:"Bens imóveis",t:"Operações com imóveis têm regime específico."},
+  {h:"Cooperativas",t:"Regras próprias para atos cooperativos."},
+  {h:"Hotelaria, bares e turismo",t:"Restaurantes, hotéis e agências têm regras específicas."},
+  {h:"SAF",t:"Sociedade Anônima do Futebol."}]},
+ {id:"is",titulo:"Imposto Seletivo",tipo:"mapa",centro:"Imposto Seletivo",itens:[
+  {h:"Alvo",t:"Bens e serviços prejudiciais à saúde ou ao meio ambiente."},
+  {h:"Incidência única",t:"Incide uma só vez sobre o bem ou serviço."},
+  {h:"Extração",t:"Incide também sobre a extração, independentemente da destinação."},
+  {h:"Alíquotas",t:"Fixadas em lei ordinária."},
+  {h:"Início",t:"Passa a valer em 2027."}]},
+ {id:"gov",titulo:"Comitê Gestor do IBS",tipo:"mapa",centro:"Comitê Gestor (CGIBS)",itens:[
+  {h:"Natureza",t:"Entidade pública com independência técnica, administrativa, orçamentária e financeira."},
+  {h:"Composição",t:"Representantes dos Estados, do Distrito Federal e dos Municípios."},
+  {h:"Regulamento único",t:"Edita regras comuns do IBS para todo o país."},
+  {h:"Arrecadação",t:"Recolhe o IBS e distribui a Estados e Municípios."},
+  {h:"Contencioso",t:"Processo administrativo próprio do IBS."}]},
+ {id:"zfm",titulo:"Zona Franca de Manaus",tipo:"mapa",centro:"Zona Franca de Manaus",itens:[
+  {h:"Benefícios mantidos",t:"A Constituição preserva o modelo da Zona Franca até 2073."},
+  {h:"IPI",t:"Permanece apenas para produtos também fabricados na Zona Franca."},
+  {h:"Áreas de Livre Comércio",t:"Têm tratamento próprio na LC 214."}]},
+ {id:"sn",titulo:"Simples Nacional e MEI",tipo:"mapa",centro:"Simples Nacional",itens:[
+  {h:"Continuidade",t:"O Simples Nacional continua, com IBS e CBS dentro do DAS."},
+  {h:"Regime regular",t:"A empresa pode optar por recolher IBS e CBS pelo regime geral."},
+  {h:"Crédito ao cliente",t:"Quem compra do Simples toma crédito do valor pago no DAS. No regime regular, crédito integral."},
+  {h:"MEI",t:"Permanece, com regras próprias."}]},
+ {id:"cont",titulo:"Consulta, contencioso e fiscalização",tipo:"mapa",centro:"Processo e fiscalização",itens:[
+  {h:"Consulta",t:"O contribuinte pode consultar sobre a interpretação da lei."},
+  {h:"Contencioso",t:"Processo administrativo com instâncias do CGIBS e da Receita Federal."},
+  {h:"Fiscalização",t:"Atividade dos entes, com regras comuns de lançamento e penalidades."}]}
+];
+var RFV_G={inst:"inc",base:"inc",suj:"inc",split:"split",nc:"nc",imp:"imp",reg:"imp",dif:"dif",fin:"fin",cont:"cont",trans:"trans",is:"is",zfm:"zfm",gov:"gov",alt:"geral",sn:"sn"};
+function rfvPorMod(mod){ var g=window.RF_CORR&&window.RF_CORR.M&&window.RF_CORR.M[mod]; if(!g) return null; var id=RFV_G[g]||"geral"; for(var i=0;i<RFV.length;i++) if(RFV[i].id===id) return RFV[i]; return null; }
+function rfvMods(id){ var out=[], M=(window.RF_CORR&&window.RF_CORR.M)||{}; Object.keys(M).forEach(function(k){ if((RFV_G[M[k]]||"geral")===id&&REG[k]) out.push(k); }); return out; }
+function ankRfLista(){
+  rfOpen();
+  var h='<div class="rf-h"><span class="q-kicker">Anki · Reforma Tributária</span><h2>Mapas e fluxos</h2><p>Visuais da LC 214/2025 e da EC 132/2023. Toque para abrir e depois estude as cartas dessa parte.</p></div><div class="rf-sec">';
+  RFV.forEach(function(v){ h+=rfBtn("rfv_"+v.id,esc(v.titulo),v.tipo==="fluxo"?"Fluxo":"Mapa mental","Ver"); });
+  ovInner.innerHTML=h+'</div>'; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+  RFV.forEach(function(v){ document.getElementById("rfv_"+v.id).onclick=function(){ ankRfVer(v.id); }; });
+}
+function ankRfVer(id,volta){
+  rfOpen(); var v=null; RFV.forEach(function(x){ if(x.id===id) v=x; }); if(!v) return;
+  var ms=rfvMods(id), ids=ankIdsMods(ms), ct=ankContagem(ids);
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Reforma Tributária · '+(v.tipo==="fluxo"?"Fluxo":"Mapa mental")+'</span><h2>'+esc(v.titulo)+'</h2></div><div class="vis-box">'+visHtml(v)+'</div><p class="ra-nota">Resumo para memorizar. Confira sempre a redação vigente da LC 214/2025, da EC 132/2023 e das leis que a alteraram.</p>'+(ids.length?rfBtn("rfvAnki","Estudar as cartas desta parte","Anki: "+ids.length+" cartas",ct.n+ct.a+ct.r):"");
+  setFoot("",volta?'<button class="big" id="rfvVolta" style="flex:1">Voltar ao cartão</button>':rfVoltar());
+  if(volta) document.getElementById("rfvVolta").onclick=function(){ ankProx(); }; else document.getElementById("rfBack").onclick=ankRfLista;
+  var b=document.getElementById("rfvAnki"); if(b) b.onclick=function(){ ankEstuda(ids,v.titulo,{mix:!!ankS().cfg.mix}); };
+}
 function ankCkB(f){
   var st=ankS().c[f]; if(!st||st.susp||!st.fd) return 0;
   var age=daysBetween(st.fd,today()), ck=st.ck||{}, b=0;
@@ -3915,7 +4056,7 @@ function ankHub(){
     '<div class="ank-mix" role="group" aria-label="Ordem"><button type="button" data-m="0" aria-pressed="'+(!cf.mix)+'"><b>Uma matéria por vez</b><small>termina uma e passa para a próxima</small></button><button type="button" data-m="1" aria-pressed="'+(!!cf.mix)+'"><b>Embaralhado</b><small>mistura os temas das matérias marcadas</small></button></div>'+
     rfBtn("ankAll","Estudar "+sel.length+(sel.length===1?" matéria":" matérias")+(cf.mix?" embaralhadas":""),pend+" cartas para hoje (novas, aprender e revisar)",pend,!pend)+'</div>';
   var k7=ankCkIds(7).length,k15=ankCkIds(15).length,k30=ankCkIds(30).length;
-  h+=rfBtn("ankBat","Bateria de questões do TEC","Cadernos do TEC por matéria e tema, com seu resultado","Abrir")+'<div class="rf-sec"><h3>Revisões de 7, 15 e 30 dias</h3><p class="ra-nota">Cada carta volta uma vez com 7, 15 e 30 dias desde que você a viu pela primeira vez. Acertar não muda a agenda; errar manda a carta de volta ao aprendizado.</p><div class="ank-ck"><button type="button" data-k="7"'+(k7?"":" disabled")+'><span class="ank-n ank-p">'+k7+'</span><small>7 dias</small></button><button type="button" data-k="15"'+(k15?"":" disabled")+'><span class="ank-n ank-p">'+k15+'</span><small>15 dias</small></button><button type="button" data-k="30"'+(k30?"":" disabled")+'><span class="ank-n ank-p">'+k30+'</span><small>30 dias</small></button></div></div>';
+  h+=rfBtn("ankRfv","Mapas e fluxos da Reforma","Transição, split payment, créditos, alíquotas, IS e mais","Ver")+rfBtn("ankBat","Bateria de questões do TEC","Cadernos do TEC por matéria e tema, com seu resultado","Abrir")+'<div class="rf-sec"><h3>Revisões de 7, 15 e 30 dias</h3><p class="ra-nota">Cada carta volta uma vez com 7, 15 e 30 dias desde que você a viu pela primeira vez. Acertar não muda a agenda; errar manda a carta de volta ao aprendizado.</p><div class="ank-ck"><button type="button" data-k="7"'+(k7?"":" disabled")+'><span class="ank-n ank-p">'+k7+'</span><small>7 dias</small></button><button type="button" data-k="15"'+(k15?"":" disabled")+'><span class="ank-n ank-p">'+k15+'</span><small>15 dias</small></button><button type="button" data-k="30"'+(k30?"":" disabled")+'><span class="ank-n ank-p">'+k30+'</span><small>30 dias</small></button></div></div>';
   h+='<div class="rf-sec"><h3>Baralhos por matéria</h3>';
   foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
     h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
@@ -3931,7 +4072,7 @@ function ankHub(){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-mix button"),function(x){ x.onclick=function(){ cf.mix=x.getAttribute("data-m")==="1"; persist(); ankHub(); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-ck button"),function(x){ x.onclick=function(){ var K=parseInt(x.getAttribute("data-k"),10); ankEstuda(ankCkIds(K),"Revisão de "+K+" dias",{ck:K}); }; });
-  document.getElementById("ankBat").onclick=ankBateria;
+  document.getElementById("ankBat").onclick=ankBateria; document.getElementById("ankRfv").onclick=ankRfLista;
   document.getElementById("ankHoje").onclick=function(){ L.finished=true; closeOv(); setNav("hoje"); window.scrollTo(0,0); };
   document.getElementById("ankTrilha").onclick=function(){ L.finished=true; closeOv(); setNav("trilha"); window.scrollTo(0,0); };
   document.getElementById("ankAprof").onclick=function(){ apHub(); };
@@ -3983,8 +4124,9 @@ function ankCardTela(){
   var cont=ck?'<span class="ank-cs">'+ankConta(ankResta(),"ank-p",true)+'</span>':(function(){ var ct=ankContagem(AN.ids); return '<span class="ank-cs">'+ankConta(ct.n,"ank-b",p.k==="n")+ankConta(ct.a,"ank-r",p.k==="a")+ankConta(ct.r,"ank-g",p.k==="r")+'</span>'; })();
   var dN=DISC[ankDiscDe(p.f)]?DISC[ankDiscDe(p.f)].nome:"", rg=""; try{ rg=ankReguaHtml(ankRegua(ankEscopo()),true); }catch(e){}
   ovInner.innerHTML='<div class="ank-top"><span>'+esc(AN.tit.length>34?AN.tit.slice(0,33)+"…":AN.tit)+'</span>'+cont+'</div>'+ankBarra()+rg+'<div class="ank-disc">'+esc(dN)+'</div>'+
-    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+ankVisualHtml(c)+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
+    '<div class="ank-card"><div class="ank-q">'+c[0]+'</div><div class="ank-a" id="ankA" hidden><hr>'+c[1]+ankVisualHtml(c,mod)+'</div></div><div class="ank-meta">'+esc(REG[mod].nome.length>60?REG[mod].nome.slice(0,59)+"…":REG[mod].nome)+'</div>';
   var mt=ovInner.querySelector(".ank-mt"); if(mt) mt.onclick=function(){ ankMapaTopico(mod); };
+  var mr=ovInner.querySelector(".ank-mr"); if(mr) mr.onclick=function(){ ankRfVer(mr.getAttribute("data-id"),true); };
   ankFoot(); setProg(ankPct());
 }
 function ankProx(){
