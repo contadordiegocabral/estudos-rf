@@ -403,7 +403,7 @@ function persist(){
     dbRef.set({xp:S.xp,streak:S.streak,bestStreak:S.bestStreak,lastDay:S.lastDay,
       hist:S.hist,goal:S.goal,cur:S.cur,disc:S.disc,mods:S.mods,
       srs:S.srs||{},dailyN:dailyTarget(),daily:S.daily||{d:null,n:0},tempo:S.tempo||{},dstat:S.dstat||{},metaMin:S.metaMin||120,metaQ:S.metaQ||40,
-      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"light",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,ank:S.ank||null,ec:S.ec||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
+      sim:S.sim||[],yt:S.yt||{},duv:S.duv||{},nota:S.nota||{},dsc:S.dsc||[],plano:S.plano||null,vid:S.vid||{},theme:S.theme||"light",last:S.last||null,lastMod:S.lastMod||{},foco:S.foco||[],focoPct:S.focoPct||null,tecDia:S.tecDia||{},rfRev:S.rfRev||{},rfEv:S.rfEv||{},tecMod:S.tecMod||{},spq:S.spq||{},cron:S.cron||null,li:S.li||{done:{}},rd:S.rd||{done:{}},mon:S.mon||{},rot:S.rot||null,rotAuto:S.rotAuto||null,ank:S.ank||null,qm:S.qm||null,ec:S.ec||null,metaTec:S.metaTec||20,ritmo:S.ritmo||null,
       at:Date.now()})["catch"](function(){});
   },1200);
 }
@@ -3680,6 +3680,7 @@ function ankS(){
   if(!S.ank) S.ank={c:{},day:{},cfg:{novas:20},log:{}};
   if(!S.ank.c) S.ank.c={}; if(!S.ank.cfg) S.ank.cfg={novas:20}; if(!S.ank.log) S.ank.log={};
   if(!S.ank.day||S.ank.day.d!==today()) S.ank.day={d:today(),nov:0,rev:0,tot:0,ok:0,ms:0,extra:0};
+  if(!REG.meu||REG.meu._n!==(S.ank.custom||[]).length) meuSync();
   return S.ank;
 }
 function ankIdsMods(mods){ var out=[]; mods.forEach(function(k){ var m=REG[k]; if(m&&m.CARDS) for(var i=0;i<m.CARDS.length;i++) out.push(qjoin(k,"c"+i)); }); return out; }
@@ -4017,6 +4018,246 @@ function ankRfVer(id,volta){
   if(volta) document.getElementById("rfvVolta").onclick=function(){ ankProx(); }; else document.getElementById("rfBack").onclick=ankRfLista;
   var b=document.getElementById("rfvAnki"); if(b) b.onclick=function(){ ankEstuda(ids,v.titulo,{mix:!!ankS().cfg.mix}); };
 }
+/* ---------- MÉTODO POR QUESTÕES: questão como porta de entrada, comentário, caderno de erros, revisão 1·7·15·30 ---------- */
+var MQ={blk:null}, MQ_IV=[1,7,15,30];
+var MQ_TIPOS=[["conteudo","Falta de conteúdo","Você não sabia. Volte à teoria só naquele ponto."],["esquecido","Conteúdo esquecido","Já viu e não fixou. Precisa de revisão espaçada."],["interp","Interpretação","Leu errado: “exceto”, “incorreta”. Treino de atenção."],["pegadinha","Pegadinha da banca","O padrão se repete. Registre-o."],["chute","Chute ou desatenção","Marcou sem base ou escorregou."]];
+var MQ_CF=[["c","Certeza"],["d","Dúvida"],["x","Chute"]];
+function mqS(){ var q=S.qm; if(!q) q=S.qm={}; q.q=q.q||{}; q.mod=q.mod||{}; q.tec=q.tec||[]; q.log=q.log||{}; q.cfg=q.cfg||{}; if(!q.cfg.tam) q.cfg.tam=10; if(!q.cfg.out) q.cfg.out=3; return q; }
+function mqTipoNome(t){ for(var i=0;i<MQ_TIPOS.length;i++) if(MQ_TIPOS[i][0]===t) return MQ_TIPOS[i][1]; return "Sem classificar"; }
+function mqCfNome(c){ return c==="c"?"Certeza":c==="d"?"Dúvida":"Chute"; }
+function mqGet(id){ var p=qsplit(id), m=REG[p.m]; return m&&m.QS?m.QS[parseInt(p.e.slice(1),10)]:null; }
+function mqModNome(k){ var m=REG[k]; return m?ankCurto(m.nome,70):k; }
+function mqQid(mod,i){ return mod+":q"+i; }
+function mqDevidas(){ var q=mqS().q, td=today(); return Object.keys(q).filter(function(id){ var x=q[id]; return x.st==="err"&&!x.done&&x.due<=td&&mqGet(id); }); }
+function mqErros(){ var q=mqS().q; return Object.keys(q).filter(function(id){ return q[id].st==="err"; }); }
+function mqChips(sel,attr){ return MQ_CF.map(function(c){ return '<button type="button" class="mq-chip" data-'+attr+'="'+c[0]+'" aria-pressed="'+(sel===c[0])+'">'+c[1]+'</button>'; }).join(""); }
+function mqTipoChips(sel){ return MQ_TIPOS.map(function(t){ return '<button type="button" class="mq-tp" data-t="'+t[0]+'" aria-pressed="'+(sel===t[0])+'" title="'+esc(t[2])+'"><b>'+t[1]+'</b><small>'+t[2]+'</small></button>'; }).join(""); }
+function mqEscolhe(mods,n){
+  var q=mqS().q, por=mods.map(function(mod){ var m=REG[mod]; if(!m||!m.QS) return {n:[],v:[]}; var nv=[],vv=[]; m.QS.forEach(function(_,i){ var id=mqQid(mod,i); (q[id]?vv:nv).push(id); }); return {n:shuffle(nv),v:shuffle(vv)}; });
+  var out=[], i=0, guard=0;
+  while(out.length<n&&guard++<2000){ var p=por[i%por.length]; var id=p.n.length?p.n.shift():(p.v.length?p.v.shift():null); if(id) out.push(id); i++; if(por.every(function(x){return !x.n.length&&!x.v.length;})) break; }
+  return out;
+}
+function mqModsDisc(d){ return DISC[d].mods.filter(function(k){ return REG[k]&&REG[k].QS&&REG[k].QS.length; }); }
+function mqIniciar(ids,titulo,redo){
+  if(!ids.length) return;
+  MQ.blk={ids:ids,i:0,ans:{},titulo:titulo,redo:!!redo,saved:{},rv:{},cur:null,novos:0,cards:0}; mqResp();
+}
+function mqHub(){
+  rfOpen(); var q=mqS(), dev=mqDevidas(), er=mqErros().length+q.tec.length, nc=((ankS().custom)||[]).length, c=q.cfg;
+  var h='<div class="rf-h"><span class="q-kicker">Método por questões</span><h2>A questão é a porta de entrada</h2><p>Resolva sem consultar, marque sua certeza, leia o comentário de todas, classifique o erro e transforme em card. Depois revise em 1, 7, 15 e 30 dias.</p></div>'+
+    '<div class="ank-tot"><div><small>Refazer hoje</small><span class="ank-n ank-r">'+dev.length+'</span></div><div><small>No caderno</small><span class="ank-n ank-b">'+er+'</span></div><div><small>Seus cards</small><span class="ank-n ank-g">'+nc+'</span></div></div>'+
+    rfBtn("mqNovo","Novo bloco de questões","Escolha o assunto: 10 a 20 questões, sem consultar","Começar")+
+    rfBtn("mqMisto","Bloco misto","Mistura as matérias do seu foco, bom para o fim de semana","Começar")+
+    rfBtn("mqRef","Refazer as erradas de hoje","Fila de revisão 1, 7, 15 e 30 dias",dev.length,!dev.length)+
+    rfBtn("mqCad","Caderno de erros","Regra por trás de cada erro, por tipo","Abrir")+
+    rfBtn("mqTec","Registrar erro do TEC","Anote o que errou lá e vire card","Registrar")+
+    rfBtn("mqEst","Estatísticas e prioridades","Onde você mais erra, pesado pela prova","Ver")+
+    '<div class="rf-sec"><h3>Ajustes</h3><label class="ank-cfg">Questões por bloco <select id="mqTam">'+[10,15,20].map(function(n){ return '<option value="'+n+'"'+(n===c.tam?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Sai da fila após <select id="mqOut"><option value="3"'+(c.out===3?" selected":"")+'>3 acertos com certeza</option><option value="4"'+(c.out===4?" selected":"")+'>4 acertos (inclui 30 dias)</option></select></label></div>'+
+    '<div class="rf-sec"><h3>Rotina da semana</h3><ul class="ec-r"><li><b>Dias de estudo:</b> 1 a 2 blocos de questões novas por assunto, com comentários e anotações.</li><li><b>Todo dia, 20 a 30 min:</b> cards do Anki e fila de erradas.</li><li><b>Fim de semana:</b> refazer as erradas da semana e um bloco misto.</li></ul><p class="ra-nota">As questões do app são inéditas, escritas por IA. Para o estilo da banca, resolva também no TEC (Fafipa e FGV) e registre os erros aqui.</p></div>';
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+  document.getElementById("mqNovo").onclick=mqTema; document.getElementById("mqMisto").onclick=mqMisto;
+  var r=document.getElementById("mqRef"); if(r&&!r.disabled) r.onclick=function(){ mqIniciar(shuffle(dev.slice()).slice(0,20),"Refazer erradas",true); };
+  document.getElementById("mqCad").onclick=function(){ mqCad("todos"); }; document.getElementById("mqTec").onclick=mqTec; document.getElementById("mqEst").onclick=mqEst;
+  document.getElementById("mqTam").onchange=function(){ mqS().cfg.tam=parseInt(this.value,10); persist(); };
+  document.getElementById("mqOut").onchange=function(){ mqS().cfg.out=parseInt(this.value,10); persist(); };
+}
+function mqTema(){
+  rfOpen(); var foc=ankEscopo(), w=ankPesos(), q=mqS();
+  var h='<div class="rf-h"><span class="q-kicker">Método por questões</span><h2>Escolha a matéria</h2></div>';
+  foc.forEach(function(d){ var n=0,ok=0; mqModsDisc(d).forEach(function(k){ var x=q.mod[k]; if(x){ n+=x.n; ok+=x.ok; } });
+    h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+(w[d]?' · '+Math.round(w[d]*100)+'% da prova':'')+'</b><small>'+(n?Math.round(ok/n*100)+'% em '+n+' questões respondidas':'ainda sem blocos')+'</small></span><span class="ank-cs">'+mqModsDisc(d).length+' temas</span></button>'; });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=mqHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ mqTemaDisc(x.getAttribute("data-d")); }; });
+}
+function mqTemaDisc(d){
+  rfOpen(); var q=mqS(), ms=mqModsDisc(d), tam=q.cfg.tam;
+  var h='<div class="rf-h"><span class="q-kicker">'+esc(DISC[d].nome)+'</span><h2>Escolha o assunto</h2><p>Bloco de '+tam+' questões. As que você ainda não viu vêm primeiro.</p></div>';
+  h+=rfBtn("mqTodos","Misturar os assuntos desta matéria",tam+" questões","Começar");
+  ms.forEach(function(k){ var x=q.mod[k], m=REG[k]; h+='<button type="button" class="ank-d" data-k="'+k+'"><span class="ank-dn"><b>'+esc(mqModNome(k))+'</b><small>'+m.QS.length+' questões · '+(x&&x.n?Math.round(x.ok/x.n*100)+'% de acerto em '+x.n:'sem respostas')+'</small></span><span class="ank-cs">›</span></button>'; });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=mqTema;
+  document.getElementById("mqTodos").onclick=function(){ mqIniciar(mqEscolhe(ms,tam),DISC[d].nome,false); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ var k=x.getAttribute("data-k"); mqIniciar(mqEscolhe([k],tam),mqModNome(k),false); }; });
+}
+function mqMisto(){
+  var mods=[]; ankEscopo().forEach(function(d){ var ms=mqModsDisc(d); if(ms.length) mods.push(shuffle(ms.slice())[0]); });
+  var ids=mqEscolhe(shuffle(mods),20); mqIniciar(ids,"Bloco misto",false);
+}
+function mqBar(i,n){ var p=Math.round(i/n*100); return '<div class="ank-bar"><i style="width:'+p+'%"></i></div>'; }
+function mqResp(){
+  rfOpen(); var b=MQ.blk, n=b.ids.length, id=b.ids[b.i], q=mqGet(id), mod=qsplit(id).m;
+  ovInner.innerHTML='<div class="ank-top"><span>'+esc(ankCurto(b.titulo,34))+'</span><span>'+(b.i+1)+' de '+n+'</span></div>'+mqBar(b.i,n)+
+    '<div class="ank-disc">Resolva sem consultar</div><div class="ank-card"><div class="ank-q" style="text-align:left;font-weight:600">'+q[0]+'</div></div><div class="ank-meta">'+esc(mqModNome(mod))+' · '+esc(q[2]||"")+'</div>'+
+    '<div class="rf-sec"><h3>1. Seu grau de certeza</h3><div class="mq-chips">'+mqChips(b.cur,"c")+'</div><h3>2. Sua resposta</h3><div class="mq-ce"><button type="button" class="mq-c" data-r="C" '+(b.cur?"":"disabled")+'>Certo</button><button type="button" class="mq-e" data-r="E" '+(b.cur?"":"disabled")+'>Errado</button></div></div>';
+  setFoot("",'<button class="ghost" id="mqSai" style="flex:1">Sair do bloco</button>'); setProg(Math.round(b.i/n*100));
+  document.getElementById("mqSai").onclick=function(){ MQ.blk=null; mqHub(); };
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-chip"),function(x){ x.onclick=function(){ b.cur=x.getAttribute("data-c"); Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-chip"),function(y){ y.setAttribute("aria-pressed",String(y===x)); }); Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-ce button"),function(y){ y.disabled=false; }); }; });
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-ce button"),function(x){ x.onclick=function(){ if(!b.cur) return; var r=x.getAttribute("data-r"); b.ans[id]={conf:b.cur,resp:r,ok:r===q[1]}; b.cur=null; b.i++; if(b.i>=n) mqResumo(); else mqResp(); }; });
+}
+function mqResumo(){
+  rfOpen(); var b=MQ.blk, n=b.ids.length, ok=0, por={c:{n:0,ok:0},d:{n:0,ok:0},x:{n:0,ok:0}}, tratar=0;
+  b.ids.forEach(function(id){ var a=b.ans[id]; if(a.ok) ok++; por[a.conf].n++; if(a.ok) por[a.conf].ok++; if(!a.ok||a.conf!=="c") tratar++; });
+  ovInner.innerHTML='<div class="cele"><div class="medal">'+svg("i-check")+'</div><h2>'+ok+' de '+n+' acertos</h2><p>Agora vem a parte que ensina: leia o comentário de <b>todas</b>, inclusive das que você acertou. '+tratar+' questões entram como erro: as erradas e as certas com dúvida ou chute.</p></div>'+
+    '<div class="rf-sec"><h3>Por grau de certeza</h3>'+MQ_CF.map(function(c){ var x=por[c[0]]; return '<div class="mon-row"><div><b>'+c[1]+'</b></div><span class="mon-tag">'+(x.n?x.ok+' de '+x.n+' certas':'—')+'</span></div>'; }).join("")+'</div>';
+  setFoot("",'<button class="big" id="mqLer" style="flex:1">Ler os comentários</button>'); setProg(100);
+  document.getElementById("mqLer").onclick=function(){ b.i=0; mqRev(0); };
+}
+function mqPrimeira(t){ var x=rfTxt(t||""); return ankCurto(rfPrimeira(x)||x,180); }
+function mqRev(i){
+  rfOpen(); var b=MQ.blk, n=b.ids.length, id=b.ids[i], q=mqGet(id), a=b.ans[id], mod=qsplit(id).m, need=!a.ok||a.conf!=="c", old=mqS().q[id]||{};
+  var rv=b.rv[id]||(b.rv[id]={tipo:old.tipo||"",regra:old.regra||mqPrimeira(q[3]),card:!old.card});
+  var cls=!a.ok?"mq-err":(need?"mq-dv":"mq-ok"), msg=!a.ok?"Você errou":(need?"Acertou com "+(a.conf==="d"?"dúvida":"chute")+": trate como erro":"Acertou com certeza: confira se o seu raciocínio bate com o do professor");
+  ovInner.innerHTML='<div class="ank-top"><span>'+esc(ankCurto(b.titulo,34))+'</span><span>Comentário '+(i+1)+' de '+n+'</span></div>'+mqBar(i,n)+
+    '<div class="mq-bd '+cls+'">'+msg+'</div><div class="ank-card"><div class="ank-q" style="text-align:left;font-weight:600">'+q[0]+'</div></div>'+
+    '<div class="mon-row"><div><b>Você marcou</b><small>'+(a.resp==="C"?"Certo":"Errado")+' · '+mqCfNome(a.conf)+'</small></div><span class="mon-tag">Gabarito: '+(q[1]==="C"?"Certo":"Errado")+'</span></div>'+
+    '<div class="mq-com"><b>Comentário</b><div>'+q[3]+'</div><small>'+esc(q[2]||"")+' · '+esc(mqModNome(mod))+'</small></div>'+
+    (need?'<div class="rf-sec"><h3>Tipo do erro</h3><div class="mq-tps">'+mqTipoChips(rv.tipo)+'</div><h3>Regra por trás da questão (1 ou 2 linhas)</h3><textarea id="mqRegra" class="mq-ta" rows="3" maxlength="400">'+esc(rv.regra)+'</textarea><label class="mq-ck"><input type="checkbox" id="mqCard"'+(rv.card?" checked":"")+'> Criar card no Anki com esta regra</label><button type="button" class="ghost" id="mqTeo">Teoria só deste ponto</button></div>':'');
+  setFoot("",'<button class="big" id="mqProx" style="flex:1">'+(i+1>=n?"Concluir bloco":"Próxima")+'</button>'); setProg(Math.round((i+1)/n*100));
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-tp"),function(x){ x.onclick=function(){ rv.tipo=x.getAttribute("data-t"); Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-tp"),function(y){ y.setAttribute("aria-pressed",String(y===x)); }); }; });
+  var tb=document.getElementById("mqTeo"); if(tb) tb.onclick=function(){ var ta=document.getElementById("mqRegra"); rv.regra=ta.value; mqSalva(id); persist(); L.finished=true; closeOv(); rdAbreMod(mod); };
+  document.getElementById("mqProx").onclick=function(){ if(need){ rv.regra=document.getElementById("mqRegra").value; rv.card=document.getElementById("mqCard").checked; } mqSalva(id); persist(); if(i+1>=n) mqFimBloco(); else mqRev(i+1); };
+}
+function ankCustomAdd(f,bk,mod){
+  var a=ankS(); a.custom=a.custom||[]; a.custom.push({q:f,a:bk,mod:mod,day:today()}); meuSync();
+  var id="meu:c"+(a.custom.length-1); a.c[id]={t:1,ivl:0,ease:2.5,step:0,lap:0,rep:0,fd:today(),due:Date.now(),ck:{}}; return id;
+}
+function meuSync(){
+  var cs=(S.ank&&S.ank.custom)||[];
+  REG.meu={nome:"Meus erros (caderno)",n:"M",CARDS:cs.map(function(c){ return [esc(c.q),esc(c.a)]; }),EX:{},QS:[],TEORIA:{},_n:cs.length};
+}
+function mqSalva(id){
+  var b=MQ.blk; if(b.saved[id]) { return; } b.saved[id]=1;
+  var Q=mqS(), a=b.ans[id], q=mqGet(id), mod=qsplit(id).m, rv=b.rv[id]||{}, need=!a.ok||a.conf!=="c", st=Q.q[id]||{n:0,ok:0,streak:0,idx:0};
+  st.n++; if(a.ok) st.ok++; st.conf=a.conf; st.last=today(); st.mod=mod;
+  var ms=Q.mod[mod]||(Q.mod[mod]={n:0,ok:0}); ms.n++; if(a.ok) ms.ok++;
+  var lg=Q.log[today()]||(Q.log[today()]={n:0,ok:0,c:{n:0,ok:0},d:{n:0,ok:0},x:{n:0,ok:0}}); lg.n++; if(a.ok) lg.ok++; lg[a.conf].n++; if(a.ok) lg[a.conf].ok++;
+  var ks=Object.keys(Q.log).sort(); while(ks.length>120) delete Q.log[ks.shift()];
+  if(need){
+    if(!st.st||st.st!=="err") b.novos++;
+    st.st="err"; st.streak=0; st.idx=0; st.due=dayKey(1); st.done=false;
+    if(rv.tipo) st.tipo=rv.tipo; if(rv.regra!=null) st.regra=rv.regra;
+    if(rv.card&&!st.card){ var regra=(st.regra||"").trim()||mqPrimeira(q[3]); st.card=ankCustomAdd("Certo ou errado? "+rfTxt(q[0]),(q[1]==="C"?"CERTO. ":"ERRADO. ")+regra,mod); b.cards++; }
+  } else if(st.st==="err"){
+    st.streak=(st.streak||0)+1;
+    if(st.streak>=Q.cfg.out) st.done=true; else { st.idx=Math.min(3,(st.idx||0)+1); st.due=dayKey(MQ_IV[st.idx]); }
+  } else st.st="ok";
+  Q.q[id]=st;
+  try{ dstatBump(a.ok); monBump(mod,a.ok); }catch(e){}
+}
+function mqFimBloco(){
+  rfOpen(); var b=MQ.blk, ok=b.ids.filter(function(id){return b.ans[id].ok;}).length; addXp(5+ok);
+  ovInner.innerHTML='<div class="cele"><div class="medal">'+svg("i-trophy")+'</div><h2>Bloco concluído</h2><p>'+ok+' de '+b.ids.length+' acertos. '+b.novos+' questões entraram na fila de revisão'+(b.cards?' e '+b.cards+' cards foram criados no Anki':'')+'. Elas voltam em 1 dia.</p></div>'+
+    rfBtn("mqOutro","Novo bloco","Outro assunto ou o mesmo","Começar")+(b.cards?rfBtn("mqAnk","Estudar os cards criados","Meus erros no Anki",b.cards):"")+rfBtn("mqCad2","Caderno de erros","Revisar as regras","Abrir");
+  setFoot("",'<button class="ghost" id="mqVolta" style="flex:1">Voltar ao método</button>'); setProg(100);
+  document.getElementById("mqOutro").onclick=mqTema; document.getElementById("mqCad2").onclick=function(){ mqCad("todos"); }; document.getElementById("mqVolta").onclick=mqHub;
+  var ka=document.getElementById("mqAnk"); if(ka) ka.onclick=function(){ ankEstuda(ankMeuIds(),"Meus erros",{}); };
+  MQ.blk=null;
+}
+function ankMeuIds(){ var cs=(ankS().custom)||[]; return cs.map(function(_,i){ return "meu:c"+i; }); }
+function mqCad(filtro){
+  rfOpen(); var Q=mqS(), td=today(), itens=[];
+  mqErros().forEach(function(id){ var x=Q.q[id], q=mqGet(id); if(q) itens.push({src:"app",id:id,x:x,q:q,mod:x.mod||qsplit(id).m}); });
+  Q.tec.forEach(function(t,i){ itens.push({src:"tec",id:"t"+i,x:t,mod:t.mod,i:i}); });
+  var fl=[["todos","Todos"],["fila","Na fila"],["sem","Sem classificar"]].concat(MQ_TIPOS.map(function(t){return [t[0],t[1]];}));
+  itens=itens.filter(function(it){ var x=it.x; if(filtro==="todos") return true; if(filtro==="fila") return it.src==="app"&&!x.done&&x.due<=td; if(filtro==="sem") return !x.tipo; return x.tipo===filtro; });
+  var h='<div class="rf-h"><span class="q-kicker">Método por questões</span><h2>Caderno de erros</h2><p>'+itens.length+' registros. Cada um guarda a regra por trás do erro.</p></div><div class="ank-chips">'+fl.map(function(f){ return '<button type="button" class="ank-chip" data-f="'+f[0]+'" aria-pressed="'+(filtro===f[0])+'">'+f[1]+'</button>'; }).join("")+'</div>';
+  itens.forEach(function(it,k){ var x=it.x, sit=it.src==="tec"?"TEC":(x.done?"saiu da fila":(x.due<=td?"revisar hoje":"volta em "+Math.max(1,daysBetween(td,x.due))+" d"));
+    h+='<details class="ec-t"><summary><span class="ec-n">'+(it.src==="tec"?"T":"Q")+'</span><span class="ec-s"><b>'+esc(ankCurto(it.src==="app"?rfTxt(it.q[0]):(x.tema||"Questão do TEC"),90))+'</b><small>'+esc(mqTipoNome(x.tipo))+' · '+esc(mqModNome(it.mod))+' · '+sit+'</small></span></summary><div class="ec-b">'+
+      (it.src==="app"?'<div class="mq-com"><b>Comentário</b><div>'+it.q[3]+'</div></div>':'')+
+      '<div class="mq-tps">'+mqTipoChips(x.tipo)+'</div><textarea class="mq-ta" rows="3" maxlength="400" data-k="'+k+'" placeholder="Regra ou conceito por trás do erro">'+esc(x.regra||"")+'</textarea>'+
+      '<div class="ec-a"><button type="button" class="big mq-sv" data-k="'+k+'">Salvar</button>'+(it.src==="app"?'<button type="button" class="ghost mq-rf" data-k="'+k+'">Refazer</button>':'<button type="button" class="ghost mq-dl" data-k="'+k+'">Excluir</button>')+'</div><div class="ec-a">'+(x.card?'<span class="ra-nota">Card criado no Anki.</span>':'<button type="button" class="ghost mq-cd" data-k="'+k+'">Criar card no Anki</button>')+'<button type="button" class="ghost mq-te" data-k="'+k+'">Teoria</button></div></div></details>'; });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=mqHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-chip"),function(x){ x.onclick=function(){ mqCad(x.getAttribute("data-f")); }; });
+  function box(k){ return ovInner.querySelectorAll("details.ec-t")[k]; }
+  Array.prototype.forEach.call(ovInner.querySelectorAll("details.ec-t"),function(dt,k){
+    var it=itens[k], sel=it.x.tipo||"";
+    Array.prototype.forEach.call(dt.querySelectorAll(".mq-tp"),function(x){ x.onclick=function(){ sel=x.getAttribute("data-t"); Array.prototype.forEach.call(dt.querySelectorAll(".mq-tp"),function(y){ y.setAttribute("aria-pressed",String(y===x)); }); }; });
+    function salva(){ it.x.tipo=sel; it.x.regra=dt.querySelector(".mq-ta").value; persist(); }
+    var sv=dt.querySelector(".mq-sv"); if(sv) sv.onclick=function(){ salva(); mqCad(filtro); };
+    var rf=dt.querySelector(".mq-rf"); if(rf) rf.onclick=function(){ salva(); mqIniciar([it.id],"Refazer",true); };
+    var dl=dt.querySelector(".mq-dl"); if(dl) dl.onclick=function(){ Q.tec.splice(it.i,1); persist(); mqCad(filtro); };
+    var cd=dt.querySelector(".mq-cd"); if(cd) cd.onclick=function(){ salva(); var q=it.q, regra=(it.x.regra||"").trim()||(q?mqPrimeira(q[3]):""); if(!regra) return; it.x.card=ankCustomAdd(it.src==="app"?"Certo ou errado? "+rfTxt(q[0]):(it.x.tema||"Regra do TEC"),(q?(q[1]==="C"?"CERTO. ":"ERRADO. "):"")+regra,it.mod); persist(); mqCad(filtro); };
+    var te=dt.querySelector(".mq-te"); if(te) te.onclick=function(){ L.finished=true; closeOv(); rdAbreMod(it.mod); };
+  });
+}
+function mqTec(){
+  rfOpen(); var foc=ankEscopo(), Q=mqS(), d0=foc[0], tipo="";
+  function mods(d){ return DISC[d].mods.filter(function(k){ return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length; }); }
+  ovInner.innerHTML='<div class="rf-h"><span class="q-kicker">Método por questões</span><h2>Registrar erro do TEC</h2><p>Depois de ler o comentário no TEC, anote aqui a regra em 1 ou 2 linhas. Ela vira card se você quiser.</p></div><div class="rf-sec">'+
+    '<label class="ank-cfg">Matéria <select id="tcD">'+foc.map(function(d){ return '<option value="'+d+'">'+esc(DISC[d].nome)+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Assunto <select id="tcM"></select></label>'+
+    '<h3>Tema da questão (opcional)</h3><input id="tcT" class="ra-in" maxlength="120" placeholder="Ex.: exceção ao princípio da anterioridade">'+
+    '<h3>Tipo do erro</h3><div class="mq-tps">'+mqTipoChips("")+'</div><h3>Regra por trás da questão</h3><textarea id="tcR" class="mq-ta" rows="3" maxlength="400" placeholder="Ex.: IPI não precisa respeitar a anterioridade anual, só a nonagesimal."></textarea><label class="mq-ck"><input type="checkbox" id="tcC" checked> Criar card no Anki</label></div>';
+  setFoot("",'<button class="ghost" id="tcV" style="flex:0 0 auto">Voltar</button><button class="big" id="tcS" style="flex:1">Salvar no caderno</button>');
+  function fill(){ var d=document.getElementById("tcD").value; document.getElementById("tcM").innerHTML=mods(d).map(function(k){ return '<option value="'+k+'">'+esc(mqModNome(k))+'</option>'; }).join(""); }
+  fill(); document.getElementById("tcD").onchange=fill;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-tp"),function(x){ x.onclick=function(){ tipo=x.getAttribute("data-t"); Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-tp"),function(y){ y.setAttribute("aria-pressed",String(y===x)); }); }; });
+  document.getElementById("tcV").onclick=mqHub;
+  document.getElementById("tcS").onclick=function(){
+    var k=document.getElementById("tcM").value, regra=document.getElementById("tcR").value.trim(), tema=document.getElementById("tcT").value.trim(); if(!regra||!k) return;
+    var e={mod:k,tema:tema,tipo:tipo,regra:regra,day:today()};
+    if(document.getElementById("tcC").checked) e.card=ankCustomAdd(tema||"Regra do TEC: "+mqModNome(k),regra,k);
+    Q.tec.push(e); addXp(2); persist(); mqCad("todos");
+  };
+}
+function mqEst(){
+  rfOpen(); var Q=mqS(), w=ankPesos(), td=today(), l7={n:0,ok:0}, c7={c:{n:0,ok:0},d:{n:0,ok:0},x:{n:0,ok:0}};
+  for(var j=-6;j<=0;j++){ var x=Q.log[dayKey(j)]; if(x){ l7.n+=x.n; l7.ok+=x.ok; ["c","d","x"].forEach(function(k){ c7[k].n+=x[k].n; c7[k].ok+=x[k].ok; }); } }
+  var tipos={}; mqErros().forEach(function(id){ var t=Q.q[id].tipo||"sem"; tipos[t]=(tipos[t]||0)+1; }); Q.tec.forEach(function(e){ var t=e.tipo||"sem"; tipos[t]=(tipos[t]||0)+1; });
+  var pr=[]; Object.keys(Q.mod).forEach(function(k){ var x=Q.mod[k]; if(x.n<3||!REG[k]) return; var d=discOf(k), acc=x.ok/x.n; pr.push({k:k,acc:acc,n:x.n,sc:(1-acc)*(w[d]||0.01)}); });
+  pr.sort(function(a,b){ return b.sc-a.sc; });
+  var h='<div class="rf-h"><span class="q-kicker">Método por questões</span><h2>Estatísticas e prioridades</h2></div><div class="mon-grid"><div class="mon-k"><b>'+l7.n+'</b><small>questões em 7 dias</small></div><div class="mon-k"><b>'+(l7.n?Math.round(l7.ok/l7.n*100)+"%":"—")+'</b><small>acerto em 7 dias</small></div><div class="mon-k"><b>'+mqDevidas().length+'</b><small>para refazer hoje</small></div></div>'+
+    '<div class="rf-sec"><h3>Calibragem: quanto você acerta em cada grau de certeza (7 dias)</h3>'+MQ_CF.map(function(c){ var x=c7[c[0]]; return '<div class="mon-row"><div><b>'+c[1]+'</b></div><span class="mon-tag">'+(x.n?Math.round(x.ok/x.n*100)+'% de '+x.n:'—')+'</span></div>'; }).join("")+'<p class="ra-nota">Se “certeza” acerta bem menos que 90%, você está confiando demais. Se “chute” acerta muito, há conteúdo que você sabe e não confia.</p></div>'+
+    '<div class="rf-sec"><h3>Tipos de erro no caderno</h3>'+(Object.keys(tipos).length?Object.keys(tipos).sort(function(a,b){return tipos[b]-tipos[a];}).map(function(t){ return '<div class="mon-row"><div><b>'+esc(t==="sem"?"Sem classificar":mqTipoNome(t))+'</b></div><span class="mon-tag">'+tipos[t]+'</span></div>'; }).join(""):'<p class="ra-nota">Ainda sem erros registrados.</p>')+'</div>'+
+    '<div class="rf-sec"><h3>Prioridade: baixo acerto e alto peso na prova</h3>'+(pr.length?pr.slice(0,8).map(function(p){ return '<button type="button" class="ank-d mq-pr" data-k="'+p.k+'"><span class="ank-dn"><b>'+esc(mqModNome(p.k))+'</b><small>'+Math.round(p.acc*100)+'% em '+p.n+' questões · '+esc(DISC[discOf(p.k)]?DISC[discOf(p.k)].nome:"")+'</small></span><span class="ank-cs">Bloco</span></button>'; }).join(""):'<p class="ra-nota">Faça alguns blocos (3 questões ou mais por assunto) para ver as prioridades.</p>')+'</div>';
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=mqHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".mq-pr"),function(x){ x.onclick=function(){ var k=x.getAttribute("data-k"); mqIniciar(mqEscolhe([k],Q.cfg.tam),mqModNome(k),false); }; });
+}
+/* ---------- STORYTELLING: o conteúdo do tópico em slides, no estilo dos posts da série ---------- */
+var ST={sl:[],i:0,k:null};
+function stSlides(k){
+  var m=REG[k], rs=ecResumo(k), qs=(m.QS||[]).map(function(q,i){return {q:q,i:i};}), sl=[];
+  var pega=shuffle(qs.filter(function(x){return x.q[1]==="E";}))[0], gancho=shuffle(qs.filter(function(x){return x.q!==(pega&&pega.q);}))[0]||qs[0];
+  var cards=shuffle((m.CARDS||[]).slice()).slice(0,3);
+  if(gancho) sl.push({tag:"Gancho",tit:"Você acertaria esta?",txt:rfTxt(gancho.q[0]),rev:(gancho.q[1]==="C"?"CERTO. ":"ERRADO. ")+rfTxt(gancho.q[3]),dica:"Pense: certo ou errado? Depois toque para ver."});
+  if(rs[0]) sl.push({tag:"Cenário",tit:rs[0].h||ankCurto(m.nome,60),txt:rs[0].t||""});
+  rs.slice(1).forEach(function(r,i){ sl.push({tag:"Ponto "+(i+1),tit:r.h||"Guarde isto",txt:r.t}); });
+  if(pega) sl.push({tag:"Pegadinha",tit:"A banca escreve assim",txt:rfTxt(pega.q[0]),rev:"ERRADO. "+rfTxt(pega.q[3]),dica:"Toque para ver o erro escondido."});
+  cards.forEach(function(c,i){ sl.push({tag:"Fixe "+(i+1),tit:rfTxt(c[0]),txt:"",rev:rfTxt(c[1]),dica:"Responda de cabeça. Depois toque."}); });
+  sl.push({tag:"Agora é com você",tit:"Leve para o Anki",txt:"Este tema tem "+((m.CARDS||[]).length)+" cartas. Estude, marque sua certeza e volte aqui quando errar.",cta:true});
+  return sl;
+}
+function stTexto(k){
+  var m=REG[k], sl=stSlides(k), t="📚 "+ankCurto(m.nome,90)+"\n\n";
+  sl.forEach(function(s,i){ if(s.cta) return; t+=(i+1)+") "+s.tit+(s.txt?"\n"+s.txt:"")+(s.rev?"\n→ "+s.rev:"")+"\n\n"; });
+  return t+"💾 Salve para revisar.\n#concursopublico #direitotributario #reformatributaria #estudos #fiscal";
+}
+function stTela(k){
+  rfOpen(); ST.k=k; if(!ST.sl.length||ST.kk!==k){ ST.sl=stSlides(k); ST.i=0; ST.kk=k; }
+  var s=ST.sl[ST.i], n=ST.sl.length, col=VIS_COR[ST.i%VIS_COR.length];
+  ovInner.innerHTML='<div class="ank-top"><span>'+esc(ankCurto(REG[k].nome,38))+'</span><span>'+(ST.i+1)+' de '+n+'</span></div>'+
+    '<div class="st-dots">'+ST.sl.map(function(_,j){ return '<i class="'+(j<=ST.i?"on":"")+'"></i>'; }).join("")+'</div>'+
+    '<div class="st-slide" style="--c:'+col+'"><span class="st-tag">'+esc(s.tag)+'</span><h2>'+esc(s.tit)+'</h2>'+(s.txt?'<p>'+esc(s.txt)+'</p>':'')+
+    (s.rev?'<div class="st-rev" id="stRev" hidden>'+esc(s.rev)+'</div><button type="button" class="st-show" id="stShow">'+esc(s.dica||"Ver resposta")+'</button>':'')+
+    (s.cta?'<button type="button" class="big" id="stAnki">Estudar as cartas no Anki</button>':'')+'</div>';
+  setFoot("",'<button class="ghost" id="stPrev" style="flex:0 0 auto" aria-label="Slide anterior"'+(ST.i?"":" disabled")+'>‹</button><button class="ghost" id="stCopy" style="flex:0 0 auto">Copiar</button><button class="big" id="stNext" style="flex:1">'+(ST.i+1>=n?"Recomeçar":"Próximo")+'</button>'); setProg(Math.round((ST.i+1)/n*100));
+  document.getElementById("stPrev").onclick=function(){ if(ST.i>0){ ST.i--; stTela(k); } };
+  document.getElementById("stNext").onclick=function(){ ST.i=(ST.i+1>=n)?0:ST.i+1; stTela(k); };
+  document.getElementById("stCopy").onclick=function(){ rfCopia(stTexto(k),this); };
+  var sh=document.getElementById("stShow"); if(sh) sh.onclick=function(){ document.getElementById("stRev").hidden=false; sh.hidden=true; };
+  var sa=document.getElementById("stAnki"); if(sa) sa.onclick=function(){ var ids=ankIdsMods([k]); ankEstuda(ids,REG[k].nome,{volta:null,disc:discOf(k),mod:k}); };
+}
+function stHub(){
+  rfOpen(); var foc=ankEscopo(), h='<div class="rf-h"><span class="q-kicker">Storytelling</span><h2>Estude em slides</h2><p>O conteúdo do tópico contado em passos curtos, no estilo dos posts da série: gancho, cenário, pontos, pegadinha e fixação. Dá para copiar o texto para o Instagram.</p></div>';
+  foc.forEach(function(d){ var n=DISC[d].mods.filter(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;}).length; h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+n+' temas</small></span><span class="ank-cs">›</span></button>'; });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ stDisc(x.getAttribute("data-d")); }; });
+}
+function stDisc(d){
+  rfOpen(); var ms=DISC[d].mods.filter(function(k){return REG[k]&&REG[k].CARDS&&REG[k].CARDS.length;}), h='<div class="rf-h"><span class="q-kicker">Storytelling · '+esc(DISC[d].nome)+'</span><h2>Escolha o tema</h2></div>';
+  ms.forEach(function(k){ h+='<button type="button" class="ank-d" data-k="'+k+'"><span class="ank-dn"><b>'+esc(ankCurto(REG[k].nome,90))+'</b><small>'+REG[k].CARDS.length+' cartas</small></span><span class="ank-cs">›</span></button>'; });
+  ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=stHub;
+  Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ST.sl=[]; stTela(x.getAttribute("data-k")); }; });
+}
 function ankCkB(f){
   var st=ankS().c[f]; if(!st||st.susp||!st.fd) return 0;
   var age=daysBetween(st.fd,today()), ck=st.ck||{}, b=0;
@@ -4043,14 +4284,14 @@ function ankBarra(){ var p=ankPct(); return '<div class="ank-bar" role="progress
 function ankHub(){
   rfOpen();
   var a=ankS(), foc=ankEscopo(), esc0=a.cfg.escopo||"f80", pw=ankPesos();
-  var h='<div class="ank-nav"><button type="button" id="ankHoje">Hoje</button><button type="button" id="ankTrilha">Trilha</button><button type="button" id="ankAprof">Aprofundar</button></div><div class="rf-h"><span class="q-kicker">Anki</span><h2>Baralhos</h2><p>As cartas do app em baralhos por matéria e módulo. Você avalia cada resposta e o intervalo se ajusta sozinho.</p></div>';
+  var h='<div class="ank-nav"><button type="button" id="ankHoje">Hoje</button><button type="button" id="ankTrilha">Trilha</button><button type="button" id="ankAprof">Aprofundar</button></div>'+rfBtn("ankSt","Storytelling","O conteúdo do tema em slides, como nos posts da série","Abrir")+rfBtn("ankMq","Método por questões","Bloco, certeza, comentário, caderno de erros e revisão 1·7·15·30","Abrir")+'<div class="rf-h"><span class="q-kicker">Anki</span><h2>Baralhos</h2><p>As cartas do app em baralhos por matéria e módulo. Você avalia cada resposta e o intervalo se ajusta sozinho.</p></div>';
   var ids=[]; foc.forEach(function(d){ ids=ids.concat(ankIdsDisc(d)); });
   var tot=ankContagem(ids);
   h+='<div class="ank-tot"><div><small>Novas</small>'+ankConta(tot.n,"ank-b")+'</div><div><small>Aprender</small>'+ankConta(tot.a,"ank-r")+'</div><div><small>Revisar</small>'+ankConta(tot.r,"ank-g")+'</div></div>';
   var rg=ankRegua(foc);
   h+='<div class="rf-sec"><h3>Régua de avanço</h3>'+ankReguaHtml(rg,false)+'<div class="ank-mix ank-esc" role="group" aria-label="Foco">'+[["f80","Foco 80%","matérias que somam 80% das provas"],["alvos","ISS + ATRFB","todas as do edital"],["todas","Todas","todas as matérias"]].map(function(x){ return '<button type="button" data-e="'+x[0]+'" aria-pressed="'+(esc0===x[0])+'"><b>'+x[1]+'</b><small>'+x[2]+'</small></button>'; }).join("")+'</div><p class="ra-nota">O peso de cada matéria vem do número de questões do ISS Curitiba (60%) e da RFB (40%). A cada '+((a.cfg.cp==null?25:a.cfg.cp)||"—")+' cartas, ou a cada 10 pontos de cobertura, o Anki leva você ao TEC para testar.</p></div>';
   var cf=a.cfg, sel=(cf.sel||[]).filter(function(d){return foc.indexOf(d)>=0;}); if(!sel.length) sel=foc.slice();
-  var selIds=[]; sel.forEach(function(d){ selIds=selIds.concat(ankIdsDisc(d)); }); var ctS=ankContagem(selIds), pend=ctS.n+ctS.a+ctS.r;
+  var meuIds=ankMeuIds(), selIds=meuIds.slice(); sel.forEach(function(d){ selIds=selIds.concat(ankIdsDisc(d)); }); var ctS=ankContagem(selIds), pend=ctS.n+ctS.a+ctS.r;
   h+='<div class="rf-sec"><h3>Montar a sessão</h3><p class="ra-nota">Marque uma ou várias matérias.</p><div class="ank-chips">'+foc.map(function(d){ return '<button type="button" class="ank-chip" data-d="'+d+'" aria-pressed="'+(sel.indexOf(d)>=0)+'">'+esc(DISC[d].nome.length>22?DISC[d].nome.slice(0,21)+"…":DISC[d].nome)+(pw[d]?' · '+Math.round(pw[d]*100)+'%':'')+'</button>'; }).join("")+'</div>'+
     '<div class="ank-md"><button type="button" class="ghost" id="ankTodas">Todas</button><button type="button" class="ghost" id="ankNenhuma">Limpar</button></div>'+
     '<div class="ank-mix" role="group" aria-label="Ordem"><button type="button" data-m="0" aria-pressed="'+(!cf.mix)+'"><b>Uma matéria por vez</b><small>termina uma e passa para a próxima</small></button><button type="button" data-m="1" aria-pressed="'+(!!cf.mix)+'"><b>Embaralhado</b><small>mistura os temas das matérias marcadas</small></button></div>'+
@@ -4061,10 +4302,10 @@ function ankHub(){
   foc.forEach(function(d){ var ct=ankContagem(ankIdsDisc(d)), tx=ankIdsDisc(d).length;
     h+='<button type="button" class="ank-d" data-d="'+d+'"><span class="ank-dn"><b>'+esc(DISC[d].nome)+'</b><small>'+tx+' cartas</small></span><span class="ank-cs">'+ankConta(ct.n,"ank-b")+ankConta(ct.a,"ank-r")+ankConta(ct.r,"ank-g")+'</span></button>'; });
   h+='</div><div class="rf-sec"><h3>Ferramentas</h3>'+rfBtn("ankEc","Estudo completo","Resumo, Anki, questões do TEC e áudios de cada tópico","Abrir")+rfBtn("ankEst","Estatísticas","Hoje, previsão de revisões e maturidade das cartas","Ver")+rfBtn("ankBusca","Buscar cartas","Procure por palavra, suspenda ou reative cartas","Abrir")+
-    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Teste no TEC a cada <select id="ankCp">'+[[10,"10 cartas"],[15,"15 cartas"],[25,"25 cartas"],[40,"40 cartas"],[0,"desligado"]].map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===(a.cfg.cp==null?25:a.cfg.cp)?" selected":"")+'>'+x[1]+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Mapa ou fluxo na resposta <select id="ankVis"><option value="1"'+(a.cfg.vis===false?"":" selected")+'>ligado</option><option value="0"'+(a.cfg.vis===false?" selected":"")+'>desligado</option></select></label><p class="ra-nota">Conexões: erros em cartas da trilha e do treino voltam sozinhos ao Anki; o acerto aqui entra no Desempenho.</p></div>';
+    '<label class="ank-cfg">Novas por dia <select id="ankNovas">'+[5,10,15,20,30,50].map(function(n){ return '<option value="'+n+'"'+(n===(a.cfg.novas||20)?" selected":"")+'>'+n+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Teste no TEC a cada <select id="ankCp">'+[[10,"10 cartas"],[15,"15 cartas"],[25,"25 cartas"],[40,"40 cartas"],[0,"desligado"]].map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===(a.cfg.cp==null?25:a.cfg.cp)?" selected":"")+'>'+x[1]+'</option>'; }).join("")+'</select></label><label class="ank-cfg">Marcar certeza antes de virar <select id="ankConf"><option value="1"'+(a.cfg.conf===false?"":" selected")+'>ligado</option><option value="0"'+(a.cfg.conf===false?" selected":"")+'>desligado</option></select></label><label class="ank-cfg">Mapa ou fluxo na resposta <select id="ankVis"><option value="1"'+(a.cfg.vis===false?"":" selected")+'>ligado</option><option value="0"'+(a.cfg.vis===false?" selected":"")+'>desligado</option></select></label><p class="ra-nota">Conexões: erros em cartas da trilha e do treino voltam sozinhos ao Anki; o acerto aqui entra no Desempenho.</p></div>';
   ovInner.innerHTML=h; setFoot("",'<button class="ghost" id="rfFecha" style="flex:1">Fechar</button>');
   document.getElementById("rfFecha").onclick=function(){ closeOv(); };
-  var b=document.getElementById("ankAll"); if(b&&!b.disabled) b.onclick=function(){ var gr=sel.map(function(d){return ankIdsDisc(d);}); ankEstuda(selIds,sel.length===1?DISC[sel[0]].nome:(cf.mix?"Embaralhado":sel.length+" matérias"),{mix:!!cf.mix,groups:gr,disc:sel.length===1?sel[0]:null}); };
+  var b=document.getElementById("ankAll"); if(b&&!b.disabled) b.onclick=function(){ var gr=sel.map(function(d){return ankIdsDisc(d);}); if(meuIds.length) gr.unshift(meuIds); ankEstuda(selIds,sel.length===1?DISC[sel[0]].nome:(cf.mix?"Embaralhado":sel.length+" matérias"),{mix:!!cf.mix,groups:gr,disc:sel.length===1?sel[0]:null}); };
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-esc button"),function(x){ x.onclick=function(){ cf.escopo=x.getAttribute("data-e"); cf.sel=null; persist(); ankHub(); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-chip"),function(x){ x.onclick=function(){ var d=x.getAttribute("data-d"), c2=(cf.sel&&cf.sel.length?cf.sel.slice():foc.slice()), p=c2.indexOf(d); if(p>=0) c2.splice(p,1); else c2.push(d); c2=foc.filter(function(z){return c2.indexOf(z)>=0;}); cf.sel=c2.length?c2:[foc[0]]; persist(); ankHub(); }; });
   document.getElementById("ankTodas").onclick=function(){ cf.sel=foc.slice(); persist(); ankHub(); };
@@ -4072,10 +4313,11 @@ function ankHub(){
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-mix button"),function(x){ x.onclick=function(){ cf.mix=x.getAttribute("data-m")==="1"; persist(); ankHub(); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-d"),function(x){ x.onclick=function(){ ankDeck(x.getAttribute("data-d")); }; });
   Array.prototype.forEach.call(ovInner.querySelectorAll(".ank-ck button"),function(x){ x.onclick=function(){ var K=parseInt(x.getAttribute("data-k"),10); ankEstuda(ankCkIds(K),"Revisão de "+K+" dias",{ck:K}); }; });
-  document.getElementById("ankBat").onclick=ankBateria; document.getElementById("ankRfv").onclick=ankRfLista;
+  document.getElementById("ankMq").onclick=mqHub; document.getElementById("ankSt").onclick=stHub; document.getElementById("ankBat").onclick=ankBateria; document.getElementById("ankRfv").onclick=ankRfLista;
   document.getElementById("ankHoje").onclick=function(){ L.finished=true; closeOv(); setNav("hoje"); window.scrollTo(0,0); };
   document.getElementById("ankTrilha").onclick=function(){ L.finished=true; closeOv(); setNav("trilha"); window.scrollTo(0,0); };
   document.getElementById("ankAprof").onclick=function(){ apHub(); };
+  document.getElementById("ankConf").onchange=function(){ ankS().cfg.conf=this.value==="1"; persist(); };
   document.getElementById("ankVis").onchange=function(){ ankS().cfg.vis=this.value==="1"; persist(); };
   document.getElementById("ankCp").onchange=function(){ ankS().cfg.cp=parseInt(this.value,10); persist(); ankHub(); };
   document.getElementById("ankNovas").onchange=function(){ ankS().cfg.novas=parseInt(this.value,10)||20; persist(); ankHub(); };
@@ -4149,11 +4391,16 @@ function ankProx(){
 function ankFoot(){
   var st=ankS().c[AN.cur.f]||null;
   if(!AN.mostra){
+    if(ankS().cfg.conf!==false){
+      setFoot("ank-notas ank-conf",'<button type="button" class="ank-c1" data-c="c"><small>tecla 1</small>Certeza</button><button type="button" class="ank-c2" data-c="d"><small>tecla 2</small>Dúvida</button><button type="button" class="ank-c3" data-c="x"><small>tecla 3</small>Chute</button>');
+      Array.prototype.forEach.call(ovFootIn.querySelectorAll("button[data-c]"),function(b){ b.onclick=function(){ ankMostra(b.getAttribute("data-c")); }; });
+      return;
+    }
     setFoot("",'<button class="ghost" id="ankUndo"'+(AN.undo.length?"":" disabled")+' style="flex:0 0 auto">Desfazer</button><button class="big" id="ankShow" style="flex:1">Mostrar resposta</button><button class="ghost" id="ankMenu" style="flex:0 0 auto" aria-label="Mais">⋯</button>');
     document.getElementById("ankShow").onclick=ankMostra;
   } else {
     var nomes=["De novo","Difícil","Bom","Fácil"], cls=["a","d","b","f"], bt="";
-    for(var g=1;g<=4;g++) bt+='<button type="button" class="ank-g'+g+'" data-g="'+g+'"><small>'+ankIntv(st,g)+'</small>'+nomes[g-1]+'</button>';
+    for(var g=1;g<=4;g++) bt+='<button type="button" class="ank-g'+g+'" data-g="'+g+'"><small>'+ankIntv(st,ankEf(g))+'</small>'+nomes[g-1]+'</button>';
     setFoot("ank-notas",bt);
     Array.prototype.forEach.call(ovFootIn.querySelectorAll("button[data-g]"),function(b){ b.onclick=function(){ ankDa(parseInt(b.getAttribute("data-g"),10)); }; });
     return;
@@ -4161,9 +4408,17 @@ function ankFoot(){
   document.getElementById("ankUndo").onclick=ankDesfaz;
   document.getElementById("ankMenu").onclick=ankMenu;
 }
-function ankMostra(){ if(!AN.cur||AN.mostra) return; AN.mostra=true; var e=document.getElementById("ankA"); if(e) e.hidden=false; ankFoot(); }
+function ankEf(g){ if(AN.conf==="x"&&g>1) return 1; if(AN.conf==="d"&&g>2) return 2; return g; }
+function ankMostra(conf){
+  if(!AN.cur||AN.mostra) return; AN.conf=(typeof conf==="string")?conf:null; AN.mostra=true;
+  var e=document.getElementById("ankA"); if(e){ e.hidden=false;
+    if(AN.conf==="d"||AN.conf==="x"){ var n=el("div","mq-bd mq-dv","Você marcou "+mqCfNome(AN.conf)+". Mesmo acertando, o Anki trata como "+(AN.conf==="x"?"erro":"difícil")+" para você revisar de novo."); e.insertBefore(n,e.firstChild); } }
+  ankFoot();
+}
 function ankDa(g){
   if(!AN.cur||!AN.mostra) return;
+  var g0=g; g=ankEf(g);
+  try{ var cs=ankS(); cs.confSt=cs.confSt||{c:{n:0,ok:0},d:{n:0,ok:0},x:{n:0,ok:0}}; if(AN.conf&&cs.confSt[AN.conf]){ cs.confSt[AN.conf].n++; if(g0>1) cs.confSt[AN.conf].ok++; } }catch(e){}
   var a=ankS(), f=AN.cur.f, prev=a.c[f]?JSON.parse(JSON.stringify(a.c[f])):null, d=a.day, dayPrev=JSON.parse(JSON.stringify(d)), ck=AN.ck!=null;
   AN.undo.push({f:f,prev:prev,day:dayPrev,fe:AN.feitas||0});
   if(AN.undo.length>30) AN.undo.shift();
@@ -4180,7 +4435,7 @@ function ankDa(g){
   var ks=Object.keys(a.log).sort(); while(ks.length>90) delete a.log[ks.shift()];
   try{ dstatBump(g>1); monBump(qsplit(f).m,g>1); }catch(e){}
   if(d.tot%5===0) addXp(1);
-  if(!ck){ (AN.rec=AN.rec||[]).push({d:ankDiscDe(f),mod:qsplit(f).m,ok:g>1}); }
+  if(!ck){ if(DISC[ankDiscDe(f)]) (AN.rec=AN.rec||[]).push({d:ankDiscDe(f),mod:qsplit(f).m,ok:g>1}); }
   persist();
   if(!ck){
     var cf=a.cfg, n=cf.cp==null?25:cf.cp, mk=null;
@@ -4210,8 +4465,9 @@ function ankMenu(){
   var pop=el("div","ank-pop","");
   pop.id="ankPop";
   pop.innerHTML='<b>Aprofundar este tópico</b>'+
-    '<button type="button" data-a="mapt">Mapa do tópico</button><button type="button" data-a="teo">Teoria do tópico</button><button type="button" data-a="tec">Questões no TEC</button><button type="button" data-a="aud">Áudios</button><button type="button" data-a="map">Mapas mentais</button>'+(ex.length?'<button type="button" data-a="trn">Treinar 10 questões do tópico</button>':'')+
+    '<button type="button" data-a="mapt">Mapa do tópico</button><button type="button" data-a="story">Storytelling do tópico</button><button type="button" data-a="teo">Teoria do tópico</button><button type="button" data-a="tec">Questões no TEC</button><button type="button" data-a="aud">Áudios</button><button type="button" data-a="map">Mapas mentais</button>'+(ex.length?'<button type="button" data-a="trn">Treinar 10 questões do tópico</button>':'')+
     '<button type="button" data-a="sus" class="ank-danger">Suspender esta carta</button><button type="button" data-a="x">Fechar</button>';
+  if(mod==="meu"){ Array.prototype.forEach.call(pop.querySelectorAll("button"),function(b){ var a=b.getAttribute("data-a"); if(a!=="sus"&&a!=="x") b.remove(); }); }
   ovInner.appendChild(pop);
   Array.prototype.forEach.call(pop.querySelectorAll("button"),function(b){ b.onclick=function(){
     var a=b.getAttribute("data-a");
@@ -4220,6 +4476,7 @@ function ankMenu(){
     if(a==="tec"){ var lk=[]; try{ lk=tecLinksDe(mod)||[]; }catch(e){} try{ window.open(lk.length?lk[0].u:"https://www.tecconcursos.com.br/","_blank","noopener"); }catch(e){} pop.remove(); return; }
     if(a==="aud"){ try{ window.open(EC_AUDIO,"_blank","noopener"); }catch(e){} pop.remove(); return; }
     if(a==="mapt"){ ankMapaTopico(mod); return; }
+    if(a==="story"){ ankFim(); ST.sl=[]; stTela(mod); return; }
     ankFim(); L.finished=true;
     if(a==="teo"){ closeOv(); rdAbreMod(mod); }
     else if(a==="map"){ mapasHub(); }
@@ -4229,6 +4486,7 @@ function ankMenu(){
 function ankKey(e){
   if(!AN.ativo||!AN.cur) return; var o=document.getElementById("ov"); if(!o||!o.classList.contains("on")) return;
   if(e.target&&/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  if(!AN.mostra&&ankS().cfg.conf!==false){ var m={"1":"c","2":"d","3":"x"}; if(m[e.key]) ankMostra(m[e.key]); return; }
   if(e.key===" "||e.key==="Enter"){ e.preventDefault(); if(!AN.mostra) ankMostra(); else ankDa(3); }
   else if(AN.mostra&&/^[1-4]$/.test(e.key)) ankDa(parseInt(e.key,10));
   else if(e.key==="z"||e.key==="Z") ankDesfaz();
@@ -4244,6 +4502,7 @@ function ankEst(){
     '<div class="mon-grid"><div class="mon-k"><b>'+l7+'</b><small>cartas em 7 dias</small></div><div class="mon-k"><b>'+(l7?Math.round(o7/l7*100)+"%":"—")+'</b><small>acerto em 7 dias</small></div><div class="mon-k"><b>'+(o7?l7-o7:0)+'</b><small>"de novo" em 7 dias</small></div></div>'+
     '<div class="rf-sec"><h3>Revisões previstas</h3><div class="mon-chart ank-fc">'+bars+'</div></div>'+
     '<div class="rf-sec"><h3>Suas cartas</h3>'+[["Novas (ainda não vistas)",m.nova],["Aprendendo",m.apr],["Jovens (intervalo até 20 dias)",m.jov],["Maduras (21 dias ou mais)",m.mad],["Suspensas",m.sus]].map(function(r){ return '<div class="mon-row"><div><b>'+r[0]+'</b></div><span class="mon-tag">'+r[1]+'</span></div>'; }).join("")+'</div>';
+  var cf=a.confSt; if(cf) h+='<div class="rf-sec"><h3>Calibragem dos cards</h3>'+MQ_CF.map(function(c){ var x=cf[c[0]]; return '<div class="mon-row"><div><b>'+c[1]+'</b></div><span class="mon-tag">'+(x.n?Math.round(x.ok/x.n*100)+'% de '+x.n:'—')+'</span></div>'; }).join("")+'<p class="ra-nota">Acerto real de cada grau de certeza que você marcou antes de virar o card.</p></div>';
   ovInner.innerHTML=h; setFoot("",rfVoltar()); document.getElementById("rfBack").onclick=ankHub;
 }
 function ankBusca(){
@@ -5867,7 +6126,7 @@ function syncRead(id){
   });
 }
 var SYNC_MAXK={xp:1,bestStreak:1};
-var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,ank:1,ec:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
+var SYNC_DEEP={spq:1,cron:1,li:1,rd:1,mon:1,ank:1,ec:1,qm:1,rfRev:1,rfEv:1,tecDia:1,tecMod:1,mods:1,hist:1,srs:1,tempo:1,dstat:1,nota:1,duv:1,yt:1,vid:1,lastMod:1};
 var SYNC_LOCAL={theme:1,sound:1,vibe:1,goal:1};
 function syncDeep(a,b){
   if(typeof a==="number"&&typeof b==="number") return Math.max(a,b);
@@ -6062,7 +6321,7 @@ if(window.claude&&typeof window.claude.use==="function"){
         if(d.dstat)S.dstat=d.dstat;
         if(d.metaMin)S.metaMin=d.metaMin;
         if(d.metaQ)S.metaQ=d.metaQ;
-        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.ank)S.ank=d.ank; if(d.ec)S.ec=d.ec; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
+        if(d.sim)S.sim=d.sim; if(d.yt)S.yt=d.yt; if(d.duv)S.duv=d.duv; if(d.nota)S.nota=d.nota; if(d.dsc)S.dsc=d.dsc; if(d.plano)S.plano=d.plano; if(d.vid)S.vid=d.vid; if(d.theme)S.theme=d.theme; if(d.foco)S.foco=d.foco; if(d.focoPct!==undefined)S.focoPct=d.focoPct; if(d.tecDia)S.tecDia=d.tecDia; if(d.rfRev)S.rfRev=d.rfRev; if(d.rfEv)S.rfEv=d.rfEv; if(d.tecMod)S.tecMod=d.tecMod; if(d.spq)S.spq=d.spq; if(d.cron)S.cron=d.cron; if(d.li)S.li=d.li; if(d.rd)S.rd=d.rd; if(d.mon)S.mon=d.mon; if(d.rot)S.rot=d.rot; if(d.rotAuto)S.rotAuto=d.rotAuto; if(d.ank)S.ank=d.ank; if(d.ec)S.ec=d.ec; if(d.qm)S.qm=d.qm; if(d.metaTec)S.metaTec=d.metaTec; if(d.ritmo)S.ritmo=d.ritmo; if(d.last)S.last=d.last; if(d.lastMod)S.lastMod=d.lastMod;
         saveLocal();loadDisc(d.disc||S.disc||DISC_ORDER[0]);loadModule(d.cur||S.cur||ORDER[0]||"m01");paintSettings();renderTrail();buildPanel();
       }
     });
